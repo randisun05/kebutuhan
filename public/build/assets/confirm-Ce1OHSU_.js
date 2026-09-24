@@ -1,0 +1,1 @@
+import{S as e,k as o}from"./app-DEDmqhRH.js";const i=async(t,a="Hapus data ini?")=>{(await e.fire({icon:"warning",title:a,text:"Data yang dihapus tidak dapat dikembalikan.",showCancelButton:!0,confirmButtonColor:"#d33",confirmButtonText:"Ya, hapus",cancelButtonText:"Batal"})).isConfirmed&&o.delete(t,{preserveScroll:!0})};export{i as d};
