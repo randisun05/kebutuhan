@@ -16,6 +16,7 @@
                         <i class="fa" :class="item.icon"></i>
                         <span class="flex-grow-1">{{ item.label }}</span>
                         <span v-if="item.badge && $page.props.inbox" class="badge rounded-pill bg-warning text-dark">{{ $page.props.inbox }}</span>
+                        <span v-if="item.badgeKey && $page.props[item.badgeKey]" class="badge rounded-pill bg-danger">{{ $page.props[item.badgeKey] }}</span>
                     </Link>
                 </template>
             </template>
@@ -38,6 +39,10 @@ export default {
                 { label: 'Monitoring', items: [
                     { label: 'Dashboard', href: '/dashboard', icon: 'fa-tachometer', roles: ALL },
                     { label: 'Monitoring Kebutuhan', href: '/monitoring', icon: 'fa-bar-chart', roles: ALL },
+                    { label: 'Dashboard Data', href: '/analitik', icon: 'fa-pie-chart', roles: ALL },
+                    { label: 'Peringatan Dini', href: '/peringatan', icon: 'fa-exclamation-triangle', roles: ALL, badgeKey: 'peringatan' },
+                    { label: 'Histori Existing', href: '/histori', icon: 'fa-history', roles: ALL },
+                    { label: 'Laporan', href: '/laporan', icon: 'fa-file-text', roles: ALL },
                 ] },
                 { label: 'Hulu: Organisasi & Data', items: [
                     { label: 'Organisasi & Unit Kerja', href: '/unit-kerja', icon: 'fa-sitemap', roles: ['admin', 'operator_instansi'] },
@@ -60,7 +65,7 @@ export default {
                     { label: 'Instansi', href: '/instansi', icon: 'fa-building', roles: ['admin'] },
                     { label: 'Jabatan', href: '/jabatan', icon: 'fa-briefcase', roles: ['admin'] },
                     { label: 'Pengguna', href: '/users', icon: 'fa-user-secret', roles: ['admin'] },
-                    { label: 'Log Audit', href: '/audit', icon: 'fa-history', roles: ['admin'] },
+                    { label: 'Log Audit', href: '/audit', icon: 'fa-shield', roles: ['admin'] },
                     { label: 'Pedoman & Regulasi', href: '/pedoman', icon: 'fa-book', roles: ALL },
                 ] },
             ],

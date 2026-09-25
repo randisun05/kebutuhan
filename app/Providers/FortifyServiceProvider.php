@@ -6,13 +6,18 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\User;
+use App\Services\Siasn\SiasnSsoClient;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\LogoutResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -36,7 +41,26 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
 
         // halaman autentikasi (Inertia)
-        Fortify::loginView(fn () => inertia('Auth/Login'));
+        Fortify::loginView(fn () => inertia('Auth/Login', [
+            'ssoSiasn' => app(SiasnSsoClient::class)->enabled(),
+        ]));
+
+        // keluar juga dari sesi SSO SIASN bila login lewat SSO
+        Event::listen(Logout::class, function () {
+            if (request()->hasSession() && request()->session()->get('login_via') === 'sso_siasn') {
+                request()->attributes->set('siasn_id_token', request()->session()->get('siasn_id_token') ?: 'sso');
+            }
+        });
+        $this->app->singleton(LogoutResponse::class, fn () => new class implements LogoutResponse
+        {
+            public function toResponse($request)
+            {
+                $token = $request->attributes->get('siasn_id_token');
+                $url = $token ? app(SiasnSsoClient::class)->logoutUrl($token === 'sso' ? null : $token) : null;
+
+                return $url ? Inertia::location($url) : redirect('/login');
+            }
+        });
         Fortify::requestPasswordResetLinkView(fn () => inertia('Auth/ForgotPassword'));
         Fortify::resetPasswordView(fn (Request $request) => inertia('Auth/ResetPassword', [
             'token' => $request->route('token'),

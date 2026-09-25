@@ -90,6 +90,8 @@ body { background: var(--page-bg); color: var(--ink); font-size: .92rem; }
 .unit-depth-3 { padding-left: 4.5rem !important; }
 .col-unit { min-width: 240px; }
 .col-jabatan { min-width: 220px; }
+.heatmap td, .heatmap th { border: 2px solid #fff; }
+.heatmap td { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .chart-box { position: relative; height: 320px; }
 
 @media print {

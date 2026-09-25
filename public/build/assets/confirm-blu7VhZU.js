@@ -1,1 +1,0 @@
-import{S as e,r}from"./app-BFD2ibIK.js";const i=async(t,a="Hapus data ini?")=>{(await e.fire({icon:"warning",title:a,text:"Data yang dihapus tidak dapat dikembalikan.",showCancelButton:!0,confirmButtonColor:"#d33",confirmButtonText:"Ya, hapus",cancelButtonText:"Batal"})).isConfirmed&&r.delete(t,{preserveScroll:!0})};export{i as d};

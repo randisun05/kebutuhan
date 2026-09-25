@@ -21,6 +21,11 @@
             </div>
             <button class="btn btn-primary w-100" :disabled="form.processing"><i class="fa fa-sign-in me-1"></i> Masuk</button>
         </form>
+        <template v-if="ssoSiasn">
+            <div class="text-center text-muted small my-3">atau</div>
+            <a href="/auth/siasn/redirect" class="btn btn-outline-primary w-100"><i class="fa fa-id-card-o me-1"></i> Masuk dengan SSO SIASN</a>
+            <div class="form-text text-center">Untuk admin & operator instansi yang NIP-nya terdaftar di SIMONKEB.</div>
+        </template>
     </AuthCard>
 </template>
 
@@ -29,6 +34,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthCard from '../../Components/AuthCard.vue';
 
 defineOptions({ layout: null });
+defineProps({ ssoSiasn: Boolean });
 const form = useForm({ email: '', password: '', remember: false });
 const submit = () => form.post('/login', { onFinish: () => form.reset('password') });
 </script>

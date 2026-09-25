@@ -15,7 +15,10 @@ class EnsureTwoFactorForRole
     {
         $user = $request->user();
 
-        if ($user && in_array($user->role?->value, config('simonkeb.wajib_2fa'), true) && ! $user->two_factor_confirmed_at
+        // login lewat SSO SIASN sudah melalui MFA ASN Digital milik BKN
+        $viaSso = $request->session()->get('login_via') === 'sso_siasn' && config('siasn.oidc.skip_local_2fa');
+
+        if ($user && ! $viaSso && in_array($user->role?->value, config('simonkeb.wajib_2fa'), true) && ! $user->two_factor_confirmed_at
             && ! $request->routeIs('akun', 'logout', 'password.confirm', 'password.confirmation', 'two-factor.*', 'user-password.update')
             && ! $request->is('user/*')) {
             return redirect()->route('akun')->with('warning', 'Peran Anda wajib mengaktifkan autentikasi dua faktor (2FA) sebelum melanjutkan.');

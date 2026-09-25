@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\UsulanStatus;
+use App\Models\Peringatan;
 use App\Models\Usulan;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -42,6 +43,11 @@ class HandleInertiaRequests extends Middleware
             ],
             // jumlah usulan yang menunggu tindakan user (badge sidebar)
             'inbox' => fn () => $user ? $this->inboxCount($user) : 0,
+            // jumlah peringatan terbuka tingkat kritis/tinggi (badge sidebar)
+            'peringatan' => fn () => $user ? Peringatan::whereIn('status', ['aktif'])
+                ->whereIn('tingkat', ['kritis', 'tinggi'])
+                ->when($user->isScopedToInstansi(), fn ($q) => $q->where('instansi_id', $user->instansi_id))
+                ->count() : 0,
             'notifikasi' => fn () => $user ? [
                 'unread' => $user->unreadNotifications()->count(),
                 'items' => $user->notifications()->limit(6)->get()->map(fn ($n) => [

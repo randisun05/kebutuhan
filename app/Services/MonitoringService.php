@@ -159,6 +159,21 @@ class MonitoringService
         ))->values();
     }
 
+    /** Rekap per jabatan (lintas unit/instansi sesuai filter). */
+    public function byJabatan(array $filters = []): Collection
+    {
+        return $this->positionsQuery($filters)
+            ->groupBy('p.jabatan_id', 'p.jabatan_nama', 'p.jenis')
+            ->selectRaw('p.jabatan_id, p.jabatan_nama, p.jenis, '.$this->aggregateSelect())
+            ->orderBy('p.jenis')->orderBy('p.jabatan_nama')
+            ->get()
+            ->map(fn ($r) => array_merge(
+                ['jabatan_id' => $r->jabatan_id, 'jabatan_nama' => $r->jabatan_nama, 'jenis' => $r->jenis,
+                    'jenis_label' => Referensi::JENIS_JABATAN[$r->jenis] ?? $r->jenis],
+                $this->decorate((array) $r)
+            ));
+    }
+
     /**
      * Rekap per unit kerja satu instansi. Setiap unit memuat angka unit itu
      * sendiri ("own") dan akumulasi termasuk seluruh sub-unit ("total").

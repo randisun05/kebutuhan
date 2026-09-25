@@ -23,6 +23,19 @@
         </div>
     </div>
 
+    <div v-if="peringatanTerbaru.length" class="card mb-3 border-danger">
+        <div class="card-header d-flex justify-content-between text-danger">
+            <span><i class="fa fa-exclamation-triangle me-1"></i> Peringatan penting</span>
+            <Link href="/peringatan" class="small">Semua peringatan <i class="fa fa-angle-right"></i></Link>
+        </div>
+        <ul class="list-group list-group-flush small">
+            <li v-for="p in peringatanTerbaru" :key="p.id" class="list-group-item d-flex justify-content-between gap-2">
+                <span><span class="badge me-1" :style="{ background: p.tingkat === 'kritis' ? '#d03b3b' : '#ec835a' }">{{ p.tingkat.toUpperCase() }}</span><b>{{ p.judul }}</b> — {{ p.pesan }}</span>
+                <Link v-if="p.url" :href="p.url" class="text-nowrap">Buka <i class="fa fa-angle-right"></i></Link>
+            </li>
+        </ul>
+    </div>
+
     <div class="row g-3 mb-3">
         <div class="col-6 col-xl-2"><StatCard label="Kebutuhan (ABK)" :value="summary.kebutuhan" icon="fa-bullseye" color="#2a78d6" :hint="summary.jumlah_jabatan + ' posisi jabatan'" /></div>
         <div class="col-6 col-xl-2"><StatCard label="Existing" :value="summary.existing" icon="fa-users" color="#eb6834" :hint="'Pemenuhan ' + pct(summary.persentase)" /></div>
@@ -128,10 +141,10 @@ import { num, pct, tanggal, barClass, COLORS } from '../../utils';
 
 const props = defineProps({
     filters: Object, instansiOptions: Array, jenisOptions: Array, summary: Object,
-    perInstansi: Array, perJenis: Array, usulan: Array, penetapanTerbaru: Array, updatedAt: String,
+    perInstansi: Array, perJenis: Array, usulan: Array, penetapanTerbaru: Array, peringatanTerbaru: Array, updatedAt: String,
 });
 
-const LIVE = ['summary', 'perInstansi', 'perJenis', 'usulan', 'penetapanTerbaru', 'updatedAt', 'inbox'];
+const LIVE = ['summary', 'perInstansi', 'perJenis', 'usulan', 'penetapanTerbaru', 'peringatanTerbaru', 'updatedAt', 'inbox', 'peringatan'];
 usePoll(30000, { only: LIVE });
 
 const filter = reactive({ instansi_id: props.filters.instansi_id || '', jenis: props.filters.jenis || '' });

@@ -1,19 +1,24 @@
 <?php
 
 use App\Http\Controllers\AkunController;
+use App\Http\Controllers\AnalitikController;
 use App\Http\Controllers\AnjabAbkController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormasiController;
+use App\Http\Controllers\HistoriController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\JabatanController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PedomanController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PenetapanController;
 use App\Http\Controllers\PerencanaanController;
+use App\Http\Controllers\PeringatanController;
 use App\Http\Controllers\SiasnController;
+use App\Http\Controllers\SsoSiasnController;
 use App\Http\Controllers\UnitKerjaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UsulanController;
@@ -23,6 +28,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
+// Login SSO SIASN (OpenID Connect)
+Route::middleware('guest')->group(function () {
+    Route::get('/auth/siasn/redirect', [SsoSiasnController::class, 'redirect'])->name('sso.siasn.redirect');
+    Route::get('/auth/siasn/callback', [SsoSiasnController::class, 'callback'])->middleware('throttle:20,1')->name('sso.siasn.callback');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/pedoman', PedomanController::class)->name('pedoman');
@@ -31,6 +42,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
     Route::post('/notifikasi/baca-semua', [NotifikasiController::class, 'readAll'])->name('notifikasi.read-all');
     Route::get('/notifikasi/{id}', [NotifikasiController::class, 'open'])->name('notifikasi.open');
+
+    // Dashboard data, histori existing, peringatan dini, dan laporan
+    Route::get('/analitik', AnalitikController::class)->name('analitik');
+    Route::get('/histori', [HistoriController::class, 'index'])->name('histori.index');
+    Route::get('/histori/export', [HistoriController::class, 'export'])->name('histori.export');
+    Route::get('/peringatan', [PeringatanController::class, 'index'])->name('peringatan.index');
+    Route::post('/peringatan/deteksi', [PeringatanController::class, 'deteksi'])->middleware('throttle:5,1')->name('peringatan.deteksi');
+    Route::post('/peringatan/{peringatan}/tindak-lanjut', [PeringatanController::class, 'tindakLanjut'])->name('peringatan.tindak-lanjut');
+    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan/unduh/{format}', [LaporanController::class, 'unduh'])->name('laporan.unduh');
 
     // Monitoring kebutuhan vs existing (real-time)
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');

@@ -13,10 +13,13 @@ use App\Models\User;
 use App\Models\Usulan;
 use App\Models\UsulanDetail;
 use App\Services\MonitoringService;
+use App\Services\PeringatanService;
+use App\Services\SnapshotService;
 use App\Services\UsulanWorkflow;
 use App\Support\Referensi;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Data demo agar alur hulu-hilir dan dashboard monitoring dapat langsung dicoba.
@@ -100,8 +103,75 @@ class DatabaseSeeder extends Seeder
             'nama_jabatan_pimpinan' => 'Kepala '.$u->nama,
         ]));
 
+        $this->simulasiHistori($faker);
+        app(SnapshotService::class)->ambil();
+        app(SnapshotService::class)->rekonstruksi(12);
+        app(PeringatanService::class)->deteksi(false);
+
         activity()->enableLogging();
         $admin->touch();
+    }
+
+    /**
+     * Data awal dianggap masuk 2–3 tahun lalu; lalu dalam 12 bulan terakhir sebagian unit
+     * mengalami mutasi, pengangkatan baru, dan pensiun. Sekitar sepertiga unit sengaja
+     * dibiarkan tanpa pergerakan agar analisis "tidak bergerak" dapat dicoba.
+     */
+    private function simulasiHistori($faker): void
+    {
+        $awal = now()->subYears(2)->subMonths(6);
+        DB::table('pegawai_riwayats')->update(['created_at' => $awal]);
+        DB::table('pegawais')->update(['created_at' => $awal, 'updated_at' => $awal]);
+
+        $acak = fn () => now()->subDays(mt_rand(5, 355))->setTime(mt_rand(8, 15), mt_rand(0, 59));
+        $backdate = function (Pegawai $p, $waktu) {
+            DB::table('pegawai_riwayats')->where('pegawai_id', $p->id)->latest('id')->limit(1)->update(['created_at' => $waktu]);
+            DB::table('pegawais')->where('id', $p->id)->update(['updated_at' => $waktu]);
+        };
+
+        foreach (Instansi::all() as $instansi) {
+            $units = UnitKerja::where('instansi_id', $instansi->id)->pluck('id')->shuffle();
+            $aktif = $units->slice(0, (int) ceil($units->count() * 0.65))->values();
+
+            foreach ($aktif as $unitId) {
+                $pegawai = Pegawai::where('unit_kerja_id', $unitId)->where('is_active', true)->inRandomOrder()->limit(3)->get();
+
+                // mutasi ke unit lain di instansi yang sama
+                foreach ($pegawai->take(mt_rand(0, 2)) as $p) {
+                    $p->keteranganRiwayat = 'SK Mutasi No. 800/'.mt_rand(100, 999).'/BKPSDM/'.now()->format('Y');
+                    $p->update(['unit_kerja_id' => $aktif->reject(fn ($u) => $u === $unitId)->random()]);
+                    $backdate($p, $acak());
+                }
+
+                // pengangkatan CPNS/PPPK baru pada jabatan yang kurang di unit ini
+                if (mt_rand(0, 2) === 0) {
+                    $jabatanId = AnjabAbk::where('unit_kerja_id', $unitId)->where('status', 'final')->inRandomOrder()->value('jabatan_id');
+                    if ($jabatanId) {
+                        $lahir = $faker->dateTimeBetween('-32 years', '-23 years');
+                        $baru = new Pegawai([
+                            'instansi_id' => $instansi->id, 'unit_kerja_id' => $unitId, 'jabatan_id' => $jabatanId,
+                            'nip' => $lahir->format('Ymd').now()->format('Y').'0'.mt_rand(1, 2).mt_rand(1, 2).str_pad((string) mt_rand(1, 999), 3, '0', STR_PAD_LEFT),
+                            'nama' => $faker->name(), 'status_kepegawaian' => mt_rand(0, 1) ? 'pns' : 'pppk', 'golongan' => 'III/a',
+                            'pendidikan' => 'S-1', 'tanggal_lahir' => $lahir->format('Y-m-d'), 'tmt_jabatan' => now()->subMonths(mt_rand(1, 11))->format('Y-m-d'),
+                        ]);
+                        $baru->keteranganRiwayat = 'Pengangkatan hasil seleksi CASN';
+                        if (! Pegawai::where('nip', $baru->nip)->exists()) {
+                            $baru->save();
+                            $backdate($baru, $acak());
+                        }
+                    }
+                }
+
+                // pensiun / berhenti
+                if ($p = $pegawai->skip(2)->first()) {
+                    if (mt_rand(0, 3) === 0) {
+                        $p->keteranganRiwayat = 'Pensiun BUP';
+                        $p->update(['is_active' => false]);
+                        $backdate($p, $acak());
+                    }
+                }
+            }
+        }
     }
 
     private function tarikAbk(Usulan $usulan): void

@@ -51,6 +51,26 @@ return [
     'timeout' => (int) env('SIASN_REQUEST_TIMEOUT', 60),
     'verify_ssl' => (bool) env('SIASN_VERIFY_SSL', true),
 
+    /*
+    | Login SSO SIASN (OpenID Connect, Keycloak realm public-siasn).
+    | Aplikasi harus didaftarkan sebagai client ke BKN (client_id, client_secret, redirect URI).
+    | User SIMONKEB dicocokkan berdasarkan NIP (users.nip) lalu email.
+    */
+    'oidc' => [
+        'enabled' => (bool) env('SIASN_SSO_LOGIN', false),
+        'base_url' => env('SIASN_OIDC_URL', $mode === 'production'
+            ? 'https://sso-siasn.bkn.go.id/auth/realms/public-siasn'
+            : 'https://iam-siasn.bkn.go.id/auth/realms/public-siasn'),
+        'client_id' => env('SIASN_OIDC_CLIENT_ID'),
+        'client_secret' => env('SIASN_OIDC_CLIENT_SECRET'),
+        'redirect' => env('SIASN_OIDC_REDIRECT') ?: '/auth/siasn/callback',
+        'scopes' => env('SIASN_OIDC_SCOPES', 'openid profile email'),
+        // claim yang berisi NIP pada token/userinfo SIASN
+        'nip_claim' => env('SIASN_OIDC_NIP_CLAIM', 'nip'),
+        // SSO BKN sudah memakai MFA, sehingga 2FA lokal tidak diminta lagi
+        'skip_local_2fa' => (bool) env('SIASN_OIDC_SKIP_2FA', true),
+    ],
+
     // sinkronisasi pegawai otomatis setiap malam untuk semua instansi yang memiliki ID SIASN
     'scheduled' => (bool) env('SIASN_SYNC_TERJADWAL', false),
 ];

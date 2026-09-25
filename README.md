@@ -29,7 +29,14 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Pelacakan pengisian formasi (realisasi hasil seleksi); sisa formasi belum terisi tampil di monitoring dan proyeksi.
 - Notifikasi di aplikasi (lonceng) dan opsional email untuk setiap tahap alur.
 
+**Monitoring lanjutan**
+- Dashboard Data: tren 12 bulan kebutuhan vs existing, pergerakan pegawai per bulan, peta panas % pemenuhan (instansi/unit × jenis jabatan), pensiun per tahun, komposisi jenis jabatan, usia, golongan, pendidikan, dan status kepegawaian.
+- Histori data existing: rekam jejak bulanan per posisi (`php artisan kebutuhan:snapshot`, harian otomatis; `--rekonstruksi=12` untuk mengisi mundur dari riwayat pegawai), log peristiwa (masuk, keluar, mutasi, ganti jabatan), dan analisis **tidak bergerak** per instansi/unit/jabatan untuk periode 1/3/6/12/24 bulan (existing awal vs kini, terakhir bergerak, kondisi).
+- Sistem peringatan dini (`php artisan peringatan:deteksi`, otomatis 06.00): jabatan kosong, pemenuhan unit kritis, unit gemuk, unit kekurangan yang stagnan, data tidak diperbarui, ABK belum ada/kedaluwarsa, pensiun mendatang, usulan tertahan, formasi belum terisi, dan sinkron SIASN gagal. Tingkat kritis/tinggi/sedang/rendah, tindak lanjut tercatat, dan peringatan tertutup otomatis ketika kondisinya teratasi. Ringkasan dikirim sebagai notifikasi. Ambang batas diatur lewat `PERINGATAN_*` di `.env`.
+- Pusat laporan: rekap per instansi/unit/jabatan, daftar jabatan bermasalah, usulan–penetapan–pengisian, proyeksi pensiun, ABK & efektivitas, unit tidak bergerak, dan peringatan terbuka. Semua bisa dilihat di layar, diunduh Excel, atau PDF.
+
 **Keamanan**
+- Login SSO SIASN (OpenID Connect ke Keycloak BKN, authorization code + PKCE) untuk admin dan operator instansi. User dicocokkan lewat NIP (lalu email) yang sudah terdaftar di SIMONKEB, dan login SSO tidak diminta 2FA lokal lagi karena BKN sudah memakai MFA.
 - Login Laravel Fortify: lupa/reset password, ganti password, 2FA (aplikasi autentikator + kode pemulihan), 2FA wajib per peran (`WAJIB_2FA_PERAN`).
 - Log audit perubahan data master, organisasi, pegawai, ABK, dan pengguna.
 
@@ -87,8 +94,14 @@ php artisan migrate --seed      # --seed mengisi data demo
 npm run build                   # atau `npm run dev` saat pengembangan
 php artisan serve
 php artisan queue:work          # untuk sinkronisasi SIASN & email
-php artisan schedule:work       # (opsional) sinkron SIASN terjadwal
+php artisan schedule:work       # rekam jejak harian, peringatan dini 06.00, sinkron SIASN terjadwal
 ```
+
+### Login SSO SIASN
+
+1. Daftarkan SIMONKEB sebagai client SSO SIASN ke BKN dengan redirect URI `https://<domain>/auth/siasn/callback`.
+2. Isi `SIASN_SSO_LOGIN=true`, `SIASN_OIDC_CLIENT_ID`, `SIASN_OIDC_CLIENT_SECRET`, dan `SIASN_OIDC_NIP_CLAIM` (nama klaim NIP pada token BKN) di `.env`.
+3. Isi NIP pada data pengguna SIMONKEB. Tombol **Masuk dengan SSO SIASN** muncul di halaman login.
 
 ### Integrasi SIASN
 
