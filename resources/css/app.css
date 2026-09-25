@@ -99,3 +99,17 @@ body { background: var(--page-bg); color: var(--ink); font-size: .92rem; }
     .app-main { margin-left: 0; }
     .card { box-shadow: none; }
 }
+
+/* panduan pengguna */
+.panduan-isi { line-height: 1.65; }
+.panduan-isi h2 { font-size: 1.2rem; font-weight: 700; margin-top: 1.75rem; padding-top: .5rem; border-top: 1px solid #eef0f4; scroll-margin-top: 70px; }
+.panduan-isi h2:first-child { border-top: 0; margin-top: 0; }
+.panduan-isi h3 { font-size: 1rem; font-weight: 600; margin-top: 1.25rem; scroll-margin-top: 70px; }
+.panduan-isi table { width: 100%; margin: .75rem 0; font-size: .85rem; }
+.panduan-isi th, .panduan-isi td { border: 1px solid #e1e0d9; padding: .35rem .6rem; }
+.panduan-isi th { background: #f1f4f9; }
+.panduan-isi blockquote { border-left: 4px solid var(--brand-2); background: #f3f7ff; padding: .5rem .9rem; margin: .75rem 0; border-radius: 0 .4rem .4rem 0; }
+.panduan-isi blockquote p:last-child { margin-bottom: 0; }
+.panduan-isi img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: .5rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin: .5rem 0 1rem; }
+.panduan-isi code { color: #0b3d91; background: #eef3fb; padding: .05rem .3rem; border-radius: .25rem; }
+.panduan-isi ol li, .panduan-isi ul li { margin-bottom: .25rem; }

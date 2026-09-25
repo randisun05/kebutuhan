@@ -11,6 +11,9 @@
                     </span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
+                <Link :href="bantuanUrl" class="btn btn-sm btn-light" title="Panduan untuk halaman ini">
+                    <i class="fa fa-question-circle"></i> <span class="d-none d-md-inline">Bantuan</span>
+                </Link>
                 <div class="dropdown" v-if="$page.props.notifikasi">
                     <button class="btn btn-sm btn-light position-relative" data-bs-toggle="dropdown" title="Notifikasi">
                         <i class="fa fa-bell"></i>
@@ -42,6 +45,10 @@
                 </div>
                 </div>
             </nav>
+            <div v-if="$page.props.panduan?.baru && !$page.url.startsWith('/panduan')" class="alert alert-info rounded-0 mb-0 py-2 small d-flex justify-content-between align-items-center">
+                <span><i class="fa fa-bullhorn me-1"></i> Ada pembaruan aplikasi (versi {{ $page.props.panduan.versi }}). Lihat apa yang baru di panduan.</span>
+                <Link href="/panduan/perubahan" class="btn btn-sm btn-info">Lihat perubahan</Link>
+            </div>
             <div class="app-content" :key="$page.url">
                 <slot />
             </div>
@@ -62,6 +69,15 @@ export default {
     computed: {
         user() {
             return this.$page.props.auth.user;
+        },
+        // halaman panduan yang paling cocok dengan URL saat ini (prefix terpanjang)
+        bantuanUrl() {
+            const peta = this.$page.props.panduan?.peta || {};
+            const path = this.$page.url.split('?')[0];
+            const cocok = Object.keys(peta)
+                .filter((m) => path === m || path.startsWith(m + '/'))
+                .sort((a, b) => b.length - a.length)[0];
+            return cocok ? `/panduan/${peta[cocok]}` : '/panduan';
         },
     },
 };

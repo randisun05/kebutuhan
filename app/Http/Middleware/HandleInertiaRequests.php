@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\UsulanStatus;
 use App\Models\Peringatan;
 use App\Models\Usulan;
+use App\Services\PanduanService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -48,6 +49,17 @@ class HandleInertiaRequests extends Middleware
                 ->whereIn('tingkat', ['kritis', 'tinggi'])
                 ->when($user->isScopedToInstansi(), fn ($q) => $q->where('instansi_id', $user->instansi_id))
                 ->count() : 0,
+            // panduan: peta menu -> halaman panduan & penanda ada catatan perubahan baru
+            'panduan' => fn () => $user ? (function () use ($user) {
+                $svc = app(PanduanService::class);
+                $versi = $svc->versiTerbaru();
+
+                return [
+                    'peta' => $svc->petaMenu(),
+                    'versi' => $versi,
+                    'baru' => $versi && $user->panduan_versi_dibaca !== $versi,
+                ];
+            })() : null,
             'notifikasi' => fn () => $user ? [
                 'unread' => $user->unreadNotifications()->count(),
                 'items' => $user->notifications()->limit(6)->get()->map(fn ($n) => [

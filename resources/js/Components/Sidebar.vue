@@ -67,6 +67,7 @@ export default {
                     { label: 'Pengguna', href: '/users', icon: 'fa-user-secret', roles: ['admin'] },
                     { label: 'Log Audit', href: '/audit', icon: 'fa-shield', roles: ['admin'] },
                     { label: 'Pedoman & Regulasi', href: '/pedoman', icon: 'fa-book', roles: ALL },
+                    { label: 'Panduan Pengguna', href: '/panduan', icon: 'fa-life-ring', roles: ALL },
                 ] },
             ],
         };

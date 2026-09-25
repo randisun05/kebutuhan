@@ -40,6 +40,13 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Login Laravel Fortify: lupa/reset password, ganti password, 2FA (aplikasi autentikator + kode pemulihan), 2FA wajib per peran (`WAJIB_2FA_PERAN`).
 - Log audit perubahan data master, organisasi, pegawai, ABK, dan pengguna.
 
+## Panduan pengguna
+
+Panduan ada di dalam aplikasi (menu **Panduan Pengguna**, tombol **Bantuan** di setiap halaman, unduh PDF),
+bersumber dari `docs/panduan/*.md`. Tabel peran, akses menu, status usulan, jenis peringatan, ambang batas,
+jenis laporan, dan rumus ABK dibangkitkan otomatis dari kode. CI gagal bila ada menu tanpa panduan.
+Tata cara pembaruan: `docs/CARA-MEMPERBARUI-PANDUAN.md`.
+
 ## Alur (hulu → hilir)
 
 | # | Tahap | Pelaku | Menu |
