@@ -10,6 +10,8 @@
             <Field class="col-md-4" label="Jenjang"><input v-model="form.jenjang" class="form-control" placeholder="Ahli Pertama, Terampil, …"></Field>
             <Field class="col-md-4" label="Kelas jabatan" :error="form.errors.kelas_jabatan"><input v-model.number="form.kelas_jabatan" type="number" min="1" max="17" class="form-control"></Field>
             <Field class="col-md-4" label="Batas usia pensiun" :error="form.errors.bup"><input v-model.number="form.bup" type="number" min="50" max="70" class="form-control"></Field>
+            <Field class="col-md-4" label="ID jabatan SIASN" help="ID jabatan fungsional / pelaksana / struktural"><input v-model="form.siasn_jabatan_id" class="form-control"></Field>
+            <Field class="col-md-4" label="Estimasi belanja pegawai / orang / tahun (Rp)" :error="form.errors.estimasi_biaya_tahunan"><input v-model.number="form.estimasi_biaya_tahunan" type="number" min="0" class="form-control"></Field>
             <Field class="col-md-4" label="Kualifikasi pendidikan"><input v-model="form.kualifikasi_pendidikan" class="form-control"></Field>
             <div class="col-12 form-check form-switch ms-2"><input v-model="form.is_active" class="form-check-input" type="checkbox" id="aktif"><label for="aktif" class="form-check-label">Aktif</label></div>
             <div class="col-12 d-flex gap-2"><button class="btn btn-primary" :disabled="form.processing"><i class="fa fa-save me-1"></i> Simpan</button><Link href="/jabatan" class="btn btn-light">Batal</Link></div>
@@ -26,6 +28,7 @@ const d = props.data || {};
 const form = useForm({
     kode: d.kode ?? '', nama: d.nama ?? '', jenis: d.jenis ?? 'fungsional', kategori: d.kategori ?? null, jenjang: d.jenjang ?? '',
     kelas_jabatan: d.kelas_jabatan ?? null, bup: d.bup ?? 58, kualifikasi_pendidikan: d.kualifikasi_pendidikan ?? '', is_active: d.is_active ?? true,
+    siasn_jabatan_id: d.siasn_jabatan_id ?? '', estimasi_biaya_tahunan: d.estimasi_biaya_tahunan ?? null,
 });
 const submit = () => {
     if (form.jenis !== 'fungsional') form.kategori = null;

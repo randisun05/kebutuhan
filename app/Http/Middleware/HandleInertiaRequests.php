@@ -42,6 +42,12 @@ class HandleInertiaRequests extends Middleware
             ],
             // jumlah usulan yang menunggu tindakan user (badge sidebar)
             'inbox' => fn () => $user ? $this->inboxCount($user) : 0,
+            'notifikasi' => fn () => $user ? [
+                'unread' => $user->unreadNotifications()->count(),
+                'items' => $user->notifications()->limit(6)->get()->map(fn ($n) => [
+                    'id' => $n->id, 'data' => $n->data, 'read' => (bool) $n->read_at, 'created_at' => $n->created_at,
+                ]),
+            ] : null,
         ]);
     }
 

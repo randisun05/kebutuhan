@@ -6,6 +6,7 @@ use App\Exports\PegawaiTemplateExport;
 use App\Imports\PegawaiImport;
 use App\Models\Jabatan;
 use App\Models\Pegawai;
+use App\Models\PegawaiRiwayat;
 use App\Models\UnitKerja;
 use App\Support\Referensi;
 use Illuminate\Http\Request;
@@ -62,6 +63,7 @@ class PegawaiController extends Controller
     public function update(Request $request, Pegawai $pegawai)
     {
         $this->authorizeInstansi($pegawai->instansi_id);
+        $pegawai->keteranganRiwayat = $request->input('keterangan_mutasi') ?: null;
         $pegawai->update($this->validated($request, $pegawai));
 
         return redirect()->route('pegawai.index', ['instansi_id' => $pegawai->instansi_id])->with('success', 'Data pegawai berhasil diperbarui.');
@@ -110,6 +112,10 @@ class PegawaiController extends Controller
     {
         return [
             'data' => $pegawai,
+            'riwayat' => $pegawai ? $pegawai->riwayats()
+                ->with(['dariUnit:id,nama', 'keUnit:id,nama', 'dariJabatan:id,nama', 'keJabatan:id,nama', 'user:id,name'])
+                ->limit(50)->get() : [],
+            'jenisRiwayat' => PegawaiRiwayat::JENIS,
             'instansiOptions' => $this->instansiOptions(),
             'unitOptions' => $instansiId ? UnitKerja::flatTree($instansiId) : [],
             'jabatanOptions' => Jabatan::where('is_active', true)->orderBy('jenis')->orderBy('nama')->get(['id', 'nama', 'jenis']),
@@ -131,7 +137,9 @@ class PegawaiController extends Controller
             'tanggal_lahir' => 'nullable|date|before:today',
             'tmt_jabatan' => 'nullable|date',
             'is_active' => 'boolean',
+            'keterangan_mutasi' => 'nullable|string|max:255',
         ]);
+        unset($data['keterangan_mutasi']);
 
         $this->authorizeInstansi((int) $data['instansi_id']);
 

@@ -28,9 +28,14 @@ class MonitoringService
     {
         $horizon = now()->addYears(Referensi::HORIZON_PROYEKSI_TAHUN)->toDateString();
 
-        $abk = DB::table('anjab_abks')
-            ->where('status', 'final')
-            ->selectRaw('instansi_id, unit_kerja_id, jabatan_id, kebutuhan as k, 0 as e, 0 as p, 0 as f');
+        // ABK final terbaru per posisi (opsional dibatasi s.d. tahun tertentu)
+        $tahunAbk = $filters['tahun_abk'] ?? null;
+        $abk = DB::table('anjab_abks as a')
+            ->where('a.status', 'final')
+            ->whereRaw('a.tahun = (SELECT MAX(b.tahun) FROM anjab_abks b WHERE b.unit_kerja_id = a.unit_kerja_id
+                AND b.jabatan_id = a.jabatan_id AND b.status = ?'.($tahunAbk ? ' AND b.tahun <= ?' : '').')',
+                $tahunAbk ? ['final', (int) $tahunAbk] : ['final'])
+            ->selectRaw('a.instansi_id as instansi_id, a.unit_kerja_id as unit_kerja_id, a.jabatan_id as jabatan_id, a.kebutuhan as k, 0 as e, 0 as p, 0 as f');
 
         $pegawai = DB::table('pegawais')
             ->where('is_active', true)
@@ -40,13 +45,13 @@ class MonitoringService
         $formasi = DB::table('usulan_details as d')
             ->join('usulans as u', 'u.id', '=', 'd.usulan_id')
             ->where('u.status', UsulanStatus::Ditetapkan->value)
-            ->where('u.tahun', '>=', (int) now()->format('Y'))
             ->groupBy('u.instansi_id', 'd.unit_kerja_id', 'd.jabatan_id')
-            ->selectRaw('u.instansi_id as instansi_id, d.unit_kerja_id as unit_kerja_id, d.jabatan_id as jabatan_id, 0 as k, 0 as e, 0 as p, SUM(COALESCE(d.jumlah_ditetapkan, 0)) as f');
+            // formasi yang sudah ditetapkan tetapi belum terisi (hasil seleksi belum diangkat)
+            ->selectRaw('u.instansi_id as instansi_id, d.unit_kerja_id as unit_kerja_id, d.jabatan_id as jabatan_id, 0 as k, 0 as e, 0 as p,
+                SUM(CASE WHEN COALESCE(d.jumlah_ditetapkan, 0) > d.jumlah_terisi THEN COALESCE(d.jumlah_ditetapkan, 0) - d.jumlah_terisi ELSE 0 END) as f');
 
-        foreach ([$abk, $pegawai] as $part) {
-            $this->applyScope($part, $filters, '');
-        }
+        $this->applyScope($abk, $filters, 'a.');
+        $this->applyScope($pegawai, $filters, '');
         $this->applyScope($formasi, $filters, 'u.', 'd.');
 
         $union = $abk->unionAll($pegawai)->unionAll($formasi);

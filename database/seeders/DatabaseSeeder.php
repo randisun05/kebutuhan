@@ -11,8 +11,10 @@ use App\Models\Pegawai;
 use App\Models\UnitKerja;
 use App\Models\User;
 use App\Models\Usulan;
+use App\Models\UsulanDetail;
 use App\Services\MonitoringService;
 use App\Services\UsulanWorkflow;
+use App\Support\Referensi;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 
@@ -24,6 +26,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // data demo tidak perlu masuk log audit
+        activity()->disableLogging();
         mt_srand(2026);
         $faker = Faker::create('id_ID');
         $faker->seed(2026);
@@ -87,6 +91,16 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+        // sebagian formasi yang sudah ditetapkan telah terisi hasil seleksi
+        UsulanDetail::whereHas('usulan', fn ($q) => $q->where('status', UsulanStatus::Ditetapkan))
+            ->each(fn ($d) => $d->update(['jumlah_terisi' => intdiv((int) $d->jumlah_ditetapkan, 2), 'terisi_updated_at' => now()]));
+
+        // unit kerja: nama jabatan pimpinan
+        UnitKerja::whereNull('nama_jabatan_pimpinan')->each(fn ($u) => $u->update([
+            'nama_jabatan_pimpinan' => 'Kepala '.$u->nama,
+        ]));
+
+        activity()->enableLogging();
         $admin->touch();
     }
 
@@ -140,6 +154,8 @@ class DatabaseSeeder extends Seeder
             'kode' => $r[0], 'nama' => $r[1], 'jenis' => $r[2], 'kategori' => $r[3], 'jenjang' => $r[4],
             'kelas_jabatan' => $r[5], 'bup' => $r[6],
             'kualifikasi_pendidikan' => $kualifikasi[$r[3]] ?? ($r[2] === 'pelaksana' ? 'SMA/D-III' : 'S-1/D-IV'),
+            // estimasi kasar belanja pegawai per tahun (gaji + tunjangan) untuk simulasi anggaran
+            'estimasi_biaya_tahunan' => 30_000_000 + $r[5] * 9_000_000,
         ]))->keyBy('kode')->all();
     }
 
@@ -207,8 +223,22 @@ class DatabaseSeeder extends Seeder
                     'instansi_id' => $instansi->id, 'unit_kerja_id' => $unit->id, 'jabatan_id' => $jabatan->id,
                     'tahun' => (int) now()->format('Y'), 'waktu_kerja_efektif' => $wke,
                     'ikhtisar_jabatan' => 'Melakukan kegiatan '.strtolower($jabatan->nama).' sesuai ketentuan peraturan perundang-undangan.',
+                    'kelas_jabatan' => $jabatan->kelas_jabatan,
+                    'pertumbuhan_beban' => [0, 0, 2, 3, 5][mt_rand(0, 4)],
+                    'informasi' => [
+                        'kualifikasi_pendidikan' => [$jabatan->kualifikasi_pendidikan],
+                        'bahan_kerja' => ['Peraturan perundang-undangan terkait', 'Data dan disposisi pimpinan'],
+                        'perangkat_kerja' => ['Komputer dan jaringan internet', 'Aplikasi kepegawaian'],
+                        'tanggung_jawab' => ['Kebenaran dan ketepatan hasil kerja'],
+                        'wewenang' => ['Meminta data kepada unit terkait'],
+                        'kondisi_lingkungan' => ['Di dalam ruangan, suhu dan penerangan normal'],
+                        'risiko_bahaya' => ['Kelelahan mata dan gangguan postur'],
+                    ],
                     'status' => mt_rand(0, 9) ? 'final' : 'draft', 'created_by' => $operator->id,
                 ]);
+                if ($anjab->status === 'final') {
+                    $anjab->update(['finalized_by' => $operator->id, 'finalized_at' => now()]);
+                }
 
                 $target = $kebutuhan * $wke;
                 $tugas = [
@@ -216,11 +246,14 @@ class DatabaseSeeder extends Seeder
                     ['Melaksanakan kegiatan teknis sesuai bidang tugas', 'Laporan', 0.5],
                     ['Melakukan evaluasi dan pelaporan', 'Laporan', 0.2],
                 ];
+                // volume dinyatakan per tahun / per bulan / per hari lalu disetahunkan saat dihitung
+                $periode = ['tahun', 'bulan', 'hari'];
                 foreach ($tugas as $i => [$uraian, $hasil, $porsi]) {
                     $norma = [120, 60, 240][$i];
+                    $faktor = Referensi::PERIODE_PER_TAHUN[$periode[$i]];
                     $anjab->uraianTugas()->create([
-                        'uraian_tugas' => $uraian, 'hasil_kerja' => $hasil, 'norma_waktu' => $norma,
-                        'volume' => (int) round($target * $porsi / $norma), 'urutan' => $i + 1,
+                        'uraian_tugas' => $uraian, 'hasil_kerja' => $hasil, 'norma_waktu' => $norma, 'satuan_periode' => $periode[$i],
+                        'volume' => max(1, (int) round($target * $porsi / $norma / $faktor)), 'urutan' => $i + 1,
                     ]);
                 }
                 $anjab->recalculate();

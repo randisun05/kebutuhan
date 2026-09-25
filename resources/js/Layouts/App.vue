@@ -10,6 +10,22 @@
                         Sistem Informasi Monitoring Penyusunan Kebutuhan ASN
                     </span>
                 </div>
+                <div class="d-flex align-items-center gap-2">
+                <div class="dropdown" v-if="$page.props.notifikasi">
+                    <button class="btn btn-sm btn-light position-relative" data-bs-toggle="dropdown" title="Notifikasi">
+                        <i class="fa fa-bell"></i>
+                        <span v-if="$page.props.notifikasi.unread" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ $page.props.notifikasi.unread }}</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-0" style="width: 340px">
+                        <div class="px-3 py-2 border-bottom small fw-semibold">Notifikasi</div>
+                        <a v-for="n in $page.props.notifikasi.items" :key="n.id" :href="`/notifikasi/${n.id}`" class="dropdown-item small py-2 text-wrap" :class="{ 'bg-light': !n.read }">
+                            <div class="fw-semibold">{{ n.data.judul }}</div>
+                            <div class="text-muted">{{ n.data.pesan }}</div>
+                        </a>
+                        <div v-if="!$page.props.notifikasi.items.length" class="px-3 py-2 small text-muted">Belum ada notifikasi.</div>
+                        <Link href="/notifikasi" class="dropdown-item small text-center border-top">Lihat semua</Link>
+                    </div>
+                </div>
                 <div class="dropdown">
                     <button class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown">
                         <i class="fa fa-user-circle me-1"></i> {{ user.name }}
@@ -20,8 +36,10 @@
                             <div class="text-muted" v-if="user.instansi">{{ user.instansi.nama }}</div>
                         </li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><Link :href="route('logout')" method="post" as="button" class="dropdown-item"><i class="fa fa-sign-out me-1"></i> Keluar</Link></li>
+                        <li><Link href="/akun" class="dropdown-item"><i class="fa fa-shield me-1"></i> Keamanan akun</Link></li>
+                        <li><Link href="/logout" method="post" as="button" class="dropdown-item"><i class="fa fa-sign-out me-1"></i> Keluar</Link></li>
                     </ul>
+                </div>
                 </div>
             </nav>
             <div class="app-content" :key="$page.url">

@@ -21,7 +21,8 @@
                         <td>{{ jenisOptions.find(j => j.value === d.jenis)?.label }}</td><td>{{ d.provinsi }}</td>
                         <td class="num">{{ d.unit_kerjas_count }}</td><td class="num">{{ d.pegawais_count }}</td>
                         <td><span class="badge" :class="d.is_active ? 'bg-success' : 'bg-secondary'">{{ d.is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
-                        <td class="text-nowrap"><Link :href="`/instansi/${d.id}/edit`" class="btn btn-sm btn-light"><i class="fa fa-pencil"></i></Link>
+                        <td class="text-nowrap"><Link :href="`/unit-kerja?instansi_id=${d.id}`" class="btn btn-sm btn-light" title="Kelola organisasi"><i class="fa fa-sitemap"></i></Link>
+                            <Link :href="`/instansi/${d.id}/edit`" class="btn btn-sm btn-light"><i class="fa fa-pencil"></i></Link>
                             <button class="btn btn-sm btn-light text-danger" @click="destroy(`/instansi/${d.id}`)"><i class="fa fa-trash"></i></button></td>
                     </tr>
                 </tbody>

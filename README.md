@@ -9,6 +9,30 @@ gemuk/lebih, per instansi, per unit kerja (hierarki), dan per jabatan.
 Stack mengikuti web aspro: **Laravel 12 · PHP 8.3 · Inertia.js · Vue 3 · Vite**,
 Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 
+## Fitur
+
+**Hulu: organisasi & data existing**
+- Manajemen organisasi: instansi, unit kerja bertingkat, aktif/nonaktif, nama jabatan pimpinan, impor struktur dari Excel, peta jabatan (kelas, B, K, +/−) siap cetak.
+- Data pegawai existing: input manual, impor Excel, atau **sinkron dari SIASN BKN**; setiap mutasi unit/ganti jabatan/keluar-masuk tercatat di riwayat pegawai.
+- Integrasi SIASN: tarik unor (`referensi/ref-unor`) menjadi unit kerja beserta hierarkinya, dan data utama PNS (`pns/data-utama/{nip}`) untuk memperbarui unit, jabatan, golongan, pendidikan, tanggal lahir, dan status aktif. Bisa manual dari menu, via `php artisan siasn:sync`, atau terjadwal tiap malam.
+
+**Hulu: manajemen ABK (PermenPANRB 1/2020)**
+- Informasi jabatan lengkap: ikhtisar, kualifikasi, bahan & perangkat kerja, tanggung jawab, wewenang, korelasi, lingkungan kerja, risiko bahaya, syarat jabatan, prestasi yang diharapkan, kelas jabatan.
+- Uraian tugas dengan volume **per tahun/bulan/minggu/hari** (disetahunkan ×1/×12/×50/×250 sesuai 1.250 jam = 104/25/5 jam) × norma waktu ÷ waktu kerja efektif (default 75.000 menit, ada kalkulator hari × jam).
+- ABK per tahun (versi), salin ke tahun berikut (satuan atau seluruh instansi), draft → final (tercatat siapa & kapan), impor/ekspor Excel, cetak dokumen Anjab-ABK ke PDF.
+- Efektivitas Jabatan (EJ/PEJ) dan Efektivitas Unit (EU/PEU) kategori A–E.
+- **Proyeksi kebutuhan 5 tahun**: kebutuhan ABK × pertumbuhan beban kerja per tahun, dikurangi pensiun (BUP) per tahun, dikurangi formasi yang sudah ditetapkan tetapi belum terisi, menghasilkan rencana formasi per tahun dan estimasi belanja pegawai.
+- Saran redistribusi pegawai dari unit gemuk ke unit kurang pada jabatan yang sama.
+
+**Hilir: usulan → penetapan → pengisian**
+- Usulan dengan prioritas per jabatan, estimasi anggaran, verifikasi & pertimbangan teknis BKN, validasi & penetapan KemenPANRB, PDF lampiran penetapan.
+- Pelacakan pengisian formasi (realisasi hasil seleksi); sisa formasi belum terisi tampil di monitoring dan proyeksi.
+- Notifikasi di aplikasi (lonceng) dan opsional email untuk setiap tahap alur.
+
+**Keamanan**
+- Login Laravel Fortify: lupa/reset password, ganti password, 2FA (aplikasi autentikator + kode pemulihan), 2FA wajib per peran (`WAJIB_2FA_PERAN`).
+- Log audit perubahan data master, organisasi, pegawai, ABK, dan pengguna.
+
 ## Alur (hulu → hilir)
 
 | # | Tahap | Pelaku | Menu |
@@ -62,7 +86,20 @@ php artisan key:generate
 php artisan migrate --seed      # --seed mengisi data demo
 npm run build                   # atau `npm run dev` saat pengembangan
 php artisan serve
+php artisan queue:work          # untuk sinkronisasi SIASN & email
+php artisan schedule:work       # (opsional) sinkron SIASN terjadwal
 ```
+
+### Integrasi SIASN
+
+1. Ajukan akses web service SIASN ke BKN (kredensial APIM + SSO dan whitelist IP server).
+2. Isi `SIASN_*` di `.env`, set `SIASN_ENABLED=true`, lalu uji dari menu **Integrasi SIASN → Uji koneksi**.
+3. Isi *ID Instansi SIASN* pada data instansi, jalankan sinkron **unor**, lalu isi *ID jabatan SIASN* pada referensi jabatan (atau samakan nama jabatannya).
+4. Jalankan sinkron **pegawai** (semua PNS aktif atau daftar NIP tertentu). Hasil dan baris yang gagal tercatat di riwayat sinkronisasi.
+
+Struktur endpoint dan token mengikuti pola web service SIASN (APIM `Authorization` + SSO `Auth`) yang dipakai
+pustaka integrasi Laravel yang beredar. Nama field respons dibaca toleran, tetapi **belum diuji terhadap server BKN
+asli** karena membutuhkan kredensial; verifikasi sekali di mode `training` sebelum produksi.
 
 Akun demo (password `password`):
 

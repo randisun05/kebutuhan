@@ -10,6 +10,7 @@ use App\Models\Usulan;
 use App\Models\UsulanDetail;
 use App\Services\MonitoringService;
 use App\Services\UsulanWorkflow;
+use App\Support\Referensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -90,7 +91,7 @@ class UsulanController extends Controller
         $usulan->load([
             'instansi:id,kode,nama',
             'pembuat:id,name',
-            'details' => fn ($q) => $q->with(['unitKerja:id,nama', 'jabatan:id,nama,jenis,kualifikasi_pendidikan'])->orderBy('unit_kerja_id'),
+            'details' => fn ($q) => $q->with(['unitKerja:id,nama', 'jabatan:id,nama,jenis,kualifikasi_pendidikan,estimasi_biaya_tahunan'])->orderBy('prioritas')->orderBy('unit_kerja_id'),
             'logs.user:id,name,role',
             'penetapan.penetap:id,name',
         ]);
@@ -102,6 +103,7 @@ class UsulanController extends Controller
             'step' => $usulan->status->step(),
             'actions' => $this->workflow->availableActions($user, $usulan),
             'editable' => $editable,
+            'prioritasOptions' => Referensi::PRIORITAS,
             'unitOptions' => $editable ? UnitKerja::flatTree($usulan->instansi_id) : [],
             'jabatanOptions' => $editable ? Jabatan::where('is_active', true)->orderBy('jenis')->orderBy('nama')->get(['id', 'nama', 'jenis']) : [],
         ]);
@@ -174,6 +176,8 @@ class UsulanController extends Controller
                         'existing' => $p['existing'],
                         'proyeksi_pensiun' => $p['pensiun'],
                         'jumlah_usul' => $usul,
+                        // jabatan yang sama sekali belum terisi diprioritaskan
+                        'prioritas' => $p['existing'] === 0 ? 1 : ($p['existing'] - $p['pensiun'] < $p['kebutuhan'] / 2 ? 1 : 2),
                         'kualifikasi_pendidikan' => Jabatan::whereKey($p['jabatan_id'])->value('kualifikasi_pendidikan'),
                     ]
                 );
@@ -195,6 +199,7 @@ class UsulanController extends Controller
             'jabatan_id' => ['required', 'exists:jabatans,id',
                 Rule::unique('usulan_details')->where('usulan_id', $usulan->id)->where('unit_kerja_id', $request->integer('unit_kerja_id'))],
             'jumlah_usul' => 'required|integer|min:1|max:10000',
+            'prioritas' => 'nullable|integer|in:1,2,3',
             'kualifikasi_pendidikan' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string|max:255',
         ], ['jabatan_id.unique' => 'Jabatan pada unit ini sudah ada di rincian usulan.']);
@@ -222,6 +227,7 @@ class UsulanController extends Controller
             'details' => 'required|array',
             'details.*.id' => ['required', Rule::exists('usulan_details', 'id')->where('usulan_id', $usulan->id)],
             'details.*.jumlah_usul' => 'required|integer|min:0|max:10000',
+            'details.*.prioritas' => 'required|integer|in:1,2,3',
             'details.*.kualifikasi_pendidikan' => 'nullable|string|max:255',
             'details.*.keterangan' => 'nullable|string|max:255',
         ]);

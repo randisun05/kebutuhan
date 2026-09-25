@@ -68,6 +68,8 @@ class JabatanController extends Controller
     {
         return $request->validate([
             'kode' => ['required', 'string', 'max:30', Rule::unique('jabatans')->ignore($jabatan)],
+            'siasn_jabatan_id' => 'nullable|string|max:64',
+            'estimasi_biaya_tahunan' => 'nullable|integer|min:0',
             'nama' => 'required|string|max:255',
             'jenis' => ['required', Rule::in(array_keys(Referensi::JENIS_JABATAN))],
             'kategori' => 'nullable|in:keahlian,keterampilan',

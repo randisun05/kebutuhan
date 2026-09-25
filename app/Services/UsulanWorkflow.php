@@ -7,7 +7,9 @@ use App\Enums\UsulanStatus as S;
 use App\Models\Penetapan;
 use App\Models\User;
 use App\Models\Usulan;
+use App\Notifications\UsulanDiproses;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -89,7 +91,7 @@ class UsulanWorkflow
      */
     public function transition(User $user, Usulan $usulan, string $aksi, array $payload = []): Usulan
     {
-        return DB::transaction(function () use ($user, $usulan, $aksi, $payload) {
+        $hasil = DB::transaction(function () use ($user, $usulan, $aksi, $payload) {
             // kunci baris agar dua verifikator tidak memproses usulan yang sama bersamaan
             $usulan = Usulan::whereKey($usulan->id)->lockForUpdate()->firstOrFail();
 
@@ -131,6 +133,33 @@ class UsulanWorkflow
 
             return $usulan;
         });
+
+        $this->notifikasi($hasil, $aksi, $user, trim((string) ($payload['catatan'] ?? '')) ?: null);
+
+        return $hasil;
+    }
+
+    /** Beri tahu pihak yang perlu bertindak / berkepentingan setelah transisi berhasil. */
+    private function notifikasi(Usulan $usulan, string $aksi, User $oleh, ?string $catatan): void
+    {
+        $operator = fn () => User::where('role', Role::OperatorInstansi)->where('instansi_id', $usulan->instansi_id)->where('is_active', true)->get();
+        $peran = fn (Role $role) => User::where('role', $role)->where('is_active', true)->get();
+
+        [$judul, $penerima] = match ($aksi) {
+            'ajukan' => ['Usulan baru menunggu verifikasi BKN', $peran(Role::VerifikatorBkn)],
+            'rekomendasi' => ['Pertimbangan teknis BKN terbit, menunggu validasi', $peran(Role::ValidatorKemenpan)->merge($operator())],
+            'tetapkan' => ['Kebutuhan ASN telah ditetapkan', $operator()->merge($peran(Role::VerifikatorBkn))],
+            'kembalikan' => ['Usulan dikembalikan untuk perbaikan', $operator()],
+            'tolak' => ['Usulan ditolak', $operator()],
+            default => [null, collect()],
+        };
+
+        if (! $judul) {
+            return;
+        }
+
+        $penerima = $penerima->reject(fn (User $u) => $u->is($oleh))->unique('id');
+        Notification::send($penerima, new UsulanDiproses($usulan, $judul, $catatan, $oleh->name));
     }
 
     private function guardAjukan(Usulan $usulan): void

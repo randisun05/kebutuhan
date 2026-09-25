@@ -8,6 +8,8 @@
             <Field class="col-md-6" label="Jenis" :error="form.errors.jenis">
                 <select v-model="form.jenis" class="form-select"><option v-for="j in jenisOptions" :key="j.value" :value="j.value">{{ j.label }}</option></select>
             </Field>
+            <Field class="col-md-6" label="ID Instansi SIASN" help="Untuk menyaring unor saat sinkronisasi"><input v-model="form.siasn_instansi_id" class="form-control"></Field>
+            <Field class="col-md-6" label="ID Satuan Kerja SIASN"><input v-model="form.siasn_satuan_kerja_id" class="form-control"></Field>
             <Field class="col-md-6" label="Provinsi"><input v-model="form.provinsi" class="form-control"></Field>
             <Field class="col-12" label="Alamat"><input v-model="form.alamat" class="form-control"></Field>
             <div class="col-12 form-check form-switch ms-2"><input v-model="form.is_active" class="form-check-input" type="checkbox" id="aktif"><label for="aktif" class="form-check-label">Aktif</label></div>
@@ -23,7 +25,7 @@ import Field from '../../Components/Field.vue';
 const props = defineProps({ data: Object, jenisOptions: Array });
 const form = useForm({
     kode: props.data?.kode ?? '', nama: props.data?.nama ?? '', jenis: props.data?.jenis ?? 'pusat',
-    provinsi: props.data?.provinsi ?? '', alamat: props.data?.alamat ?? '', is_active: props.data?.is_active ?? true,
+    provinsi: props.data?.provinsi ?? '', siasn_instansi_id: props.data?.siasn_instansi_id ?? '', siasn_satuan_kerja_id: props.data?.siasn_satuan_kerja_id ?? '', alamat: props.data?.alamat ?? '', is_active: props.data?.is_active ?? true,
 });
 const submit = () => (props.data ? form.put(`/instansi/${props.data.id}`) : form.post('/instansi'));
 </script>

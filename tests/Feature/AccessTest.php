@@ -76,7 +76,7 @@ class AccessTest extends TestCase
             'instansi_id' => $instansi->id, 'unit_kerja_id' => $unit->id, 'jabatan_id' => $jab->id, 'tahun' => 2026,
             'waktu_kerja_efektif' => 75000, 'status' => 'final',
             'uraian' => [['uraian_tugas' => 'A', 'volume' => 1000, 'norma_waktu' => 120]], // 120.000 menit = 1,6 -> 2
-        ])->assertRedirect();
+        ])->assertSessionHasNoErrors()->assertRedirect();
 
         $anjab->refresh();
         $this->assertSame(2, $anjab->kebutuhan);

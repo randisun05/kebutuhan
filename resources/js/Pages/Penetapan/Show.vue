@@ -2,7 +2,10 @@
     <Head :title="'Penetapan ' + data.nomor_sk" />
     <div class="d-flex justify-content-between align-items-start no-print mb-3">
         <Link href="/penetapan" class="small"><i class="fa fa-angle-left"></i> Daftar penetapan</Link>
-        <button class="btn btn-sm btn-outline-secondary" @click="print"><i class="fa fa-print me-1"></i> Cetak</button>
+        <div class="d-flex gap-2">
+            <a :href="`/penetapan/${data.id}/pdf`" class="btn btn-sm btn-outline-danger"><i class="fa fa-file-pdf-o me-1"></i> PDF</a>
+            <button class="btn btn-sm btn-outline-secondary" @click="print"><i class="fa fa-print me-1"></i> Cetak</button>
+        </div>
     </div>
 
     <div class="card">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Penetapan;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PenetapanController extends Controller
 {
@@ -38,5 +39,19 @@ class PenetapanController extends Controller
         ]);
 
         return inertia('Penetapan/Show', ['data' => $penetapan]);
+    }
+
+    /** Lampiran keputusan penetapan kebutuhan dalam PDF. */
+    public function pdf(Penetapan $penetapan)
+    {
+        $this->authorizeInstansi($penetapan->instansi_id);
+        $penetapan->load([
+            'instansi', 'penetap:id,name',
+            'usulan.details' => fn ($q) => $q->where('jumlah_ditetapkan', '>', 0)
+                ->with(['unitKerja:id,nama', 'jabatan:id,nama,jenis'])->orderBy('unit_kerja_id'),
+        ]);
+
+        return Pdf::loadView('pdf.penetapan', ['p' => $penetapan])
+            ->setPaper('a4')->download('penetapan-'.str($penetapan->nomor_sk)->slug().'.pdf');
     }
 }

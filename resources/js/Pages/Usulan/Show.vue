@@ -48,6 +48,7 @@
                                 <th class="col-unit">Unit Kerja</th><th class="col-jabatan">Jabatan</th>
                                 <th class="num" title="Kebutuhan hasil ABK saat usulan disusun">ABK</th>
                                 <th class="num">Existing</th><th class="num">Pensiun ≤5th</th>
+                                <th>Prioritas</th>
                                 <th class="num">Diusulkan</th>
                                 <th class="num">Rekomendasi BKN</th>
                                 <th class="num">Ditetapkan</th>
@@ -61,6 +62,12 @@
                                 <td class="num">{{ num(d.kebutuhan_abk) }}</td>
                                 <td class="num">{{ num(d.existing) }}</td>
                                 <td class="num">{{ num(d.proyeksi_pensiun) }}</td>
+                                <td>
+                                    <select v-if="editable" v-model.number="d.prioritas" class="form-select form-select-sm" style="width: 95px" @change="dirty = true">
+                                        <option v-for="(l, k) in prioritasOptions" :key="k" :value="Number(k)">{{ l }}</option>
+                                    </select>
+                                    <span v-else class="badge" :class="{ 1: 'bg-danger', 2: 'bg-warning text-dark', 3: 'bg-secondary' }[d.prioritas]">{{ prioritasOptions[d.prioritas] }}</span>
+                                </td>
                                 <td class="num">
                                     <input v-if="editable" v-model.number="d.jumlah_usul" type="number" min="0" class="form-control form-control-sm text-end" style="width: 80px" :class="{ 'border-warning': d.jumlah_usul > maxWajar(d) }" :title="d.jumlah_usul > maxWajar(d) ? 'Melebihi kekurangan + proyeksi pensiun' : ''" @input="dirty = true">
                                     <span v-else>{{ num(d.jumlah_usul) }}</span>
@@ -82,7 +89,7 @@
                                 </td>
                                 <td v-if="editable"><button class="btn btn-sm btn-light text-danger" @click="hapusRincian(d)"><i class="fa fa-times"></i></button></td>
                             </tr>
-                            <tr v-if="!rows.length"><td colspan="10" class="text-center text-muted py-4">Belum ada rincian. Gunakan "Tarik dari ABK" atau tambah manual.</td></tr>
+                            <tr v-if="!rows.length"><td colspan="11" class="text-center text-muted py-4">Belum ada rincian. Gunakan "Tarik dari ABK" atau tambah manual.</td></tr>
                         </tbody>
                         <tfoot v-if="rows.length">
                             <tr class="fw-semibold">
@@ -90,6 +97,7 @@
                                 <td class="num">{{ num(sum('kebutuhan_abk')) }}</td>
                                 <td class="num">{{ num(sum('existing')) }}</td>
                                 <td class="num">{{ num(sum('proyeksi_pensiun')) }}</td>
+                                <td></td>
                                 <td class="num">{{ num(sum('jumlah_usul')) }}</td>
                                 <td class="num">{{ can('rekomendasi') ? num(sumInput) : num(sum('jumlah_rekomendasi')) }}</td>
                                 <td class="num">{{ can('tetapkan') ? num(sumInput) : num(sum('jumlah_ditetapkan')) }}</td>
@@ -175,6 +183,16 @@
                 </div>
             </div>
 
+            <div class="card mb-3" v-if="anggaran.adaData">
+                <div class="card-header">Estimasi belanja pegawai / tahun</div>
+                <div class="card-body small">
+                    <div class="d-flex justify-content-between"><span>Diusulkan</span><b>Rp {{ num(anggaran.usul) }}</b></div>
+                    <div class="d-flex justify-content-between" v-if="anggaran.rekomendasi !== null"><span>Rekomendasi BKN</span><b>Rp {{ num(anggaran.rekomendasi) }}</b></div>
+                    <div class="d-flex justify-content-between" v-if="anggaran.ditetapkan !== null"><span>Ditetapkan</span><b>Rp {{ num(anggaran.ditetapkan) }}</b></div>
+                    <div class="text-muted mt-1">Dari estimasi belanja per jabatan pada referensi; bahan pertimbangan anggaran.</div>
+                </div>
+            </div>
+
             <div class="card mb-3">
                 <div class="card-header">Informasi</div>
                 <div class="card-body small">
@@ -207,7 +225,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
 import { num, tanggal, waktu } from '../../utils';
 
-const props = defineProps({ data: Object, step: Number, actions: Array, editable: Boolean, unitOptions: Array, jabatanOptions: Array });
+const props = defineProps({ data: Object, step: Number, actions: Array, editable: Boolean, unitOptions: Array, jabatanOptions: Array, prioritasOptions: Object });
 
 const steps = ['Penyusunan', 'Diajukan', 'Verifikasi BKN', 'Pertimbangan Teknis', 'Validasi KemenPANRB', 'Ditetapkan'];
 const STATUS = {
@@ -238,11 +256,17 @@ watch(() => props.data.details, (details) => {
 
 const sk = reactive({ nomor_sk: '', tanggal_sk: new Date().toISOString().slice(0, 10), keterangan: '', file_sk: null });
 
-const baru = useForm({ unit_kerja_id: '', jabatan_id: '', jumlah_usul: 1 });
+const baru = useForm({ unit_kerja_id: '', jabatan_id: '', jumlah_usul: 1, prioritas: 2 });
+
+const anggaran = computed(() => {
+    const biaya = (d) => d.jabatan?.estimasi_biaya_tahunan || 0;
+    const tot = (key) => rows.value.some((d) => d[key] !== null) ? rows.value.reduce((t, d) => t + (d[key] || 0) * biaya(d), 0) : null;
+    return { adaData: rows.value.some((d) => biaya(d)), usul: tot('jumlah_usul'), rekomendasi: tot('jumlah_rekomendasi'), ditetapkan: tot('jumlah_ditetapkan') };
+});
 const tambahRincian = () => baru.post(`/usulan/${props.data.id}/details`, { preserveScroll: true, onSuccess: () => baru.reset() });
 
 const simpanRincian = () => router.put(`/usulan/${props.data.id}/details`, {
-    details: rows.value.map((d) => ({ id: d.id, jumlah_usul: d.jumlah_usul || 0, kualifikasi_pendidikan: d.kualifikasi_pendidikan, keterangan: d.keterangan })),
+    details: rows.value.map((d) => ({ id: d.id, jumlah_usul: d.jumlah_usul || 0, prioritas: d.prioritas || 2, kualifikasi_pendidikan: d.kualifikasi_pendidikan, keterangan: d.keterangan })),
 }, { preserveScroll: true, onSuccess: () => (dirty.value = false) });
 
 const tarikAbk = async () => {

@@ -7,12 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class UnitKerja extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
-    protected $fillable = ['instansi_id', 'parent_id', 'kode', 'nama', 'eselon', 'urutan'];
+    protected $fillable = ['instansi_id', 'parent_id', 'kode', 'siasn_unor_id', 'nama', 'eselon', 'nama_jabatan_pimpinan', 'urutan', 'is_active'];
+
+    protected $casts = ['is_active' => 'boolean'];
+
+    protected $attributes = ['is_active' => true];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty()->dontSubmitEmptyLogs()->useLogName('master');
+    }
 
     public function instansi(): BelongsTo
     {
@@ -44,7 +55,7 @@ class UnitKerja extends Model
     {
         $units = static::where('instansi_id', $instansiId)
             ->orderBy('urutan')->orderBy('nama')
-            ->get(['id', 'parent_id', 'kode', 'nama', 'eselon']);
+            ->get(['id', 'parent_id', 'kode', 'siasn_unor_id', 'nama', 'eselon', 'nama_jabatan_pimpinan', 'is_active']);
 
         $byParent = $units->groupBy(fn ($u) => $u->parent_id ?? 0);
         $ids = $units->pluck('id')->flip();
@@ -58,6 +69,9 @@ class UnitKerja extends Model
                     'kode' => $unit->kode,
                     'nama' => $unit->nama,
                     'eselon' => $unit->eselon,
+                    'siasn_unor_id' => $unit->siasn_unor_id,
+                    'nama_jabatan_pimpinan' => $unit->nama_jabatan_pimpinan,
+                    'is_active' => $unit->is_active,
                     'depth' => $depth,
                 ]);
                 $walk($unit->id, $depth + 1);
@@ -69,7 +83,8 @@ class UnitKerja extends Model
         // unit yang induknya berada di luar instansi / terhapus tetap ditampilkan
         foreach ($units as $unit) {
             if ($unit->parent_id && ! $ids->has($unit->parent_id) && ! $result->contains('id', $unit->id)) {
-                $result->push(['id' => $unit->id, 'parent_id' => null, 'kode' => $unit->kode, 'nama' => $unit->nama, 'eselon' => $unit->eselon, 'depth' => 0]);
+                $result->push(['id' => $unit->id, 'parent_id' => null, 'kode' => $unit->kode, 'nama' => $unit->nama, 'eselon' => $unit->eselon,
+                    'siasn_unor_id' => $unit->siasn_unor_id, 'nama_jabatan_pimpinan' => $unit->nama_jabatan_pimpinan, 'is_active' => $unit->is_active, 'depth' => 0]);
                 $walk($unit->id, 1);
             }
         }

@@ -67,7 +67,10 @@ class PegawaiImport implements ToCollection, WithHeadingRow
                 'tanggal_lahir' => $this->date($row['tanggal_lahir'] ?? null),
                 'tmt_jabatan' => $this->date($row['tmt_jabatan'] ?? null),
                 'is_active' => true,
-            ])->save();
+                'sumber' => 'import',
+            ]);
+            $pegawai->keteranganRiwayat = 'Impor Excel';
+            $pegawai->save();
 
             $existing ? $this->updated++ : $this->created++;
         }

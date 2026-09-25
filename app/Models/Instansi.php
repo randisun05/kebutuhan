@@ -5,12 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Instansi extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
-    protected $fillable = ['kode', 'nama', 'jenis', 'provinsi', 'alamat', 'is_active'];
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty()->dontSubmitEmptyLogs()->useLogName('master');
+    }
+
+    protected $fillable = ['kode', 'siasn_instansi_id', 'siasn_satuan_kerja_id', 'nama', 'jenis', 'provinsi', 'alamat', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];
 

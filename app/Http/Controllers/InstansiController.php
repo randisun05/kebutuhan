@@ -64,6 +64,8 @@ class InstansiController extends Controller
     {
         return $request->validate([
             'kode' => ['required', 'string', 'max:20', Rule::unique('instansis')->ignore($instansi)],
+            'siasn_instansi_id' => 'nullable|string|max:64',
+            'siasn_satuan_kerja_id' => 'nullable|string|max:64',
             'nama' => 'required|string|max:255',
             'jenis' => ['required', Rule::in(array_keys(Referensi::JENIS_INSTANSI))],
             'provinsi' => 'nullable|string|max:255',

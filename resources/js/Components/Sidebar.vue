@@ -39,19 +39,28 @@ export default {
                     { label: 'Dashboard', href: '/dashboard', icon: 'fa-tachometer', roles: ALL },
                     { label: 'Monitoring Kebutuhan', href: '/monitoring', icon: 'fa-bar-chart', roles: ALL },
                 ] },
-                { label: 'Hulu: Perencanaan', items: [
-                    { label: 'Struktur Unit Kerja', href: '/unit-kerja', icon: 'fa-sitemap', roles: ['admin', 'operator_instansi'] },
+                { label: 'Hulu: Organisasi & Data', items: [
+                    { label: 'Organisasi & Unit Kerja', href: '/unit-kerja', icon: 'fa-sitemap', roles: ['admin', 'operator_instansi'] },
+                    { label: 'Peta Jabatan', href: '/peta-jabatan', icon: 'fa-th-list', roles: ALL },
                     { label: 'Data Pegawai (Existing)', href: '/pegawai', icon: 'fa-users', roles: ['admin', 'operator_instansi'] },
-                    { label: 'Anjab & ABK', href: '/anjab', icon: 'fa-calculator', roles: ALL },
+                    { label: 'Integrasi SIASN', href: '/siasn', icon: 'fa-exchange', roles: ['admin', 'operator_instansi'] },
+                ] },
+                { label: 'Hulu: ABK & Perencanaan', items: [
+                    { label: 'Manajemen ABK', href: '/anjab', icon: 'fa-calculator', roles: ALL },
+                    { label: 'Efektivitas Unit', href: '/anjab-rekap-unit', icon: 'fa-tachometer', roles: ALL },
+                    { label: 'Proyeksi 5 Tahun', href: '/proyeksi', icon: 'fa-line-chart', roles: ALL },
+                    { label: 'Redistribusi Pegawai', href: '/redistribusi', icon: 'fa-random', roles: ALL },
                 ] },
                 { label: 'Hilir: Usulan s.d. Penetapan', items: [
                     { label: 'Usulan Kebutuhan', href: '/usulan', icon: 'fa-inbox', roles: ALL, badge: true },
                     { label: 'Penetapan Kebutuhan', href: '/penetapan', icon: 'fa-gavel', roles: ALL },
+                    { label: 'Pengisian Formasi', href: '/formasi', icon: 'fa-user-plus', roles: ALL },
                 ] },
                 { label: 'Referensi', items: [
                     { label: 'Instansi', href: '/instansi', icon: 'fa-building', roles: ['admin'] },
                     { label: 'Jabatan', href: '/jabatan', icon: 'fa-briefcase', roles: ['admin'] },
                     { label: 'Pengguna', href: '/users', icon: 'fa-user-secret', roles: ['admin'] },
+                    { label: 'Log Audit', href: '/audit', icon: 'fa-history', roles: ['admin'] },
                     { label: 'Pedoman & Regulasi', href: '/pedoman', icon: 'fa-book', roles: ALL },
                 ] },
             ],

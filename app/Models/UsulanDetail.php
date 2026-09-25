@@ -9,7 +9,7 @@ class UsulanDetail extends Model
 {
     protected $fillable = [
         'usulan_id', 'unit_kerja_id', 'jabatan_id', 'kebutuhan_abk', 'existing', 'proyeksi_pensiun',
-        'jumlah_usul', 'jumlah_rekomendasi', 'jumlah_ditetapkan', 'kualifikasi_pendidikan', 'keterangan',
+        'jumlah_usul', 'prioritas', 'jumlah_rekomendasi', 'jumlah_ditetapkan', 'jumlah_terisi', 'terisi_updated_at', 'kualifikasi_pendidikan', 'keterangan',
     ];
 
     public function usulan(): BelongsTo
