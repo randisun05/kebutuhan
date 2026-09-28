@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Contracts\LogoutResponse;
@@ -43,6 +44,7 @@ class FortifyServiceProvider extends ServiceProvider
         // halaman autentikasi (Inertia)
         Fortify::loginView(fn () => inertia('Auth/Login', [
             'ssoSiasn' => app(SiasnSsoClient::class)->enabled(),
+            'loginManual' => (bool) config('simonkeb.login_manual'),
         ]));
 
         // keluar juga dari sesi SSO SIASN bila login lewat SSO
@@ -71,6 +73,12 @@ class FortifyServiceProvider extends ServiceProvider
 
         // hanya akun aktif yang dapat masuk
         Fortify::authenticateUsing(function (Request $request) {
+            if (! config('simonkeb.login_manual')) {
+                throw ValidationException::withMessages([
+                    Fortify::username() => 'Login dengan email dan password dinonaktifkan. Gunakan SSO SIASN.',
+                ]);
+            }
+
             $user = User::where('email', $request->input('email'))->first();
 
             return $user && $user->is_active && Hash::check((string) $request->input('password'), $user->password) ? $user : null;

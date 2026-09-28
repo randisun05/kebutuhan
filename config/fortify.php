@@ -144,7 +144,8 @@ return [
     */
 
     'features' => [
-        Features::resetPasswords(),
+        // lupa/reset password hanya tersedia bila login manual aktif
+        ...(env('LOGIN_MANUAL', true) ? [Features::resetPasswords()] : []),
         Features::updatePasswords(),
         Features::twoFactorAuthentication([
             'confirm' => true,

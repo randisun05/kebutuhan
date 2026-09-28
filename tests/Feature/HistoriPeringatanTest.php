@@ -161,6 +161,43 @@ class HistoriPeringatanTest extends TestCase
         $this->get('/analitik')->assertOk();
     }
 
+    /** Operator tidak boleh memakai filter unit_kerja_id milik instansi lain untuk menembus isolasi data. */
+    public function test_filter_unit_instansi_lain_ditolak(): void
+    {
+        [$instansiA] = $this->skenario();
+        $lain = $this->instansi('LAIN');
+        $unitLain = $this->unit($lain, 'Unit Lain');
+        $this->pegawai($unitLain, Jabatan::first(), 2);
+        $operator = $this->user(Role::OperatorInstansi, $instansiA);
+        $this->actingAs($operator);
+
+        foreach ([
+            "/histori?unit_kerja_id={$unitLain->id}&bulan=24&tampil=semua",
+            "/histori/export?unit_kerja_id={$unitLain->id}",
+            "/laporan?jenis=pensiun&unit_kerja_id={$unitLain->id}",
+            "/proyeksi?unit_kerja_id={$unitLain->id}",
+            "/pegawai?unit_kerja_id={$unitLain->id}",
+            "/anjab?unit_kerja_id={$unitLain->id}",
+        ] as $url) {
+            $this->get($url)->assertForbidden();
+        }
+
+        // admin yang memilih instansi A juga tidak bisa mencampur unit instansi lain
+        $this->actingAs($this->user(Role::Admin))
+            ->get("/histori?instansi_id={$instansiA->id}&unit_kerja_id={$unitLain->id}")->assertNotFound();
+    }
+
+    public function test_log_histori_hanya_memuat_instansi_sendiri(): void
+    {
+        [$instansiA] = $this->skenario();
+        $lain = $this->instansi('LAIN');
+        $unitLain = $this->unit($lain, 'Unit Lain');
+        $this->pegawai($unitLain, Jabatan::first(), 2);
+
+        $log = app(HistoriService::class)->log(['instansi_id' => $instansiA->id, 'unit_ids' => [$unitLain->id]])->get();
+        $this->assertCount(0, $log);
+    }
+
     public function test_halaman_analitik_histori_dapat_dibuka_semua_peran(): void
     {
         [$instansi] = $this->skenario();

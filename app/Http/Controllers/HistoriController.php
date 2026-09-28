@@ -73,7 +73,7 @@ class HistoriController extends Controller
 
         return [array_filter([
             'instansi_id' => $instansiId,
-            'unit_ids' => request('unit_kerja_id') ? UnitKerja::descendantIds(request()->integer('unit_kerja_id')) : null,
+            'unit_ids' => $this->unitFilterIds($instansiId),
         ]), $instansiId];
     }
 

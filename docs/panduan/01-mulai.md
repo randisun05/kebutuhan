@@ -11,12 +11,12 @@ SIMONKEB (Sistem Informasi Monitoring Penyusunan Kebutuhan ASN) mengelola penyus
 
 ## Masuk ke aplikasi
 
-Ada dua cara masuk:
+Ada dua cara masuk, dan administrator menentukan mana yang aktif:
 
-1. **Email dan password** — isi email dan password akun SIMONKEB, lalu klik **Masuk**. Lupa password? Klik **Lupa password?** dan ikuti tautan yang dikirim ke email.
-2. **SSO SIASN** — klik **Masuk dengan SSO SIASN**, masuk dengan akun SIASN Anda di halaman BKN, lalu Anda otomatis kembali ke SIMONKEB. Tombol ini hanya muncul bila administrator sudah mengaktifkan SSO.
+1. **SSO SIASN** — klik **Masuk dengan SSO SIASN**, masuk dengan akun SIASN Anda di halaman BKN, lalu Anda otomatis kembali ke SIMONKEB. Tombol ini hanya muncul bila SSO sudah diaktifkan.
+2. **Email dan password** — isi email dan password akun SIMONKEB, lalu klik **Masuk**. Lupa password? Klik **Lupa password?** dan ikuti tautan yang dikirim ke email. Cara ini bisa **dimatikan** administrator (misalnya hanya dipakai untuk pengujian); bila dimatikan, form email/password dan menu lupa password tidak tampil.
 
-> Login SSO hanya berhasil bila **NIP Anda sudah terdaftar** sebagai pengguna SIMONKEB. Bila muncul pesan "belum terdaftar", minta administrator menambahkan akun dengan NIP Anda.
+> Login SSO dicocokkan **hanya berdasarkan NIP**. Login berhasil bila NIP Anda sudah terdaftar dan aktif sebagai pengguna SIMONKEB; email akun SIASN tidak dipakai. Bila muncul pesan "NIP … belum terdaftar", minta administrator menambahkan akun dengan NIP Anda.
 
 Bila akun Anda memakai autentikasi dua faktor (2FA), setelah password Anda akan diminta kode 6 digit dari aplikasi autentikator. Login lewat SSO SIASN tidak meminta 2FA lagi karena BKN sudah memakai MFA.
 

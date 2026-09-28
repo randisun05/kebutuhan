@@ -93,6 +93,23 @@ class SsoSiasnTest extends TestCase
         $this->assertGuest();
     }
 
+    /** Email dari SSO tidak boleh dipakai mencocokkan akun (bisa diubah pemilik akun SSO). */
+    public function test_email_sso_tidak_dipakai_untuk_mencocokkan_akun(): void
+    {
+        $admin = $this->user(Role::Admin); // admin tanpa NIP
+
+        [$state, $nonce] = $this->mulai();
+        $this->fakeIdp($nonce, ['sub' => 'penyerang', 'email' => $admin->email, 'nip' => '199901012020011099']);
+        $this->get("/auth/siasn/callback?code=abc&state={$state}")->assertSessionHasErrors('email');
+        $this->assertGuest();
+
+        // tanpa klaim NIP sama sekali
+        [$state, $nonce] = $this->mulai();
+        $this->fakeIdp($nonce, ['sub' => 'penyerang', 'email' => $admin->email]);
+        $this->get("/auth/siasn/callback?code=abc&state={$state}")->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
     public function test_state_atau_nonce_salah_ditolak(): void
     {
         $user = $this->user(Role::Admin);

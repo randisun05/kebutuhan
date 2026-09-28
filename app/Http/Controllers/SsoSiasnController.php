@@ -31,7 +31,9 @@ class SsoSiasnController extends Controller
             activity('keamanan')->withProperties(['nip' => $identity['nip'], 'email' => $identity['email']])->log('login SSO SIASN ditolak: akun tidak terdaftar/nonaktif');
 
             return redirect()->route('login')->withErrors([
-                'email' => 'Akun SSO SIASN '.($identity['nip'] ?? $identity['email']).' belum terdaftar atau nonaktif di SIMONKEB. Hubungi administrator.',
+                'email' => $identity['nip']
+                    ? 'NIP '.$identity['nip'].' belum terdaftar atau nonaktif di SIMONKEB. Hubungi administrator.'
+                    : 'Akun SSO SIASN tidak memuat NIP, sehingga tidak dapat dicocokkan dengan pengguna SIMONKEB.',
             ]);
         }
 

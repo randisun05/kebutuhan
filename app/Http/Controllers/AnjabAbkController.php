@@ -315,7 +315,7 @@ class AnjabAbkController extends Controller
     {
         return $this->scoped(AnjabAbk::query())
             ->when($instansiId, fn ($q) => $q->where('instansi_id', $instansiId))
-            ->when(request('unit_kerja_id'), fn ($q, $u) => $q->whereIn('unit_kerja_id', UnitKerja::descendantIds((int) $u)))
+            ->when($this->unitFilterIds($instansiId), fn ($q, $ids) => $q->whereIn('unit_kerja_id', $ids))
             ->when(request('status'), fn ($q, $s) => $q->where('status', $s))
             ->when(request('tahun'), fn ($q, $t) => $q->where('tahun', $t))
             ->when(request('q'), fn ($q, $s) => $q->whereHas('jabatan', fn ($w) => $w->where('nama', 'like', "%{$s}%")));

@@ -101,17 +101,16 @@ class SiasnSsoClient
         ];
     }
 
-    /** Cari user SIMONKEB yang terdaftar untuk identitas SSO ini. */
+    /**
+     * Cari user SIMONKEB untuk identitas SSO ini. Pencocokan HANYA lewat NIP (18 digit):
+     * email dari SSO tidak dipakai karena dapat diubah pemilik akun SSO sehingga
+     * berisiko dipakai mengambil alih akun lain.
+     */
     public function findUser(array $identity): ?User
     {
-        if ($identity['nip']) {
-            $user = User::where('nip', $identity['nip'])->first();
-            if ($user) {
-                return $user;
-            }
-        }
+        $nip = $identity['nip'] ?? null;
 
-        return $identity['email'] ? User::where('email', $identity['email'])->first() : null;
+        return $nip && preg_match('/^\d{18}$/', $nip) ? User::where('nip', $nip)->first() : null;
     }
 
     public function logoutUrl(?string $idToken): ?string

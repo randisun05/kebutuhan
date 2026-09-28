@@ -21,6 +21,20 @@ class KeamananTest extends TestCase
         $this->actingAs($this->user(Role::Admin))->get('/akun')->assertOk();
     }
 
+    public function test_login_manual_dapat_dimatikan(): void
+    {
+        $admin = $this->user(Role::Admin);
+        config(['simonkeb.login_manual' => false]);
+
+        $this->get('/login')->assertOk()->assertInertia(fn ($p) => $p->where('loginManual', false));
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password'])->assertSessionHasErrors('email');
+        $this->assertGuest();
+
+        config(['simonkeb.login_manual' => true]);
+        $this->post('/login', ['email' => $admin->email, 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($admin);
+    }
+
     public function test_peran_wajib_2fa_diarahkan_ke_halaman_akun(): void
     {
         config(['simonkeb.wajib_2fa' => ['admin']]);

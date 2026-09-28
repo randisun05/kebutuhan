@@ -61,6 +61,8 @@ class LaporanController extends Controller
         if ($instansiId) {
             $this->authorizeInstansi($instansiId);
         }
+        // unit harus milik instansi terpilih (LaporanService membatasi dengan instansi + unit)
+        $this->unitFilterIds($instansiId);
 
         return ['jenis' => $data['jenis'] ?? null, 'instansi_id' => $instansiId] + array_filter($data, fn ($v, $k) => $k !== 'jenis' && $v !== null, ARRAY_FILTER_USE_BOTH);
     }

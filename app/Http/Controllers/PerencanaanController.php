@@ -74,7 +74,7 @@ class PerencanaanController extends Controller
         $this->authorizeInstansi($instansiId);
 
         return [$instansiId, array_filter([
-            'unit_ids' => request('unit_kerja_id') ? UnitKerja::descendantIds(request()->integer('unit_kerja_id')) : null,
+            'unit_ids' => $this->unitFilterIds($instansiId),
             'jenis' => request('jenis'),
         ])];
     }

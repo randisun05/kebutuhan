@@ -1,6 +1,10 @@
 <?php
 
 return [
+    // login email + password (termasuk lupa/reset password). Matikan di produksi bila semua
+    // pengguna masuk lewat SSO SIASN; nyalakan untuk pengujian.
+    'login_manual' => (bool) env('LOGIN_MANUAL', true),
+
     // kirim notifikasi alur usulan juga lewat email (selain notifikasi di aplikasi)
     'notifikasi_email' => (bool) env('NOTIFIKASI_EMAIL', false),
 

@@ -183,27 +183,33 @@ class HistoriService
             ->orderByDesc('r.created_at')->orderByDesc('r.id');
     }
 
-    /** Riwayat pegawai dibatasi instansi/unit (lewat unit asal atau tujuan). */
+    /**
+     * Riwayat pegawai dibatasi instansi DAN unit (lewat unit asal atau tujuan).
+     * Batasan instansi selalu diterapkan agar filter unit tidak bisa dipakai menembus instansi lain.
+     */
     private function riwayatQuery(array $filters, string $sisi = 'semua'): Builder
     {
         $q = DB::table('pegawai_riwayats as r');
-        $unitIds = $filters['unit_ids'] ?? null;
-        $instansiId = $filters['instansi_id'] ?? null;
 
-        if ($unitIds) {
-            match ($sisi) {
-                'dari' => $q->whereIn('r.dari_unit_id', $unitIds),
-                'ke' => $q->whereIn('r.ke_unit_id', $unitIds),
-                default => $q->where(fn ($w) => $w->whereIn('r.dari_unit_id', $unitIds)->orWhereIn('r.ke_unit_id', $unitIds)),
-            };
-        } elseif ($instansiId) {
-            $units = DB::table('unit_kerjas')->where('instansi_id', $instansiId)->select('id');
-            match ($sisi) {
-                'dari' => $q->whereIn('r.dari_unit_id', $units),
-                'ke' => $q->whereIn('r.ke_unit_id', $units),
-                default => $q->where(fn ($w) => $w->whereIn('r.dari_unit_id', $units)->orWhereIn('r.ke_unit_id', $units)),
-            };
+        $units = DB::table('unit_kerjas')->select('id');
+        $adaFilter = false;
+        if (! empty($filters['instansi_id'])) {
+            $units->where('instansi_id', $filters['instansi_id']);
+            $adaFilter = true;
         }
+        if (! empty($filters['unit_ids'])) {
+            $units->whereIn('id', $filters['unit_ids']);
+            $adaFilter = true;
+        }
+        if (! $adaFilter) {
+            return $q;
+        }
+
+        match ($sisi) {
+            'dari' => $q->whereIn('r.dari_unit_id', $units),
+            'ke' => $q->whereIn('r.ke_unit_id', $units),
+            default => $q->where(fn ($w) => $w->whereIn('r.dari_unit_id', $units)->orWhereIn('r.ke_unit_id', clone $units)),
+        };
 
         return $q;
     }

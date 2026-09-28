@@ -17,7 +17,9 @@ Isi kode, nama, jenis, kategori/jenjang (jabatan fungsional), **kelas jabatan**,
 
 ## Pengguna
 
-Tambah pengguna dengan nama, **NIP** (wajib untuk login SSO SIASN), email, password awal, peran, dan instansi (wajib untuk operator instansi). Pengguna yang dinonaktifkan tidak dapat masuk.
+Tambah pengguna dengan nama, **NIP**, email, password awal, peran, dan instansi (wajib untuk operator instansi). Pengguna yang dinonaktifkan tidak dapat masuk.
+
+> **NIP wajib diisi untuk semua pengguna yang login lewat SSO SIASN**, karena SSO hanya mencocokkan akun berdasarkan NIP. Pengguna tanpa NIP hanya dapat masuk lewat email + password, dan itu pun hanya bila login manual diaktifkan (pengaturan `LOGIN_MANUAL` di server).
 
 ## Log audit
 

@@ -36,7 +36,8 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Pusat laporan: rekap per instansi/unit/jabatan, daftar jabatan bermasalah, usulan–penetapan–pengisian, proyeksi pensiun, ABK & efektivitas, unit tidak bergerak, dan peringatan terbuka. Semua bisa dilihat di layar, diunduh Excel, atau PDF.
 
 **Keamanan**
-- Login SSO SIASN (OpenID Connect ke Keycloak BKN, authorization code + PKCE) untuk admin dan operator instansi. User dicocokkan lewat NIP (lalu email) yang sudah terdaftar di SIMONKEB, dan login SSO tidak diminta 2FA lokal lagi karena BKN sudah memakai MFA.
+- Login SSO SIASN (OpenID Connect ke Keycloak BKN, authorization code + PKCE) untuk admin dan operator instansi. User dicocokkan **hanya lewat NIP** yang sudah terdaftar di SIMONKEB, dan login SSO tidak diminta 2FA lokal lagi karena BKN sudah memakai MFA.
+- Login email + password dapat dimatikan dengan `LOGIN_MANUAL=false` (disarankan di produksi; nyalakan untuk pengujian).
 - Login Laravel Fortify: lupa/reset password, ganti password, 2FA (aplikasi autentikator + kode pemulihan), 2FA wajib per peran (`WAJIB_2FA_PERAN`).
 - Log audit perubahan data master, organisasi, pegawai, ABK, dan pengguna.
 
@@ -108,7 +109,8 @@ php artisan schedule:work       # rekam jejak harian, peringatan dini 06.00, sin
 
 1. Daftarkan SIMONKEB sebagai client SSO SIASN ke BKN dengan redirect URI `https://<domain>/auth/siasn/callback`.
 2. Isi `SIASN_SSO_LOGIN=true`, `SIASN_OIDC_CLIENT_ID`, `SIASN_OIDC_CLIENT_SECRET`, dan `SIASN_OIDC_NIP_CLAIM` (nama klaim NIP pada token BKN) di `.env`.
-3. Isi NIP pada data pengguna SIMONKEB. Tombol **Masuk dengan SSO SIASN** muncul di halaman login.
+3. Isi NIP pada data pengguna SIMONKEB (wajib; SSO tidak mencocokkan email). Tombol **Masuk dengan SSO SIASN** muncul di halaman login.
+4. Setelah SSO berjalan, matikan login manual dengan `LOGIN_MANUAL=false` bila tidak diperlukan.
 
 ### Integrasi SIASN
 

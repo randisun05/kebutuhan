@@ -9,6 +9,12 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.3.1 — 2026-09-28
+
+- **Keamanan:** login SSO SIASN kini hanya mencocokkan akun berdasarkan **NIP** (email tidak lagi dipakai). Pastikan NIP semua pengguna SSO sudah terisi.
+- **Keamanan:** filter unit kerja pada Histori, Laporan, Proyeksi, Data Pegawai, dan ABK kini hanya menerima unit milik instansi yang dipilih.
+- Login email + password dapat dinyalakan/dimatikan administrator; bila dimatikan, form login manual dan lupa password tidak tampil.
+
 ## v1.3.0 — 2026-09-26
 
 - **Panduan pengguna** di dalam aplikasi: tombol **Bantuan** di setiap halaman membuka bagian panduan yang sesuai, pencarian, unduh PDF, dan pemberitahuan "Apa yang baru".

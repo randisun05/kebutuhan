@@ -21,7 +21,11 @@ Tidak ada peristiwa pegawai (masuk, keluar, mutasi, ganti jabatan) yang menyentu
 
 ### Login SSO SIASN berhasil di BKN tetapi ditolak SIMONKEB?
 
-NIP Anda belum terdaftar sebagai pengguna atau akun Anda nonaktif. Hubungi administrator.
+NIP Anda belum terdaftar sebagai pengguna atau akun Anda nonaktif. SSO hanya mencocokkan NIP, bukan email. Hubungi administrator.
+
+### Form email dan password tidak muncul di halaman login?
+
+Login manual sedang dimatikan administrator. Gunakan **Masuk dengan SSO SIASN**.
 
 ### Tombol "Ajukan Usulan" tidak berfungsi?
 

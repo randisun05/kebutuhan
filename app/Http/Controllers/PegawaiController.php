@@ -18,11 +18,12 @@ class PegawaiController extends Controller
     public function index()
     {
         $instansiId = $this->selectedInstansiId();
+        $unitIds = $this->unitFilterIds($instansiId);
 
         $datas = $this->scoped(Pegawai::query())
             ->with(['instansi:id,nama', 'unitKerja:id,nama', 'jabatan:id,nama,jenis'])
             ->when($instansiId, fn ($q) => $q->where('instansi_id', $instansiId))
-            ->when(request('unit_kerja_id'), fn ($q, $u) => $q->whereIn('unit_kerja_id', UnitKerja::descendantIds((int) $u)))
+            ->when($unitIds, fn ($q) => $q->whereIn('unit_kerja_id', $unitIds))
             ->when(request('jenis'), fn ($q, $j) => $q->whereHas('jabatan', fn ($w) => $w->where('jenis', $j)))
             ->when(request('q'), fn ($q, $s) => $q->where(fn ($w) => $w->where('nama', 'like', "%{$s}%")->orWhere('nip', 'like', "%{$s}%")))
             ->when(request('aktif', '1') !== 'all', fn ($q) => $q->where('is_active', request('aktif', '1') === '1'))
