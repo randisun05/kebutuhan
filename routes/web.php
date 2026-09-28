@@ -12,6 +12,7 @@ use App\Http\Controllers\JabatanController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\PanduanController;
 use App\Http\Controllers\PedomanController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PenetapanController;
@@ -37,9 +38,9 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/pedoman', PedomanController::class)->name('pedoman');
-    Route::get('/panduan', [\App\Http\Controllers\PanduanController::class, 'index'])->name('panduan.index');
-    Route::get('/panduan/unduh/pdf', [\App\Http\Controllers\PanduanController::class, 'pdf'])->name('panduan.pdf');
-    Route::get('/panduan/{slug}', [\App\Http\Controllers\PanduanController::class, 'show'])->name('panduan.show');
+    Route::get('/panduan', [PanduanController::class, 'index'])->name('panduan.index');
+    Route::get('/panduan/unduh/pdf', [PanduanController::class, 'pdf'])->name('panduan.pdf');
+    Route::get('/panduan/{slug}', [PanduanController::class, 'show'])->name('panduan.show');
     Route::get('/akun', AkunController::class)->name('akun');
 
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
