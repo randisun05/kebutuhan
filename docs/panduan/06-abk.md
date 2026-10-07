@@ -29,6 +29,8 @@ Volume boleh diisi per bulan/minggu/hari; aplikasi mengalikannya dengan pengali 
 5. **Tab 3 — Waktu Kerja & Proyeksi**: ubah waktu kerja efektif bila perlu (ada kalkulator hari × jam) dan isi **perkiraan pertumbuhan beban kerja per tahun (%)** untuk proyeksi 5 tahun.
 6. Simpan sebagai **Draft**, periksa, lalu **Finalkan**.
 
+> **Bantu isi dengan AI:** bila fitur AI aktif, tombol **Buat draf** di atas tab mengisi uraian tugas (dengan volume dan norma waktu perkiraan) serta informasi jabatan yang masih kosong. Periksa angkanya sebelum menyimpan. Lihat [Asisten AI](/panduan/17-asisten-ai).
+
 ![Form ABK](/img/panduan/abk-form.png)
 
 ## Memfinalkan dan membuka kembali

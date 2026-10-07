@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\AkunController;
 use App\Http\Controllers\AnalitikController;
 use App\Http\Controllers\AnjabAbkController;
@@ -56,6 +57,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/peringatan/{peringatan}/tindak-lanjut', [PeringatanController::class, 'tindakLanjut'])->name('peringatan.tindak-lanjut');
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
     Route::get('/laporan/unduh/{format}', [LaporanController::class, 'unduh'])->name('laporan.unduh');
+
+    // Asisten AI (Gemini, API key bergiliran); dibatasi agar kuota gratis tidak cepat habis
+    Route::middleware('throttle:ai')->prefix('ai')->name('ai.')->group(function () {
+        Route::post('/anjab-draft', [AiController::class, 'draftAnjab'])->name('anjab-draft');
+        Route::post('/monitoring/{instansi}', [AiController::class, 'analisisMonitoring'])->name('monitoring');
+        Route::post('/peringatan/{peringatan}', [AiController::class, 'saranPeringatan'])->name('peringatan');
+    });
 
     // Monitoring kebutuhan vs existing (real-time)
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');

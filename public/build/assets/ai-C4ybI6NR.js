@@ -1,0 +1,1 @@
+import{w as i}from"./utils-npb0HURl.js";const u=a=>a?`${a.dari_riwayat?"Diambil dari riwayat":"Dibuat"} ${i(a.dibuat)}${a.oleh?" oleh "+a.oleh:""}.`+(a.usang?' Data sudah berubah sejak hasil ini dibuat; klik "Buat ulang" untuk memperbarui.':""):"",s=a=>String(a).replace(/[&<>"']/g,t=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[t]);export{s as e,u as i};

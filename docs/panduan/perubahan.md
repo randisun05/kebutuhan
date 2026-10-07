@@ -9,6 +9,12 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.4.0 — 2026-10-07
+
+- **Asisten AI** (Google Gemini): tombol **Buat draf** di form ABK mengisi uraian tugas dan informasi jabatan, kartu **Analisis AI** di monitoring per instansi, dan tombol **Saran AI** di Peringatan Dini.
+- Hasil AI **disimpan di riwayat** dan dipakai lagi untuk permintaan yang sama; AI hanya dipanggil ulang lewat tombol **Buat ulang**.
+- Administrator dapat memasang sampai 5 API key Gemini yang dipakai bergiliran; key yang kuotanya habis dilewati otomatis. Lihat [Asisten AI](/panduan/17-asisten-ai).
+
 ## v1.3.1 — 2026-09-28
 
 - **Keamanan:** login SSO SIASN kini hanya mencocokkan akun berdasarkan **NIP** (email tidak lagi dipakai). Pastikan NIP semua pengguna SSO sudah terisi.

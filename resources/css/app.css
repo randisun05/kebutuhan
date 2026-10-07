@@ -113,3 +113,8 @@ body { background: var(--page-bg); color: var(--ink); font-size: .92rem; }
 .panduan-isi img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: .5rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin: .5rem 0 1rem; }
 .panduan-isi code { color: #0b3d91; background: #eef3fb; padding: .05rem .3rem; border-radius: .25rem; }
 .panduan-isi ol li, .panduan-isi ul li { margin-bottom: .25rem; }
+
+/* hasil fitur AI (markdown dari server) */
+.ai-hasil h1, .ai-hasil h2, .ai-hasil h3 { font-size: 1rem; font-weight: 700; margin-top: .75rem; }
+.ai-hasil p:last-child, .ai-hasil ul:last-child, .ai-hasil ol:last-child { margin-bottom: 0; }
+.ai-hasil ul, .ai-hasil ol { padding-left: 1.25rem; }

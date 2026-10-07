@@ -25,6 +25,8 @@ Satuan perhitungan adalah **posisi** (unit kerja × jabatan). Kekurangan dan kel
 2. Klik nama instansi — rekap **per unit kerja** bertingkat. Tombol **Total (incl. sub-unit)** / **Unit sendiri** mengganti cara penjumlahan.
 3. Klik nama unit — rincian **per jabatan**, dengan opsi *Termasuk sub-unit*.
 
+Pada halaman per instansi, kartu **Analisis AI** (bila diaktifkan) merangkum kondisi, masalah utama, dan rekomendasi tindakan dari angka di halaman tersebut. Lihat [Asisten AI](/panduan/17-asisten-ai).
+
 Semua halaman monitoring diperbarui otomatis setiap 30 detik dan bisa difilter jenis jabatan, kondisi, dan nama jabatan. **Export Excel** mengunduh rincian per posisi.
 
 ![Monitoring per instansi](/img/panduan/monitoring.png)

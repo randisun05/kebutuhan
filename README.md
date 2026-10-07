@@ -35,6 +35,12 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Sistem peringatan dini (`php artisan peringatan:deteksi`, otomatis 06.00): jabatan kosong, pemenuhan unit kritis, unit gemuk, unit kekurangan yang stagnan, data tidak diperbarui, ABK belum ada/kedaluwarsa, pensiun mendatang, usulan tertahan, formasi belum terisi, dan sinkron SIASN gagal. Tingkat kritis/tinggi/sedang/rendah, tindak lanjut tercatat, dan peringatan tertutup otomatis ketika kondisinya teratasi. Ringkasan dikirim sebagai notifikasi. Ambang batas diatur lewat `PERINGATAN_*` di `.env`.
 - Pusat laporan: rekap per instansi/unit/jabatan, daftar jabatan bermasalah, usulan–penetapan–pengisian, proyeksi pensiun, ABK & efektivitas, unit tidak bergerak, dan peringatan terbuka. Semua bisa dilihat di layar, diunduh Excel, atau PDF.
 
+**Asisten AI (Google Gemini)**
+- Draf Anjab-ABK dari nama jabatan & unit: uraian tugas (volume, periode, norma waktu perkiraan), ikhtisar, dan informasi jabatan.
+- Analisis naratif monitoring per instansi (kondisi, masalah utama, rekomendasi, prioritas) dan saran tindak lanjut setiap peringatan dini.
+- Semua hasil tersimpan di satu tabel `ai_riwayat` dan dipakai ulang untuk permintaan yang sama (ditandai bila datanya sudah berubah); AI dipanggil lagi hanya lewat tombol **Buat ulang**.
+- Mendukung **sampai 5 API key gratis** (`GEMINI_API_KEY_1`…`_5`) yang dipakai bergiliran: key yang kena rate limit/kuota harian diistirahatkan otomatis dan permintaan dialihkan ke key berikutnya. Cek dengan `php artisan ai:status --uji`. Detail di `App\Services\Ai\GeminiClient`.
+
 **Keamanan**
 - Login SSO SIASN (OpenID Connect ke Keycloak BKN, authorization code + PKCE) untuk admin dan operator instansi. User dicocokkan **hanya lewat NIP** yang sudah terdaftar di SIMONKEB, dan login SSO tidak diminta 2FA lokal lagi karena BKN sudah memakai MFA.
 - Login email + password dapat dimatikan dengan `LOGIN_MANUAL=false` (disarankan di produksi; nyalakan untuk pengujian).

@@ -66,6 +66,9 @@
                                 <span class="badge" :class="{ aktif: 'bg-danger', ditindaklanjuti: 'bg-warning text-dark', selesai: 'bg-success' }[p.status]">{{ p.status }}</span>
                                 <Link v-if="p.url" :href="p.url" class="btn btn-sm btn-light">Buka <i class="fa fa-angle-right"></i></Link>
                                 <button v-if="p.status !== 'selesai' && bolehTindak" class="btn btn-sm btn-outline-primary" @click="tindak(p)">Tindak lanjut</button>
+                                <button v-if="p.status !== 'selesai' && $page.props.ai" class="btn btn-sm btn-outline-info" :disabled="aiProses === p.id" @click="saranAi(p)">
+                                    <i class="fa" :class="aiProses === p.id ? 'fa-spinner fa-spin' : 'fa-magic'"></i> Saran AI
+                                </button>
                             </div>
                         </div>
                     </li>
@@ -78,11 +81,13 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
+import axios from 'axios';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
 import Pagination from '../../Components/Pagination.vue';
 import { tanggal, waktu } from '../../utils';
+import { escapeHtml, infoRiwayat } from '../../ai';
 
 const props = defineProps({ datas: Object, filters: Object, aturan: Object, instansiOptions: Array, perTingkat: Object, perKode: Object, terakhirDeteksi: String, canRun: Boolean });
 
@@ -109,5 +114,26 @@ const tindak = async (p) => {
         showCancelButton: true, confirmButtonText: 'Simpan', cancelButtonText: 'Batal',
     });
     if (res.isConfirmed) router.post(`/peringatan/${p.id}/tindak-lanjut`, { catatan: res.value }, { preserveScroll: true });
+};
+
+const aiProses = ref(null);
+const saranAi = async (p, baru = false) => {
+    aiProses.value = p.id;
+    try {
+        const { data } = await axios.post(`/ai/peringatan/${p.id}`, { baru });
+        aiProses.value = null;
+        const res = await Swal.fire({
+            title: 'Saran AI', html: `<div class="text-start small ai-hasil">${data.html}</div>`, width: 640,
+            showDenyButton: true, denyButtonText: 'Buat ulang',
+            showCancelButton: bolehTindak.value, confirmButtonText: bolehTindak.value ? 'Catat tindak lanjut' : 'Tutup', cancelButtonText: 'Tutup',
+            footer: `<span class="small text-muted">${escapeHtml(infoRiwayat(data.riwayat))} Saran AI perlu diperiksa sebelum dijalankan.</span>`,
+        });
+        if (res.isDenied) return saranAi(p, true);
+        if (res.isConfirmed && bolehTindak.value) tindak(p);
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'AI gagal', text: e.response?.data?.message || 'Terjadi kesalahan. Silakan coba lagi.' });
+    } finally {
+        aiProses.value = null;
+    }
 };
 </script>

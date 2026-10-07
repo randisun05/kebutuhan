@@ -21,6 +21,21 @@
         <div class="col-6 col-xl-2"><StatCard label="Pensiun ≤ 5 th" :value="summary.pensiun" icon="fa-hourglass-half" color="#4a3aa7" /></div>
     </div>
 
+    <div v-if="$page.props.ai" class="card mb-3 border-info">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fa fa-magic text-info me-1"></i> Analisis AI</span>
+            <button class="btn btn-sm btn-info text-white" :disabled="ai.proses" @click="analisis">
+                <i class="fa" :class="ai.proses ? 'fa-spinner fa-spin' : 'fa-magic'"></i> {{ ai.proses ? 'Menganalisis…' : (ai.html ? 'Buat ulang' : 'Buat analisis') }}
+            </button>
+        </div>
+        <div v-if="ai.html || ai.error" class="card-body">
+            <div v-if="ai.error" class="alert alert-warning mb-0">{{ ai.error }}</div>
+            <div v-else class="ai-hasil" v-html="ai.html"></div>
+            <div v-if="ai.html" class="small text-muted mt-2">{{ infoRiwayat(ai.riwayat) }} Dibuat AI dari angka monitoring; gunakan sebagai bahan pertimbangan, bukan keputusan.</div>
+        </div>
+        <div v-else class="card-body small text-muted py-2">Ringkasan kondisi, masalah utama, dan rekomendasi tindakan dari data monitoring instansi ini.</div>
+    </div>
+
     <div class="row g-3 mb-3">
         <div class="col-xl-7">
             <div class="card h-100">
@@ -103,20 +118,38 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
+import axios from 'axios';
 import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import StatCard from '../../Components/StatCard.vue';
 import BarChart from '../../Components/BarChart.vue';
 import Kondisi from '../../Components/Kondisi.vue';
 import LiveBadge from '../../Components/LiveBadge.vue';
 import MonitoringFilter from '../../Components/MonitoringFilter.vue';
+import { infoRiwayat } from '../../ai';
 import { num, pct, barClass, COLORS } from '../../utils';
 
-const props = defineProps({ instansi: Object, filters: Object, jenisOptions: Array, summary: Object, units: Array, perJenis: Array, updatedAt: String });
+const props = defineProps({ instansi: Object, filters: Object, jenisOptions: Array, summary: Object, units: Array, perJenis: Array, updatedAt: String, analisisAi: Object });
 
 const mode = ref('total');
 const isOperator = computed(() => usePage().props.auth.user.role === 'operator_instansi');
 const chartUnits = computed(() => props.units.filter((u) => u.own.kurang || u.own.lebih));
+
+// analisis tersimpan tampil langsung; AI hanya dipanggil saat "Buat analisis"/"Buat ulang"
+const ai = reactive({ proses: false, html: props.analisisAi?.html || '', riwayat: props.analisisAi?.riwayat || null, error: '' });
+// filter berubah: tampilkan analisis tersimpan untuk filter tersebut
+watch(() => props.analisisAi, (v) => Object.assign(ai, { html: v?.html || '', riwayat: v?.riwayat || null, error: '' }));
+const analisis = async () => {
+    Object.assign(ai, { proses: true, error: '' });
+    try {
+        const { data } = await axios.post(`/ai/monitoring/${props.instansi.id}`, { jenis: props.filters.jenis, q: props.filters.q, baru: !!ai.html });
+        Object.assign(ai, { html: data.html, riwayat: data.riwayat });
+    } catch (e) {
+        ai.error = e.response?.data?.message || 'Analisis AI gagal. Silakan coba lagi.';
+    } finally {
+        ai.proses = false;
+    }
+};
 
 const LIVE = ['summary', 'units', 'perJenis', 'updatedAt'];
 usePoll(30000, { only: LIVE });

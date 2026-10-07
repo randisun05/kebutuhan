@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\MonitoringExport;
 use App\Models\Instansi;
 use App\Models\UnitKerja;
+use App\Services\Ai\AsistenAi;
 use App\Services\MonitoringService;
 use App\Support\Referensi;
 use Maatwebsite\Excel\Facades\Excel;
@@ -51,6 +52,8 @@ class MonitoringController extends Controller
             'summary' => fn () => $this->monitoring->summary($filters + ['instansi_id' => $instansi->id]),
             'units' => fn () => $this->monitoring->byUnit($instansi->id, $filters),
             'perJenis' => fn () => $this->monitoring->byJenisJabatan($filters + ['instansi_id' => $instansi->id]),
+            // analisis AI terakhir yang tersimpan (tidak memanggil AI)
+            'analisisAi' => fn () => app(AsistenAi::class)->analisisMonitoringTersimpan($instansi, array_intersect_key($filters, ['jenis' => 1, 'q' => 1])),
             'updatedAt' => fn () => now()->toIso8601String(),
         ]);
     }

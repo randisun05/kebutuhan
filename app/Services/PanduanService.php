@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\Role;
 use App\Enums\UsulanStatus;
+use App\Services\Ai\GeminiClient;
 use App\Support\Referensi;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -147,6 +148,9 @@ class PanduanService
                 fn ($v) => [$v[0], Referensi::pej($v[1])['nilai'].' — '.Referensi::pej($v[1])['label']],
                 [['> 1,00', 1.01], ['0,90 – 1,00', 0.95], ['0,70 – 0,89', 0.8], ['0,50 – 0,69', 0.6], ['< 0,50', 0.3]])),
             'prioritas_usulan' => fn () => $this->daftarBullet(Referensi::PRIORITAS),
+            'status_ai' => fn () => app(GeminiClient::class)->aktif()
+                ? '**aktif** — '.count(config('gemini.keys')).' API key bergiliran, model `'.config('gemini.model').'`.'
+                : '**belum aktif** (administrator belum mengisi API key Gemini).',
         ];
     }
 
