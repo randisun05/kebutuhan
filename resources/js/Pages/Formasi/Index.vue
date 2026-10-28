@@ -1,7 +1,7 @@
 <template>
     <Head title="Pengisian Formasi" />
     <div class="page-title">Pengisian Formasi</div>
-    <div class="page-subtitle">Lacak realisasi formasi yang sudah ditetapkan (hasil seleksi yang telah diangkat). Sisa formasi belum terisi tampil di monitoring dan proyeksi.</div>
+    <div class="page-subtitle">Lacak realisasi formasi yang sudah ditetapkan (hasil seleksi yang telah diangkat). Sisa formasi belum terisi tampil di monitoring dan proyeksi. Jumlah terisi bertambah otomatis bila pegawai baru ditautkan ke formasi di Data Pegawai.</div>
 
     <div class="row g-3 mb-3">
         <div class="col-md-4"><StatCard label="Formasi ditetapkan" :value="ringkasan.ditetapkan" icon="fa-gavel" color="#2a78d6" /></div>
@@ -35,8 +35,9 @@
                         <td>{{ d.jabatan?.nama }}</td>
                         <td class="num">{{ d.jumlah_ditetapkan }}</td>
                         <td class="num">
-                            <input v-if="canEdit" v-model.number="d.jumlah_terisi" type="number" min="0" :max="d.jumlah_ditetapkan" class="form-control form-control-sm text-end" @input="dirty = true">
+                            <input v-if="canEdit" v-model.number="d.jumlah_terisi" type="number" :min="d.pegawai_tertaut || 0" :max="d.jumlah_ditetapkan" class="form-control form-control-sm text-end" @input="dirty = true">
                             <span v-else>{{ d.jumlah_terisi }}</span>
+                            <div v-if="d.pegawai_tertaut" class="small text-muted" :title="'Pegawai yang ditautkan ke formasi ini di Data Pegawai'"><i class="fa fa-link"></i> {{ d.pegawai_tertaut }} pegawai</div>
                         </td>
                         <td><div class="progress progress-thin"><div class="progress-bar" :class="d.jumlah_terisi >= d.jumlah_ditetapkan ? 'bg-success' : 'bg-warning'" :style="{ width: Math.min(100, d.jumlah_terisi / d.jumlah_ditetapkan * 100) + '%' }"></div></div></td>
                         <td class="small text-muted">{{ waktu(d.terisi_updated_at) }}</td>

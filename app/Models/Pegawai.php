@@ -21,7 +21,7 @@ class Pegawai extends Model
     }
 
     protected $fillable = [
-        'instansi_id', 'unit_kerja_id', 'jabatan_id', 'nip', 'nama', 'status_kepegawaian',
+        'instansi_id', 'unit_kerja_id', 'jabatan_id', 'usulan_detail_id', 'nip', 'nama', 'status_kepegawaian',
         'golongan', 'pendidikan', 'tanggal_lahir', 'tmt_jabatan', 'is_active',
         'siasn_id', 'sumber', 'siasn_synced_at',
     ];
@@ -68,7 +68,20 @@ class Pegawai extends Model
             if ($p->wasChanged('is_active')) {
                 $p->catatRiwayat($p->is_active ? 'masuk' : 'keluar', $p->unit_kerja_id, $p->unit_kerja_id, $p->jabatan_id, $p->jabatan_id);
             }
+
+            // pengisian formasi: pindah tautan formasi atau berubah status aktif
+            if ($p->wasChanged('usulan_detail_id') || $p->wasChanged('is_active')) {
+                $lama = $p->getOriginal('usulan_detail_id');
+                if ($lama && $p->getOriginal('is_active')) {
+                    UsulanDetail::find($lama)?->sesuaikanTerisi(-1);
+                }
+                if ($p->usulan_detail_id && $p->is_active) {
+                    UsulanDetail::find($p->usulan_detail_id)?->sesuaikanTerisi(+1);
+                }
+            }
         });
+        static::created(fn (Pegawai $p) => $p->usulan_detail_id && $p->is_active ? UsulanDetail::find($p->usulan_detail_id)?->sesuaikanTerisi(+1) : null);
+        static::deleted(fn (Pegawai $p) => $p->usulan_detail_id && $p->is_active ? UsulanDetail::find($p->usulan_detail_id)?->sesuaikanTerisi(-1) : null);
     }
 
     public function catatRiwayat(string $jenis, $dariUnit, $keUnit, $dariJabatan, $keJabatan): void
@@ -101,5 +114,11 @@ class Pegawai extends Model
     public function jabatan(): BelongsTo
     {
         return $this->belongsTo(Jabatan::class);
+    }
+
+    /** Formasi (rincian usulan yang ditetapkan) tempat pegawai ini diangkat. */
+    public function usulanDetail(): BelongsTo
+    {
+        return $this->belongsTo(UsulanDetail::class);
     }
 }

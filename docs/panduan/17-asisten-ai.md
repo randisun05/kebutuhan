@@ -48,6 +48,10 @@ Analisis dibuat dari angka di halaman tersebut, termasuk filter jenis jabatan da
 
 Di **Peringatan Dini**, tombol **Saran AI** pada setiap peringatan terbuka menampilkan penyebab yang mungkin, langkah tindak lanjut, dan contoh catatan (dari riwayat bila sudah pernah dibuat; tombol **Buat ulang** untuk saran baru). Klik **Catat tindak lanjut** untuk langsung menulis catatan. Lihat [Sistem peringatan dini](/panduan/13-peringatan).
 
+## Justifikasi usulan
+
+Di halaman **Usulan Kebutuhan**, kartu **Justifikasi AI** → **Buat** menyusun draf alasan per jabatan (urut prioritas) dari kebutuhan, existing, pensiun, dan saran sistem. Rincian yang melebihi saran atau belum punya dasar kebutuhan disebutkan apa adanya. Klik **Salin teks** untuk memakainya di surat pengantar.
+
 ## Batas pemakaian
 
 AI memakai kuota gratis Google yang dibagi semua pengguna, sehingga:

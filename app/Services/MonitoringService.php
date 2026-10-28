@@ -10,13 +10,16 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Menghitung perbandingan kebutuhan (hasil ABK final) dengan pegawai existing
+ * Menghitung perbandingan kebutuhan (hasil ABK final, atau kebutuhan sementara selama posisi
+ * belum memiliki ABK final) dengan pegawai existing
  * (bezetting) langsung dari database, sehingga setiap perubahan data pegawai,
  * ABK maupun penetapan langsung tercermin di dashboard monitoring.
  *
  * Satuan terkecil perhitungan adalah "posisi" = kombinasi unit kerja + jabatan.
  * Kekurangan dan kelebihan dihitung per posisi terlebih dahulu kemudian dijumlahkan,
  * sehingga kelebihan di satu unit tidak menutupi kekurangan di unit lain.
+ *
+ * Setiap posisi membawa "sumber" kebutuhan: abk, sementara, atau null (belum ada).
  *
  * Filter yang didukung: instansi_id, unit_ids (array), jenis (jenis jabatan),
  * jabatan_id, status (kurang|lebih|sesuai|kosong|tanpa_abk), q (nama jabatan).
@@ -35,12 +38,20 @@ class MonitoringService
             ->whereRaw('a.tahun = (SELECT MAX(b.tahun) FROM anjab_abks b WHERE b.unit_kerja_id = a.unit_kerja_id
                 AND b.jabatan_id = a.jabatan_id AND b.status = ?'.($tahunAbk ? ' AND b.tahun <= ?' : '').')',
                 $tahunAbk ? ['final', (int) $tahunAbk] : ['final'])
-            ->selectRaw('a.instansi_id as instansi_id, a.unit_kerja_id as unit_kerja_id, a.jabatan_id as jabatan_id, a.kebutuhan as k, 0 as e, 0 as p, 0 as f');
+            ->selectRaw('a.instansi_id as instansi_id, a.unit_kerja_id as unit_kerja_id, a.jabatan_id as jabatan_id, a.kebutuhan as k, 0 as e, 0 as p, 0 as f, 1 as a, 0 as sm');
+
+        // kebutuhan sementara hanya untuk posisi yang belum memiliki ABK final
+        $sementara = DB::table('kebutuhan_sementara as ks')
+            ->whereNotExists(fn ($q) => $q->from('anjab_abks as b')
+                ->whereColumn('b.unit_kerja_id', 'ks.unit_kerja_id')->whereColumn('b.jabatan_id', 'ks.jabatan_id')
+                ->where('b.status', 'final')
+                ->when($tahunAbk, fn ($w) => $w->where('b.tahun', '<=', (int) $tahunAbk)))
+            ->selectRaw('ks.instansi_id as instansi_id, ks.unit_kerja_id as unit_kerja_id, ks.jabatan_id as jabatan_id, ks.jumlah as k, 0 as e, 0 as p, 0 as f, 0 as a, 1 as sm');
 
         $pegawai = DB::table('pegawais')
             ->where('is_active', true)
             ->groupBy('instansi_id', 'unit_kerja_id', 'jabatan_id')
-            ->selectRaw('instansi_id, unit_kerja_id, jabatan_id, 0 as k, COUNT(*) as e, SUM(CASE WHEN tmt_pensiun IS NOT NULL AND tmt_pensiun <= ? THEN 1 ELSE 0 END) as p, 0 as f', [$horizon]);
+            ->selectRaw('instansi_id, unit_kerja_id, jabatan_id, 0 as k, COUNT(*) as e, SUM(CASE WHEN tmt_pensiun IS NOT NULL AND tmt_pensiun <= ? THEN 1 ELSE 0 END) as p, 0 as f, 0 as a, 0 as sm', [$horizon]);
 
         $formasi = DB::table('usulan_details as d')
             ->join('usulans as u', 'u.id', '=', 'd.usulan_id')
@@ -48,19 +59,21 @@ class MonitoringService
             ->groupBy('u.instansi_id', 'd.unit_kerja_id', 'd.jabatan_id')
             // formasi yang sudah ditetapkan tetapi belum terisi (hasil seleksi belum diangkat)
             ->selectRaw('u.instansi_id as instansi_id, d.unit_kerja_id as unit_kerja_id, d.jabatan_id as jabatan_id, 0 as k, 0 as e, 0 as p,
-                SUM(CASE WHEN COALESCE(d.jumlah_ditetapkan, 0) > d.jumlah_terisi THEN COALESCE(d.jumlah_ditetapkan, 0) - d.jumlah_terisi ELSE 0 END) as f');
+                SUM(CASE WHEN COALESCE(d.jumlah_ditetapkan, 0) > d.jumlah_terisi THEN COALESCE(d.jumlah_ditetapkan, 0) - d.jumlah_terisi ELSE 0 END) as f, 0 as a, 0 as sm');
 
         $this->applyScope($abk, $filters, 'a.');
+        $this->applyScope($sementara, $filters, 'ks.');
         $this->applyScope($pegawai, $filters, '');
         $this->applyScope($formasi, $filters, 'u.', 'd.');
 
-        $union = $abk->unionAll($pegawai)->unionAll($formasi);
+        $union = $abk->unionAll($sementara)->unionAll($pegawai)->unionAll($formasi);
 
         $positions = DB::query()->fromSub($union, 'x')
             ->join('jabatans as j', 'j.id', '=', 'x.jabatan_id')
             ->groupBy('x.instansi_id', 'x.unit_kerja_id', 'x.jabatan_id', 'j.jenis', 'j.nama')
             ->selectRaw('x.instansi_id, x.unit_kerja_id, x.jabatan_id, j.jenis, j.nama as jabatan_nama,
-                SUM(x.k) as kebutuhan, SUM(x.e) as existing, SUM(x.p) as pensiun, SUM(x.f) as formasi');
+                SUM(x.k) as kebutuhan, SUM(x.e) as existing, SUM(x.p) as pensiun, SUM(x.f) as formasi,
+                CASE WHEN SUM(x.a) > 0 THEN \'abk\' WHEN SUM(x.sm) > 0 THEN \'sementara\' ELSE NULL END as sumber');
 
         if (! empty($filters['jenis'])) {
             $positions->where('j.jenis', $filters['jenis']);
@@ -112,7 +125,8 @@ class MonitoringService
             COALESCE(SUM(CASE WHEN p.existing = 0 AND p.kebutuhan > 0 THEN 1 ELSE 0 END), 0) as jabatan_kosong,
             COALESCE(SUM(CASE WHEN p.kebutuhan = 0 AND p.existing > 0 THEN 1 ELSE 0 END), 0) as tanpa_abk,
             COALESCE(SUM(p.pensiun), 0) as pensiun,
-            COALESCE(SUM(p.formasi), 0) as formasi';
+            COALESCE(SUM(p.formasi), 0) as formasi,
+            COALESCE(SUM(CASE WHEN p.sumber = \'sementara\' THEN 1 ELSE 0 END), 0) as posisi_sementara';
     }
 
     public function summary(array $filters = []): array
@@ -189,7 +203,7 @@ class MonitoringService
 
         $tree = UnitKerja::flatTree($instansiId);
         $metricKeys = ['jumlah_jabatan', 'kebutuhan', 'existing', 'kurang', 'lebih', 'jabatan_kurang', 'jabatan_lebih',
-            'jabatan_sesuai', 'jabatan_kosong', 'tanpa_abk', 'pensiun', 'formasi'];
+            'jabatan_sesuai', 'jabatan_kosong', 'tanpa_abk', 'pensiun', 'formasi', 'posisi_sementara'];
 
         $own = $tree->mapWithKeys(fn ($u) => [$u['id'] => $this->decorate($rows->has($u['id']) ? (array) $rows->get($u['id']) : [])]);
 
@@ -253,7 +267,7 @@ class MonitoringService
     private function decorate(array $agg): array
     {
         $keys = ['jumlah_jabatan', 'kebutuhan', 'existing', 'kurang', 'lebih', 'jabatan_kurang', 'jabatan_lebih',
-            'jabatan_sesuai', 'jabatan_kosong', 'tanpa_abk', 'pensiun', 'formasi'];
+            'jabatan_sesuai', 'jabatan_kosong', 'tanpa_abk', 'pensiun', 'formasi', 'posisi_sementara'];
 
         $data = [];
         foreach ($keys as $key) {

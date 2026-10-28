@@ -7,13 +7,14 @@ use App\Enums\UsulanStatus;
 use App\Models\AnjabAbk;
 use App\Models\Instansi;
 use App\Models\Jabatan;
+use App\Models\KebutuhanSementara;
 use App\Models\Pegawai;
 use App\Models\UnitKerja;
 use App\Models\User;
 use App\Models\Usulan;
 use App\Models\UsulanDetail;
-use App\Services\MonitoringService;
 use App\Services\PeringatanService;
+use App\Services\SaranUsulanService;
 use App\Services\SnapshotService;
 use App\Services\UsulanWorkflow;
 use App\Support\Referensi;
@@ -176,18 +177,15 @@ class DatabaseSeeder extends Seeder
 
     private function tarikAbk(Usulan $usulan): void
     {
-        $monitoring = app(MonitoringService::class);
-        $positions = $monitoring->positionsQuery(['instansi_id' => $usulan->instansi_id])->where('p.kebutuhan', '>', 0)->get();
+        $posisi = app(SaranUsulanService::class)->hitung($usulan->instansi_id, $usulan->tahun, false, $usulan->id);
 
-        foreach ($positions as $p) {
-            $usul = max(0, (int) $p->kebutuhan - (int) $p->existing + (int) $p->pensiun);
-            if ($usul > 0) {
-                $usulan->details()->create([
-                    'unit_kerja_id' => $p->unit_kerja_id, 'jabatan_id' => $p->jabatan_id,
-                    'kebutuhan_abk' => $p->kebutuhan, 'existing' => $p->existing, 'proyeksi_pensiun' => $p->pensiun,
-                    'jumlah_usul' => $usul,
-                ]);
-            }
+        foreach ($posisi->filter(fn ($p) => $p['saran'] > 0) as $p) {
+            $usulan->details()->create([
+                'unit_kerja_id' => $p['unit_kerja_id'], 'jabatan_id' => $p['jabatan_id'],
+                'kebutuhan_abk' => $p['kebutuhan'], 'sumber_kebutuhan' => $p['sumber'], 'existing' => $p['existing'],
+                'proyeksi_pensiun' => $p['pensiun'], 'formasi_belum_terisi' => $p['formasi'], 'usulan_proses' => $p['usulan_proses'],
+                'jumlah_usul' => $p['saran'],
+            ]);
         }
     }
 
@@ -327,6 +325,14 @@ class DatabaseSeeder extends Seeder
                     ]);
                 }
                 $anjab->recalculate();
+
+                // sebagian posisi yang ABK-nya masih draft diberi kebutuhan sementara
+                if ($anjab->status === 'draft' && $anjab->id % 2 === 0) {
+                    KebutuhanSementara::create([
+                        'instansi_id' => $instansi->id, 'unit_kerja_id' => $unit->id, 'jabatan_id' => $jabatan->id,
+                        'jumlah' => $kebutuhan, 'dasar' => 'Peta jabatan tahun sebelumnya', 'created_by' => $operator->id,
+                    ]);
+                }
             }
         }
     }

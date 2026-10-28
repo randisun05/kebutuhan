@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UsulanStatus;
 use App\Exports\PegawaiTemplateExport;
 use App\Imports\PegawaiImport;
 use App\Models\Jabatan;
@@ -10,7 +11,9 @@ use App\Models\PegawaiRiwayat;
 use App\Models\UnitKerja;
 use App\Support\Referensi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
 class PegawaiController extends Controller
@@ -121,7 +124,22 @@ class PegawaiController extends Controller
             'unitOptions' => $instansiId ? UnitKerja::flatTree($instansiId) : [],
             'jabatanOptions' => Jabatan::where('is_active', true)->orderBy('jenis')->orderBy('nama')->get(['id', 'nama', 'jenis']),
             'instansiId' => $instansiId,
+            // formasi ditetapkan yang masih ada sisanya (dan formasi pegawai ini), untuk ditautkan
+            'formasiOptions' => $instansiId ? $this->formasiQuery($instansiId)
+                ->where(fn ($q) => $q->whereRaw('COALESCE(d.jumlah_ditetapkan, 0) > d.jumlah_terisi')
+                    ->when($pegawai?->usulan_detail_id, fn ($w, $id) => $w->orWhere('d.id', $id)))
+                ->orderByDesc('u.tahun')
+                ->get(['d.id', 'd.jabatan_id', 'd.unit_kerja_id', 'u.tahun', 'u.nomor', 'uk.nama as unit_nama', 'd.jumlah_ditetapkan', 'd.jumlah_terisi']) : [],
         ];
+    }
+
+    private function formasiQuery(int $instansiId)
+    {
+        return DB::table('usulan_details as d')
+            ->join('usulans as u', 'u.id', '=', 'd.usulan_id')
+            ->join('unit_kerjas as uk', 'uk.id', '=', 'd.unit_kerja_id')
+            ->where('u.instansi_id', $instansiId)
+            ->where('u.status', UsulanStatus::Ditetapkan->value);
     }
 
     private function validated(Request $request, ?Pegawai $pegawai = null): array
@@ -138,11 +156,20 @@ class PegawaiController extends Controller
             'tanggal_lahir' => 'nullable|date|before:today',
             'tmt_jabatan' => 'nullable|date',
             'is_active' => 'boolean',
+            'usulan_detail_id' => 'nullable|integer',
             'keterangan_mutasi' => 'nullable|string|max:255',
         ]);
         unset($data['keterangan_mutasi']);
 
         $this->authorizeInstansi((int) $data['instansi_id']);
+
+        // tautan formasi bersifat opsional; bila diisi harus formasi ditetapkan milik instansi yang sama
+        if (! empty($data['usulan_detail_id'])) {
+            $sah = $this->formasiQuery((int) $data['instansi_id'])->where('d.id', $data['usulan_detail_id'])->exists();
+            if (! $sah) {
+                throw ValidationException::withMessages(['usulan_detail_id' => 'Formasi tidak ditemukan atau belum ditetapkan untuk instansi ini.']);
+            }
+        }
 
         return $data;
     }

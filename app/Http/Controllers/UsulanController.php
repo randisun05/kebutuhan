@@ -8,12 +8,13 @@ use App\Models\Jabatan;
 use App\Models\UnitKerja;
 use App\Models\Usulan;
 use App\Models\UsulanDetail;
-use App\Services\MonitoringService;
+use App\Services\SaranUsulanService;
 use App\Services\UsulanWorkflow;
 use App\Support\Referensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UsulanController extends Controller
@@ -100,6 +101,10 @@ class UsulanController extends Controller
 
         return inertia('Usulan/Show', [
             'data' => $usulan,
+            // pemeriksaan rincian terhadap kondisi terkini (hanya informasi, tidak memblokir alur)
+            // setelah ditetapkan/ditolak formasinya sendiri sudah masuk perhitungan, jadi tidak diperiksa lagi
+            'pemeriksaan' => fn () => in_array($usulan->status, [UsulanStatus::Ditetapkan, UsulanStatus::Ditolak], true)
+                ? null : app(SaranUsulanService::class)->periksa($usulan),
             'step' => $usulan->status->step(),
             'actions' => $this->workflow->availableActions($user, $usulan),
             'editable' => $editable,
@@ -149,48 +154,43 @@ class UsulanController extends Controller
     }
 
     /**
-     * Tarik rincian otomatis dari hasil ABK final: untuk setiap jabatan yang
-     * kekurangan pegawai, jumlah usul = kekurangan + proyeksi pensiun 5 tahun.
+     * Tarik rincian otomatis: untuk setiap posisi yang kekurangan, jumlah usul = saran sistem
+     * (lihat SaranUsulanService: kekurangan + pensiun − formasi belum terisi − usulan lain yang
+     * sedang diproses − redistribusi bila dipilih). Kebutuhan dari ABK final yang berlaku untuk
+     * tahun usulan, atau kebutuhan sementara bila belum ada ABK.
      */
-    public function tarikAbk(Usulan $usulan, MonitoringService $monitoring)
+    public function tarikAbk(Request $request, Usulan $usulan, SaranUsulanService $saran)
     {
         $this->guardEditable($usulan);
+        $redistribusi = $request->boolean('redistribusi', true);
 
-        $positions = $monitoring->positionsQuery(['instansi_id' => $usulan->instansi_id])
-            ->where('p.kebutuhan', '>', 0)
-            ->get()
-            ->map(fn ($p) => $monitoring->decoratePosition((array) $p));
+        $posisi = $saran->hitung($usulan->instansi_id, $usulan->tahun, $redistribusi, $usulan->id)
+            ->filter(fn ($p) => $p['saran'] > 0);
+        $kualifikasi = Jabatan::whereIn('id', $posisi->pluck('jabatan_id'))->pluck('kualifikasi_pendidikan', 'id');
 
-        $count = 0;
-        DB::transaction(function () use ($positions, $usulan, &$count) {
-            foreach ($positions as $p) {
-                $usul = max(0, $p['kebutuhan'] - $p['existing'] + $p['pensiun']);
-                if ($usul < 1) {
-                    continue;
-                }
-
+        DB::transaction(function () use ($posisi, $usulan, $kualifikasi) {
+            foreach ($posisi as $p) {
                 $usulan->details()->updateOrCreate(
                     ['unit_kerja_id' => $p['unit_kerja_id'], 'jabatan_id' => $p['jabatan_id']],
-                    [
-                        'kebutuhan_abk' => $p['kebutuhan'],
-                        'existing' => $p['existing'],
-                        'proyeksi_pensiun' => $p['pensiun'],
-                        'jumlah_usul' => $usul,
+                    $this->snapshot($p) + [
+                        'jumlah_usul' => $p['saran'],
                         // jabatan yang sama sekali belum terisi diprioritaskan
                         'prioritas' => $p['existing'] === 0 ? 1 : ($p['existing'] - $p['pensiun'] < $p['kebutuhan'] / 2 ? 1 : 2),
-                        'kualifikasi_pendidikan' => Jabatan::whereKey($p['jabatan_id'])->value('kualifikasi_pendidikan'),
+                        'kualifikasi_pendidikan' => $kualifikasi[$p['jabatan_id']] ?? null,
+                        'keterangan' => $p['redistribusi_masuk'] ? Str::limit("Sudah dikurangi {$p['redistribusi_masuk']} pegawai pindahan dari {$p['redistribusi_dari']}", 255) : null,
                     ]
                 );
-                $count++;
             }
         });
 
+        $count = $posisi->count();
+
         return back()->with($count ? 'success' : 'info', $count
-            ? "{$count} rincian jabatan ditarik dari hasil ABK."
-            : 'Tidak ada jabatan yang kekurangan pegawai berdasarkan ABK final.');
+            ? "{$count} rincian jabatan ditarik dari kebutuhan (ABK final/kebutuhan sementara)."
+            : 'Tidak ada jabatan yang perlu diusulkan: kekurangan sudah tertutup oleh formasi, usulan lain, atau redistribusi.');
     }
 
-    public function storeDetail(Request $request, Usulan $usulan, MonitoringService $monitoring)
+    public function storeDetail(Request $request, Usulan $usulan, SaranUsulanService $saran)
     {
         $this->guardEditable($usulan);
 
@@ -204,19 +204,32 @@ class UsulanController extends Controller
             'keterangan' => 'nullable|string|max:255',
         ], ['jabatan_id.unique' => 'Jabatan pada unit ini sudah ada di rincian usulan.']);
 
-        $snapshot = $monitoring->positionsQuery([
-            'instansi_id' => $usulan->instansi_id,
-            'unit_ids' => [$data['unit_kerja_id']],
-            'jabatan_id' => $data['jabatan_id'],
-        ])->first();
+        // rincian manual tetap boleh walaupun posisi belum punya kebutuhan; selisihnya ditandai di halaman usulan
+        $p = $saran->hitung($usulan->instansi_id, $usulan->tahun, false, $usulan->id)->get($data['unit_kerja_id'].'-'.$data['jabatan_id']);
+        $usulan->details()->create($data + ($p ? $this->snapshot($p) : []));
 
-        $usulan->details()->create($data + [
-            'kebutuhan_abk' => (int) ($snapshot->kebutuhan ?? 0),
-            'existing' => (int) ($snapshot->existing ?? 0),
-            'proyeksi_pensiun' => (int) ($snapshot->pensiun ?? 0),
-        ]);
+        $pesan = 'Rincian jabatan ditambahkan.';
+        if (! $p || $p['sumber'] === null) {
+            return back()->with('warning', $pesan.' Posisi ini belum memiliki ABK final maupun kebutuhan sementara.');
+        }
 
-        return back()->with('success', 'Rincian jabatan ditambahkan.');
+        return $data['jumlah_usul'] > $p['saran']
+            ? back()->with('warning', $pesan." Jumlah usul melebihi saran sistem ({$p['saran']}).")
+            : back()->with('success', $pesan);
+    }
+
+    /** Kolom snapshot kondisi posisi saat rincian disusun. */
+    private function snapshot(array $p): array
+    {
+        return [
+            'kebutuhan_abk' => $p['kebutuhan'],
+            'sumber_kebutuhan' => $p['sumber'],
+            'existing' => $p['existing'],
+            'proyeksi_pensiun' => $p['pensiun'],
+            'formasi_belum_terisi' => $p['formasi'],
+            'usulan_proses' => $p['usulan_proses'],
+            'redistribusi_masuk' => $p['redistribusi_masuk'],
+        ];
     }
 
     public function updateDetails(Request $request, Usulan $usulan)

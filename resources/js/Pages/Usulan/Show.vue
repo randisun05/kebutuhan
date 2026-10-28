@@ -46,8 +46,9 @@
                         <thead>
                             <tr>
                                 <th class="col-unit">Unit Kerja</th><th class="col-jabatan">Jabatan</th>
-                                <th class="num" title="Kebutuhan hasil ABK saat usulan disusun">ABK</th>
+                                <th class="num" title="Kebutuhan (ABK final atau kebutuhan sementara) saat rincian disusun">Kebutuhan</th>
                                 <th class="num">Existing</th><th class="num">Pensiun ≤5th</th>
+                                <th v-if="pemeriksaan" class="num" title="Saran sistem dari kondisi terkini: kebutuhan − existing + pensiun − formasi belum terisi − usulan lain yang diproses">Saran sistem</th>
                                 <th>Prioritas</th>
                                 <th class="num">Diusulkan</th>
                                 <th class="num">Rekomendasi BKN</th>
@@ -59,9 +60,16 @@
                             <tr v-for="d in rows" :key="d.id">
                                 <td class="small">{{ d.unit_kerja?.nama }}</td>
                                 <td>{{ d.jabatan?.nama }}</td>
-                                <td class="num">{{ num(d.kebutuhan_abk) }}</td>
+                                <td class="num">
+                                    {{ num(d.kebutuhan_abk) }}
+                                    <span v-if="d.sumber_kebutuhan === 'sementara'" class="badge bg-warning text-dark" title="Kebutuhan sementara (belum ada ABK final)">sem.</span>
+                                </td>
                                 <td class="num">{{ num(d.existing) }}</td>
                                 <td class="num">{{ num(d.proyeksi_pensiun) }}</td>
+                                <td v-if="pemeriksaan" class="num" :title="rincianSaran(d)">
+                                    <template v-if="periksa(d)?.sumber">{{ num(periksa(d).saran) }}<i v-if="periksa(d).redistribusi_masuk" class="fa fa-random text-info ms-1" title="Ada pegawai yang dapat dipindahkan dari unit gemuk"></i></template>
+                                    <span v-else class="badge bg-light text-muted border" title="Belum ada ABK final maupun kebutuhan sementara">tanpa dasar</span>
+                                </td>
                                 <td>
                                     <select v-if="editable" v-model.number="d.prioritas" class="form-select form-select-sm" style="width: 95px" @change="dirty = true">
                                         <option v-for="(l, k) in prioritasOptions" :key="k" :value="Number(k)">{{ l }}</option>
@@ -69,8 +77,9 @@
                                     <span v-else class="badge" :class="{ 1: 'bg-danger', 2: 'bg-warning text-dark', 3: 'bg-secondary' }[d.prioritas]">{{ prioritasOptions[d.prioritas] }}</span>
                                 </td>
                                 <td class="num">
-                                    <input v-if="editable" v-model.number="d.jumlah_usul" type="number" min="0" class="form-control form-control-sm text-end" style="width: 80px" :class="{ 'border-warning': d.jumlah_usul > maxWajar(d) }" :title="d.jumlah_usul > maxWajar(d) ? 'Melebihi kekurangan + proyeksi pensiun' : ''" @input="dirty = true">
+                                    <input v-if="editable" v-model.number="d.jumlah_usul" type="number" min="0" class="form-control form-control-sm text-end" style="width: 80px" :class="{ 'border-warning': melebihi(d, d.jumlah_usul) }" :title="melebihi(d, d.jumlah_usul) ? 'Melebihi saran sistem' : ''" @input="dirty = true">
                                     <span v-else>{{ num(d.jumlah_usul) }}</span>
+                                    <div v-if="melebihi(d, d.jumlah_usul)" class="small text-warning-emphasis"><i class="fa fa-exclamation-triangle"></i> +{{ d.jumlah_usul - periksa(d).saran }}</div>
                                 </td>
                                 <td class="num">
                                     <input v-if="can('rekomendasi')" v-model.number="jumlah[d.id]" type="number" min="0" :max="d.jumlah_usul" class="form-control form-control-sm text-end" style="width: 80px" :class="{ 'is-invalid': errors['details.' + d.id] }">
@@ -89,7 +98,7 @@
                                 </td>
                                 <td v-if="editable"><button class="btn btn-sm btn-light text-danger" @click="hapusRincian(d)"><i class="fa fa-times"></i></button></td>
                             </tr>
-                            <tr v-if="!rows.length"><td colspan="11" class="text-center text-muted py-4">Belum ada rincian. Gunakan "Tarik dari ABK" atau tambah manual.</td></tr>
+                            <tr v-if="!rows.length"><td colspan="12" class="text-center text-muted py-4">Belum ada rincian. Gunakan "Tarik dari ABK" atau tambah manual.</td></tr>
                         </tbody>
                         <tfoot v-if="rows.length">
                             <tr class="fw-semibold">
@@ -97,6 +106,7 @@
                                 <td class="num">{{ num(sum('kebutuhan_abk')) }}</td>
                                 <td class="num">{{ num(sum('existing')) }}</td>
                                 <td class="num">{{ num(sum('proyeksi_pensiun')) }}</td>
+                                <td v-if="pemeriksaan" class="num">{{ num(totalSaran) }}</td>
                                 <td></td>
                                 <td class="num">{{ num(sum('jumlah_usul')) }}</td>
                                 <td class="num">{{ can('rekomendasi') ? num(sumInput) : num(sum('jumlah_rekomendasi')) }}</td>
@@ -183,6 +193,42 @@
                 </div>
             </div>
 
+            <div v-if="pemeriksaan" class="card mb-3" :class="pemeriksaan.jumlah_melebihi || pemeriksaan.tanpa_dasar ? 'border-warning' : ''">
+                <div class="card-header"><i class="fa fa-balance-scale me-1"></i> Pemeriksaan terhadap kebutuhan</div>
+                <div class="card-body small">
+                    <div v-if="pemeriksaan.jumlah_melebihi" class="text-warning-emphasis mb-1"><i class="fa fa-exclamation-triangle"></i> {{ pemeriksaan.jumlah_melebihi }} rincian melebihi saran sistem (total +{{ num(pemeriksaan.total_lebih) }}).</div>
+                    <div v-if="pemeriksaan.tanpa_dasar" class="text-warning-emphasis mb-1"><i class="fa fa-question-circle"></i> {{ pemeriksaan.tanpa_dasar }} rincian tanpa ABK final maupun kebutuhan sementara.</div>
+                    <div v-if="!pemeriksaan.jumlah_melebihi && !pemeriksaan.tanpa_dasar && rows.length" class="text-success mb-1"><i class="fa fa-check"></i> Semua rincian sesuai saran sistem.</div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between"><span>Kesiapan ABK instansi</span><b>{{ pemeriksaan.kesiapan.persen ?? '-' }}%</b></div>
+                    <div class="progress progress-thin my-1"><div class="progress-bar" :class="(pemeriksaan.kesiapan.persen ?? 0) >= 80 ? 'bg-success' : 'bg-warning'" :style="{ width: (pemeriksaan.kesiapan.persen ?? 0) + '%' }"></div></div>
+                    <div class="text-muted">
+                        {{ pemeriksaan.kesiapan.mutakhir }} posisi ABK mutakhir (≥ {{ pemeriksaan.kesiapan.min_tahun }}),
+                        {{ pemeriksaan.kesiapan.lama }} ABK lama, {{ pemeriksaan.kesiapan.sementara }} kebutuhan sementara,
+                        {{ pemeriksaan.kesiapan.belum }} belum ada dasar — dari {{ pemeriksaan.kesiapan.total }} posisi.
+                    </div>
+                    <div class="text-muted mt-1">Hanya informasi; tidak menghalangi pengajuan maupun verifikasi.</div>
+                </div>
+            </div>
+
+            <div v-if="$page.props.ai" class="card mb-3 border-info">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fa fa-magic text-info me-1"></i> Justifikasi AI</span>
+                    <button class="btn btn-sm btn-info text-white" :disabled="ai.proses || !rows.length" @click="justifikasi(!!ai.html)">
+                        <i class="fa" :class="ai.proses ? 'fa-spinner fa-spin' : 'fa-magic'"></i> {{ ai.html ? 'Buat ulang' : 'Buat' }}
+                    </button>
+                </div>
+                <div class="card-body small">
+                    <div v-if="ai.error" class="text-danger">{{ ai.error }}</div>
+                    <template v-else-if="ai.html">
+                        <div class="ai-hasil" v-html="ai.html"></div>
+                        <div class="text-muted mt-2">{{ infoRiwayat(ai.riwayat) }}</div>
+                        <button class="btn btn-sm btn-light mt-1" @click="salin"><i class="fa fa-copy me-1"></i> Salin teks</button>
+                    </template>
+                    <div v-else class="text-muted">Draf alasan/justifikasi per jabatan dari data kebutuhan, existing, pensiun, dan pemeriksaan di halaman ini, untuk surat pengantar.</div>
+                </div>
+            </div>
+
             <div class="card mb-3" v-if="anggaran.adaData">
                 <div class="card-header">Estimasi belanja pegawai / tahun</div>
                 <div class="card-body small">
@@ -223,9 +269,11 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 import { num, tanggal, waktu } from '../../utils';
+import { infoRiwayat } from '../../ai';
 
-const props = defineProps({ data: Object, step: Number, actions: Array, editable: Boolean, unitOptions: Array, jabatanOptions: Array, prioritasOptions: Object });
+const props = defineProps({ data: Object, step: Number, actions: Array, editable: Boolean, unitOptions: Array, jabatanOptions: Array, prioritasOptions: Object, pemeriksaan: Object });
 
 const steps = ['Penyusunan', 'Diajukan', 'Verifikasi BKN', 'Pertimbangan Teknis', 'Validasi KemenPANRB', 'Ditetapkan'];
 const STATUS = {
@@ -241,7 +289,38 @@ const errors = computed(() => usePage().props.errors || {});
 
 const can = (aksi) => props.actions.some((a) => a.aksi === aksi);
 const sum = (key) => rows.value.reduce((t, d) => t + (Number(d[key]) || 0), 0);
-const maxWajar = (d) => Math.max(0, d.kebutuhan_abk - d.existing + d.proyeksi_pensiun);
+// saran sistem dari kondisi terkini (SaranUsulanService); hanya penanda, tidak membatasi isian
+const periksa = (d) => props.pemeriksaan?.rincian?.[d.id];
+const melebihi = (d, nilai) => !!periksa(d)?.sumber && Number(nilai) > periksa(d).saran;
+const totalSaran = computed(() => rows.value.reduce((t, d) => t + (periksa(d)?.saran || 0), 0));
+const rincianSaran = (d) => {
+    const p = periksa(d);
+    if (!p) return '';
+    return `Kebutuhan ${p.kebutuhan}${p.sumber === 'sementara' ? ' (sementara)' : ''} − existing ${p.existing} + pensiun ${p.pensiun}`
+        + ` − formasi belum terisi ${p.formasi} − usulan lain diproses ${p.usulan_proses} = ${p.saran}`
+        + (p.redistribusi_masuk ? `. Bila redistribusi dijalankan (${p.redistribusi_masuk} dari ${p.redistribusi_dari}): ${p.saran_redistribusi}` : '');
+};
+
+const ai = reactive({ proses: false, html: '', teks: '', riwayat: null, error: '' });
+const justifikasi = async (baru = false) => {
+    Object.assign(ai, { proses: true, error: '' });
+    try {
+        const { data } = await axios.post(`/ai/usulan/${props.data.id}`, { baru });
+        Object.assign(ai, { html: data.html, teks: data.teks, riwayat: data.riwayat });
+    } catch (e) {
+        ai.error = e.response?.data?.message || 'Justifikasi AI gagal. Silakan coba lagi.';
+    } finally {
+        ai.proses = false;
+    }
+};
+const salin = async () => {
+    try {
+        await navigator.clipboard.writeText(ai.teks);
+        Swal.fire({ icon: 'success', title: 'Teks disalin', timer: 1200, showConfirmButton: false });
+    } catch {
+        Swal.fire({ icon: 'info', title: 'Salin manual', text: 'Peramban tidak mengizinkan salin otomatis; blok teks lalu salin.' });
+    }
+};
 
 // input jumlah untuk rekomendasi (default = diusulkan) atau penetapan (default = rekomendasi)
 const jumlah = reactive(Object.fromEntries(props.data.details.map((d) => [d.id, can('tetapkan') ? d.jumlah_rekomendasi : d.jumlah_usul])));
@@ -270,8 +349,15 @@ const simpanRincian = () => router.put(`/usulan/${props.data.id}/details`, {
 }, { preserveScroll: true, onSuccess: () => (dirty.value = false) });
 
 const tarikAbk = async () => {
-    const ok = await Swal.fire({ icon: 'question', title: 'Tarik rincian dari ABK?', text: 'Jabatan yang kekurangan pegawai akan ditambahkan/diperbarui dengan jumlah = kekurangan + proyeksi pensiun 5 tahun.', showCancelButton: true, confirmButtonText: 'Ya, tarik', cancelButtonText: 'Batal' });
-    if (ok.isConfirmed) router.post(`/usulan/${props.data.id}/tarik-abk`, {}, { preserveScroll: true });
+    const ok = await Swal.fire({
+        icon: 'question', title: 'Tarik rincian dari kebutuhan?',
+        html: `<div class="text-start small">Posisi yang kekurangan ditambahkan/diperbarui dengan jumlah = kebutuhan − existing + pensiun 5 tahun
+            − formasi yang sudah ditetapkan tetapi belum terisi − usulan lain yang sedang diproses.
+            Kebutuhan dari ABK final tahun ${props.data.tahun} (atau sebelumnya); posisi tanpa ABK memakai kebutuhan sementara bila ada.</div>`,
+        input: 'checkbox', inputValue: 1, inputPlaceholder: 'Kurangi dengan pegawai yang dapat dipindahkan dari unit gemuk (redistribusi)',
+        showCancelButton: true, confirmButtonText: 'Ya, tarik', cancelButtonText: 'Batal',
+    });
+    if (ok.isConfirmed) router.post(`/usulan/${props.data.id}/tarik-abk`, { redistribusi: !!ok.value }, { preserveScroll: true });
 };
 
 const hapusRincian = async (d) => {
@@ -293,9 +379,15 @@ const jalankan = async (a) => {
     }
 
     const perluCatatan = ['kembalikan', 'tolak'].includes(a.aksi);
+    // peringatan (tidak memblokir) bila rincian melebihi saran sistem atau tanpa dasar kebutuhan
+    const p = props.pemeriksaan;
+    const peringatan = ['ajukan', 'rekomendasi', 'tetapkan'].includes(a.aksi) && p && (p.jumlah_melebihi || p.tanpa_dasar)
+        ? [p.jumlah_melebihi ? `${p.jumlah_melebihi} rincian melebihi saran sistem` : '', p.tanpa_dasar ? `${p.tanpa_dasar} rincian tanpa dasar kebutuhan` : ''].filter(Boolean).join(', ') + '.'
+        : '';
     const res = await Swal.fire({
-        icon: perluCatatan ? 'warning' : 'question',
+        icon: perluCatatan || peringatan ? 'warning' : 'question',
         title: a.label + '?',
+        text: peringatan ? `Perhatian: ${peringatan} Anda tetap dapat melanjutkan.` : undefined,
         input: 'textarea',
         inputLabel: perluCatatan ? 'Catatan (wajib)' : 'Catatan (opsional)',
         inputValidator: (v) => (perluCatatan && !v ? 'Catatan wajib diisi' : undefined),

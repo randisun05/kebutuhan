@@ -9,6 +9,15 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.5.0 — 2026-10-28
+
+- **Kebutuhan sementara**: posisi yang belum punya ABK final dapat diberi angka kebutuhan sementara (halaman rincian unit di Monitoring), sehingga monitoring, usulan, proyeksi, dan redistribusi tetap terhitung. Otomatis digantikan hasil ABK setelah difinalkan.
+- **Tarik dari ABK** kini memakai ABK yang berlaku untuk tahun usulan dan mengurangkan formasi yang sudah ditetapkan tetapi belum terisi serta usulan lain yang sedang diproses, sehingga tidak ada usulan ganda. Opsi **kurangi dengan redistribusi** dari unit gemuk.
+- Halaman usulan menampilkan **saran sistem** per jabatan dan kartu **Pemeriksaan terhadap kebutuhan** (melebihi saran, tanpa dasar, kesiapan ABK) untuk operator, BKN, dan KemenPANRB. Hanya penanda, tidak memblokir.
+- **Pegawai dapat ditautkan ke formasi** yang ditetapkan; jumlah terisi di Pengisian Formasi bertambah otomatis.
+- **Kesiapan ABK** per instansi di halaman monitoring.
+- **Justifikasi AI** untuk usulan kebutuhan.
+
 ## v1.4.0 — 2026-10-07
 
 - **Asisten AI** (Google Gemini): tombol **Buat draf** di form ABK mengisi uraian tugas dan informasi jabatan, kartu **Analisis AI** di monitoring per instansi, dan tombol **Saran AI** di Peringatan Dini.

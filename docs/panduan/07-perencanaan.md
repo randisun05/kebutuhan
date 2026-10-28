@@ -9,7 +9,7 @@ menu: [/proyeksi, /redistribusi]
 
 ## Proyeksi kebutuhan 5 tahun
 
-Untuk setiap jabatan yang memiliki ABK final:
+Untuk setiap jabatan yang memiliki ABK final (atau **kebutuhan sementara** bila belum ada ABK final; kebutuhannya dianggap tetap tanpa pertumbuhan dan ditandai *sementara*):
 
 - **Kebutuhan tahun t** = beban kerja ABK × (1 + pertumbuhan %)^(t − tahun ABK) ÷ waktu kerja efektif.
 - **Existing akhir tahun t** = pegawai aktif sekarang − pegawai yang mencapai BUP sampai 31 Desember t.
@@ -22,3 +22,5 @@ Rekap per tahun juga menampilkan **estimasi tambahan belanja pegawai** bila esti
 ## Redistribusi pegawai
 
 Sebelum mengusulkan formasi baru, periksa **Redistribusi Pegawai**: aplikasi memasangkan unit yang **kelebihan** dengan unit yang **kekurangan** pada **jabatan yang sama** di instansi yang sama, dimulai dari selisih terbesar. Bagian **Kekurangan yang tersisa** adalah kekurangan yang tidak dapat ditutup dari dalam — inilah yang perlu diusulkan formasinya.
+
+Saat menarik rincian usulan, centang *Kurangi dengan redistribusi* agar pegawai yang dapat dipindahkan langsung mengurangi jumlah usulan. Lihat [Usulan kebutuhan](/panduan/08-usulan).

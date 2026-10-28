@@ -7,8 +7,10 @@ use App\Models\Instansi;
 use App\Models\Jabatan;
 use App\Models\Peringatan;
 use App\Models\UnitKerja;
+use App\Models\Usulan;
 use App\Services\MonitoringService;
 use App\Services\PeringatanService;
+use App\Services\SaranUsulanService;
 use App\Support\Referensi;
 use Illuminate\Support\Str;
 
@@ -26,6 +28,7 @@ class AsistenAi
         'anjab_draft' => 'Draf Anjab-ABK',
         'analisis_monitoring' => 'Analisis monitoring',
         'saran_peringatan' => 'Saran tindak lanjut peringatan',
+        'justifikasi_usulan' => 'Justifikasi usulan kebutuhan',
     ];
 
     private const SISTEM = 'Anda asisten analis kepegawaian ASN Indonesia yang memahami UU 20/2023 tentang ASN, '
@@ -232,6 +235,36 @@ class AsistenAi
         $r = $this->riwayat('saran_peringatan', "peringatan:{$peringatan->id}", $peringatan->instansi_id, $prompt, [], $baru);
 
         return ['html' => $this->html($r['hasil']), 'riwayat' => $r['riwayat']];
+    }
+
+    /** Draf justifikasi usulan per jabatan untuk surat pengantar (markdown + HTML). */
+    public function justifikasiUsulan(Usulan $usulan, bool $baru = false): array
+    {
+        $usulan->loadMissing(['instansi:id,nama', 'details.unitKerja:id,nama', 'details.jabatan:id,nama,jenis']);
+        $periksa = app(SaranUsulanService::class)->periksa($usulan);
+
+        $baris = $usulan->details->sortBy('prioritas')->take(40)->map(function ($d) use ($periksa) {
+            $p = $periksa['rincian'][$d->id] ?? [];
+            $sumber = match ($p['sumber'] ?? null) {
+                'abk' => 'ABK final', 'sementara' => 'kebutuhan sementara', default => 'belum ada dasar kebutuhan',
+            };
+
+            return "- {$d->jabatan?->nama} pada {$d->unitKerja?->nama}: diusulkan {$d->jumlah_usul}, prioritas "
+                .(Referensi::PRIORITAS[$d->prioritas] ?? $d->prioritas).', kebutuhan '.($p['kebutuhan'] ?? $d->kebutuhan_abk)." ({$sumber}), "
+                .'existing '.($p['existing'] ?? $d->existing).', pensiun 5 tahun '.($p['pensiun'] ?? $d->proyeksi_pensiun)
+                .', formasi belum terisi '.($p['formasi'] ?? 0).', saran sistem '.($p['saran'] ?? '-')
+                .($d->keterangan ? ", keterangan: {$d->keterangan}" : '');
+        })->implode("\n");
+
+        $prompt = "Usulan kebutuhan ASN ({$usulan->jenis_asn}) tahun {$usulan->tahun} dari {$usulan->instansi?->nama}, perihal: {$usulan->perihal}.\n"
+            ."Rincian per jabatan:\n{$baris}\n\n"
+            .'Susun justifikasi dalam markdown untuk lampiran surat pengantar: satu paragraf pengantar, lalu per jabatan (urut prioritas) '
+            .'satu butir alasan singkat berbasis angka di atas (kekurangan, pensiun, beban kerja ABK). Bila jumlah diusulkan melebihi saran sistem '
+            .'atau belum ada dasar kebutuhan, sebutkan secara jujur dan sarankan apa yang perlu dilengkapi. Maksimal 400 kata.';
+
+        $r = $this->riwayat('justifikasi_usulan', "usulan:{$usulan->id}", $usulan->instansi_id, $prompt, [], $baru);
+
+        return ['html' => $this->html($r['hasil']), 'teks' => $r['hasil'], 'riwayat' => $r['riwayat']];
     }
 
     private function html(string $markdown): string

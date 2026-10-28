@@ -6,6 +6,7 @@ use App\Models\Instansi;
 use App\Models\Jabatan;
 use App\Models\Peringatan;
 use App\Models\UnitKerja;
+use App\Models\Usulan;
 use App\Services\Ai\AiException;
 use App\Services\Ai\AsistenAi;
 use Closure;
@@ -55,6 +56,14 @@ class AiController extends Controller
         $this->authorizeInstansi($peringatan->instansi_id);
 
         return $this->jawab(fn () => $this->ai->saranPeringatan($peringatan, $request->boolean('baru')));
+    }
+
+    /** Draf justifikasi usulan kebutuhan untuk surat pengantar. */
+    public function justifikasiUsulan(Request $request, Usulan $usulan): JsonResponse
+    {
+        $this->authorizeInstansi($usulan->instansi_id);
+
+        return $this->jawab(fn () => $this->ai->justifikasiUsulan($usulan, $request->boolean('baru')));
     }
 
     private function jawab(Closure $proses): JsonResponse

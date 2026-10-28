@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Exports\MonitoringExport;
 use App\Models\Instansi;
+use App\Models\Jabatan;
+use App\Models\KebutuhanSementara;
 use App\Models\UnitKerja;
 use App\Services\Ai\AsistenAi;
 use App\Services\MonitoringService;
+use App\Services\SaranUsulanService;
 use App\Support\Referensi;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -52,6 +55,7 @@ class MonitoringController extends Controller
             'summary' => fn () => $this->monitoring->summary($filters + ['instansi_id' => $instansi->id]),
             'units' => fn () => $this->monitoring->byUnit($instansi->id, $filters),
             'perJenis' => fn () => $this->monitoring->byJenisJabatan($filters + ['instansi_id' => $instansi->id]),
+            'kesiapan' => fn () => app(SaranUsulanService::class)->kesiapanAbk($instansi->id),
             // analisis AI terakhir yang tersimpan (tidak memanggil AI)
             'analisisAi' => fn () => app(AsistenAi::class)->analisisMonitoringTersimpan($instansi, array_intersect_key($filters, ['jenis' => 1, 'q' => 1])),
             'updatedAt' => fn () => now()->toIso8601String(),
@@ -75,6 +79,12 @@ class MonitoringController extends Controller
             'jenisOptions' => Referensi::options(Referensi::JENIS_JABATAN),
             'summary' => fn () => $this->monitoring->summary($filters),
             'positions' => fn () => $this->monitoring->positions($filters, 2000),
+            // kebutuhan sementara pada unit ini (dipakai selama posisi belum punya ABK final)
+            'sementara' => fn () => KebutuhanSementara::whereIn('unit_kerja_id', $filters['unit_ids'])
+                ->get(['id', 'unit_kerja_id', 'jabatan_id', 'jumlah', 'dasar', 'updated_at'])
+                ->keyBy(fn ($k) => $k->unit_kerja_id.'-'.$k->jabatan_id),
+            'bolehAtur' => in_array(request()->user()->role?->value, ['admin', 'operator_instansi'], true),
+            'jabatanOptions' => fn () => Jabatan::where('is_active', true)->orderBy('jenis')->orderBy('nama')->get(['id', 'nama']),
             'updatedAt' => fn () => now()->toIso8601String(),
         ]);
     }

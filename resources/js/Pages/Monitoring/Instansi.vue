@@ -21,6 +21,15 @@
         <div class="col-6 col-xl-2"><StatCard label="Pensiun ≤ 5 th" :value="summary.pensiun" icon="fa-hourglass-half" color="#4a3aa7" /></div>
     </div>
 
+    <div v-if="kesiapan && kesiapan.total" class="card mb-3">
+        <div class="card-body py-2 d-flex flex-wrap align-items-center gap-3 small">
+            <span class="fw-semibold"><i class="fa fa-calculator me-1"></i> Kesiapan ABK {{ kesiapan.persen }}%</span>
+            <div class="progress progress-thin flex-grow-1" style="min-width: 120px; max-width: 260px"><div class="progress-bar" :class="kesiapan.persen >= 80 ? 'bg-success' : 'bg-warning'" :style="{ width: kesiapan.persen + '%' }"></div></div>
+            <span class="text-muted">{{ kesiapan.mutakhir }} ABK mutakhir · {{ kesiapan.lama }} ABK lama (&lt; {{ kesiapan.min_tahun }}) · {{ kesiapan.sementara }} kebutuhan sementara · {{ kesiapan.belum }} belum ada dasar, dari {{ kesiapan.total }} posisi</span>
+            <Link :href="`/anjab?instansi_id=${instansi.id}`" class="ms-auto">Kelola ABK <i class="fa fa-angle-right"></i></Link>
+        </div>
+    </div>
+
     <div v-if="$page.props.ai" class="card mb-3 border-info">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span><i class="fa fa-magic text-info me-1"></i> Analisis AI</span>
@@ -129,7 +138,7 @@ import MonitoringFilter from '../../Components/MonitoringFilter.vue';
 import { infoRiwayat } from '../../ai';
 import { num, pct, barClass, COLORS } from '../../utils';
 
-const props = defineProps({ instansi: Object, filters: Object, jenisOptions: Array, summary: Object, units: Array, perJenis: Array, updatedAt: String, analisisAi: Object });
+const props = defineProps({ instansi: Object, filters: Object, jenisOptions: Array, summary: Object, units: Array, perJenis: Array, updatedAt: String, analisisAi: Object, kesiapan: Object });
 
 const mode = ref('total');
 const isOperator = computed(() => usePage().props.auth.user.role === 'operator_instansi');

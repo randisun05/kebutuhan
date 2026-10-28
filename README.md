@@ -25,6 +25,9 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Saran redistribusi pegawai dari unit gemuk ke unit kurang pada jabatan yang sama.
 
 **Hilir: usulan → penetapan → pengisian**
+- Satu rumus saran usulan (`App\Services\SaranUsulanService`) untuk menarik rincian dan memeriksa usulan; rincian yang melebihi saran atau tanpa dasar kebutuhan ditandai untuk operator, BKN, dan KemenPANRB, tanpa memblokir alur.
+- Kebutuhan sementara per posisi agar perhitungan tidak menunggu ABK; kesiapan ABK per instansi.
+- Pegawai baru dapat ditautkan ke formasi yang ditetapkan sehingga jumlah terisi bertambah otomatis.
 - Usulan dengan prioritas per jabatan, estimasi anggaran, verifikasi & pertimbangan teknis BKN, validasi & penetapan KemenPANRB, PDF lampiran penetapan.
 - Pelacakan pengisian formasi (realisasi hasil seleksi); sisa formasi belum terisi tampil di monitoring dan proyeksi.
 - Notifikasi di aplikasi (lonceng) dan opsional email untuk setiap tahap alur.
@@ -60,7 +63,7 @@ Tata cara pembaruan: `docs/CARA-MEMPERBARUI-PANDUAN.md`.
 |---|-------|--------|------|
 | 1 | Struktur organisasi & data pegawai existing (bezetting), bisa impor Excel | Operator instansi | Struktur Unit Kerja, Data Pegawai |
 | 2 | Anjab & ABK: uraian tugas × volume × norma waktu ÷ waktu kerja efektif (75.000 menit) | Operator instansi | Anjab & ABK |
-| 3 | Usulan: rincian ditarik otomatis dari ABK final (kekurangan + proyeksi pensiun 5 th), lalu **diajukan** | Operator instansi | Usulan Kebutuhan |
+| 3 | Usulan: rincian ditarik otomatis dengan **saran sistem** (kebutuhan − existing + pensiun 5 th − formasi belum terisi − usulan lain yang diproses − redistribusi opsional), lalu **diajukan** | Operator instansi | Usulan Kebutuhan |
 | 4 | Verifikasi & **pertimbangan teknis** (jumlah rekomendasi per jabatan) | Verifikator BKN | Usulan Kebutuhan |
 | 5 | Validasi & **penetapan** (jumlah ditetapkan, nomor/tanggal SK, berkas SK) | Validator KemenPANRB | Usulan Kebutuhan, Penetapan |
 | 6 | Monitoring kebutuhan vs existing, diperbarui otomatis tiap 30 detik | Semua peran | Dashboard, Monitoring |
@@ -74,7 +77,7 @@ Jumlah rekomendasi tidak boleh melebihi usulan, dan jumlah ditetapkan tidak bole
 
 `App\Services\MonitoringService` menghitung langsung dari database, tanpa cache:
 
-- **Posisi** = unit kerja × jabatan. Kebutuhan = ABK berstatus *final*; existing = pegawai aktif.
+- **Posisi** = unit kerja × jabatan. Kebutuhan = ABK berstatus *final* (atau **kebutuhan sementara** bila posisi belum punya ABK final); existing = pegawai aktif.
 - Kurang/lebih dihitung **per posisi** lalu dijumlahkan, sehingga kelebihan di satu unit
   tidak menutupi kekurangan di unit lain.
 - Indikator: kurang, lebih (gemuk), jabatan kosong (dibutuhkan tetapi 0 pegawai), belum ada ABK,

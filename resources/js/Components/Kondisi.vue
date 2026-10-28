@@ -11,7 +11,7 @@ export const KONDISI = {
     lebih: { label: 'Lebih', icon: 'fa-arrow-up', title: 'Existing melebihi kebutuhan' },
     sesuai: { label: 'Sesuai', icon: 'fa-check', title: 'Existing sama dengan kebutuhan' },
     ideal: { label: 'Ideal', icon: 'fa-check', title: 'Pemenuhan 90–110%' },
-    tanpa_abk: { label: 'Belum ada ABK', icon: 'fa-question', title: 'Ada pegawai tetapi belum ada ABK final' },
+    tanpa_abk: { label: 'Belum ada ABK', icon: 'fa-question', title: 'Ada pegawai tetapi belum ada ABK final maupun kebutuhan sementara' },
     belum_ada_data: { label: 'Belum ada data', icon: 'fa-minus', title: 'Belum ada ABK maupun pegawai' },
 };
 
