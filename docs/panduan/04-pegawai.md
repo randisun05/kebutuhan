@@ -14,7 +14,8 @@ Data pegawai aktif adalah angka **existing** pada monitoring. Ada tiga cara memp
 1. Buka **Data Pegawai (Existing)** → **Tambah**.
 2. Pilih instansi, unit kerja, jabatan; isi NIP (18 digit), nama, status (PNS/PPPK), golongan, pendidikan.
 3. Isi **tanggal lahir** — dipakai menghitung **TMT pensiun** otomatis dari batas usia pensiun (BUP) jabatan.
-4. Saat mengubah unit/jabatan/status, isi **Keterangan perubahan** (misalnya nomor SK mutasi) agar tercatat di riwayat.
+4. Untuk pegawai baru hasil seleksi, pilih **Diangkat dari formasi** (opsional). Jumlah *terisi* di [Pengisian Formasi](/panduan/09-penetapan) bertambah otomatis, dan berkurang lagi bila pegawai dinonaktifkan atau dihapus.
+5. Saat mengubah unit/jabatan/status, isi **Keterangan perubahan** (misalnya nomor SK mutasi) agar tercatat di riwayat.
 
 Pegawai yang pensiun/berhenti cukup **dinonaktifkan** (hilangkan centang *Aktif*), jangan dihapus, agar histori tetap utuh.
 

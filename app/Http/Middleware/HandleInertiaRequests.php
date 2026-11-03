@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\UsulanStatus;
 use App\Models\Peringatan;
 use App\Models\Usulan;
+use App\Services\Ai\GeminiClient;
 use App\Services\PanduanService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -42,6 +43,8 @@ class HandleInertiaRequests extends Middleware
                     'instansi' => $user->instansi?->only(['id', 'kode', 'nama']),
                 ] : null,
             ],
+            // tombol fitur AI hanya tampil bila API key Gemini sudah diisi
+            'ai' => fn () => $user && app(GeminiClient::class)->aktif(),
             // jumlah usulan yang menunggu tindakan user (badge sidebar)
             'inbox' => fn () => $user ? $this->inboxCount($user) : 0,
             // jumlah peringatan terbuka tingkat kritis/tinggi (badge sidebar)

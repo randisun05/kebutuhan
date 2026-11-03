@@ -57,9 +57,12 @@
                     <tr><template v-for="t in hasil.tahun" :key="t"><th class="num small">K/B</th><th class="num small">Rencana</th></template></tr>
                 </thead>
                 <tbody>
-                    <tr v-for="r in hasil.rows" :key="r.anjab_id">
+                    <tr v-for="r in hasil.rows" :key="r.unit_kerja_id + '-' + r.jabatan_id">
                         <td class="small">{{ r.unit_nama }}</td>
-                        <td><Link :href="`/anjab/${r.anjab_id}`">{{ r.jabatan_nama }}</Link><div class="small text-muted">ABK {{ r.tahun_abk }}<span v-if="r.pertumbuhan"> · +{{ r.pertumbuhan }}%/th</span></div></td>
+                        <td>
+                            <Link v-if="r.anjab_id" :href="`/anjab/${r.anjab_id}`">{{ r.jabatan_nama }}</Link><span v-else>{{ r.jabatan_nama }}</span>
+                            <div class="small text-muted"><template v-if="r.sumber === 'sementara'"><span class="badge bg-warning text-dark">sementara</span> belum ada ABK</template><template v-else>ABK {{ r.tahun_abk }}</template><span v-if="r.pertumbuhan"> · +{{ r.pertumbuhan }}%/th</span></div>
+                        </td>
                         <td class="num">{{ r.kebutuhan_saat_ini }} / {{ r.existing_saat_ini }}</td>
                         <td class="num">{{ r.formasi_belum_terisi || '-' }}</td>
                         <template v-for="t in hasil.tahun" :key="t">

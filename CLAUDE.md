@@ -21,4 +21,5 @@ Jangan menulis manual isi yang tersedia sebagai penanda dinamis (`{{ tabel_peran
 - `composer.lock` dikunci ke platform PHP 8.3 (`config.platform.php`), jangan dihapus.
 - Operator instansi harus selalu dibatasi ke instansinya (`Controller::scoped()` / `authorizeInstansi()`).
 - Query harus portabel SQLite & MySQL (hindari fungsi khusus satu DB, mis. `||` untuk string).
+- Fitur AI (Gemini) wajib lewat `App\Services\Ai\AsistenAi::riwayat()`: hasil disimpan di tabel `ai_riwayat` dan dipakai ulang; AI hanya dipanggil lagi bila pengguna meminta "Buat ulang" (`baru=1`). Jangan memanggil `GeminiClient` langsung dari controller, dan jangan membuat tabel riwayat AI baru.
 - Jalankan `vendor/bin/pint` dan `php artisan test` sebelum push.

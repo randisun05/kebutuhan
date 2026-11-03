@@ -41,7 +41,7 @@ class PerencanaanController extends Controller
         $head[] = 'Total rencana';
 
         $rows = array_map(function ($r) use ($hasil) {
-            $row = [$r['unit_nama'], $r['jabatan_nama'], $r['tahun_abk'], $r['pertumbuhan'], $r['kebutuhan_saat_ini'], $r['existing_saat_ini'], $r['formasi_belum_terisi']];
+            $row = [$r['unit_nama'], $r['jabatan_nama'], $r['sumber'] === 'sementara' ? 'Kebutuhan sementara' : $r['tahun_abk'], $r['pertumbuhan'], $r['kebutuhan_saat_ini'], $r['existing_saat_ini'], $r['formasi_belum_terisi']];
             foreach ($hasil['tahun'] as $t) {
                 $y = $r['tahun'][$t];
                 array_push($row, $y['kebutuhan'], $y['existing'], $y['pensiun'], $y['kekurangan'], $y['rencana']);

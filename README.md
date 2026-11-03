@@ -25,6 +25,9 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Saran redistribusi pegawai dari unit gemuk ke unit kurang pada jabatan yang sama.
 
 **Hilir: usulan → penetapan → pengisian**
+- Satu rumus saran usulan (`App\Services\SaranUsulanService`) untuk menarik rincian dan memeriksa usulan; rincian yang melebihi saran atau tanpa dasar kebutuhan ditandai untuk operator, BKN, dan KemenPANRB, tanpa memblokir alur.
+- Kebutuhan sementara per posisi agar perhitungan tidak menunggu ABK; kesiapan ABK per instansi.
+- Pegawai baru dapat ditautkan ke formasi yang ditetapkan sehingga jumlah terisi bertambah otomatis.
 - Usulan dengan prioritas per jabatan, estimasi anggaran, verifikasi & pertimbangan teknis BKN, validasi & penetapan KemenPANRB, PDF lampiran penetapan.
 - Pelacakan pengisian formasi (realisasi hasil seleksi); sisa formasi belum terisi tampil di monitoring dan proyeksi.
 - Notifikasi di aplikasi (lonceng) dan opsional email untuk setiap tahap alur.
@@ -34,6 +37,12 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Histori data existing: rekam jejak bulanan per posisi (`php artisan kebutuhan:snapshot`, harian otomatis; `--rekonstruksi=12` untuk mengisi mundur dari riwayat pegawai), log peristiwa (masuk, keluar, mutasi, ganti jabatan), dan analisis **tidak bergerak** per instansi/unit/jabatan untuk periode 1/3/6/12/24 bulan (existing awal vs kini, terakhir bergerak, kondisi).
 - Sistem peringatan dini (`php artisan peringatan:deteksi`, otomatis 06.00): jabatan kosong, pemenuhan unit kritis, unit gemuk, unit kekurangan yang stagnan, data tidak diperbarui, ABK belum ada/kedaluwarsa, pensiun mendatang, usulan tertahan, formasi belum terisi, dan sinkron SIASN gagal. Tingkat kritis/tinggi/sedang/rendah, tindak lanjut tercatat, dan peringatan tertutup otomatis ketika kondisinya teratasi. Ringkasan dikirim sebagai notifikasi. Ambang batas diatur lewat `PERINGATAN_*` di `.env`.
 - Pusat laporan: rekap per instansi/unit/jabatan, daftar jabatan bermasalah, usulan–penetapan–pengisian, proyeksi pensiun, ABK & efektivitas, unit tidak bergerak, dan peringatan terbuka. Semua bisa dilihat di layar, diunduh Excel, atau PDF.
+
+**Asisten AI (Google Gemini)**
+- Draf Anjab-ABK dari nama jabatan & unit: uraian tugas (volume, periode, norma waktu perkiraan), ikhtisar, dan informasi jabatan.
+- Analisis naratif monitoring per instansi (kondisi, masalah utama, rekomendasi, prioritas) dan saran tindak lanjut setiap peringatan dini.
+- Semua hasil tersimpan di satu tabel `ai_riwayat` dan dipakai ulang untuk permintaan yang sama (ditandai bila datanya sudah berubah); AI dipanggil lagi hanya lewat tombol **Buat ulang**.
+- Mendukung **sampai 5 API key gratis** (`GEMINI_API_KEY_1`…`_5`) yang dipakai bergiliran: key yang kena rate limit/kuota harian diistirahatkan otomatis dan permintaan dialihkan ke key berikutnya. Cek dengan `php artisan ai:status --uji`. Detail di `App\Services\Ai\GeminiClient`.
 
 **Keamanan**
 - Login SSO SIASN (OpenID Connect ke Keycloak BKN, authorization code + PKCE) untuk admin dan operator instansi. User dicocokkan **hanya lewat NIP** yang sudah terdaftar di SIMONKEB, dan login SSO tidak diminta 2FA lokal lagi karena BKN sudah memakai MFA.
@@ -54,7 +63,7 @@ Tata cara pembaruan: `docs/CARA-MEMPERBARUI-PANDUAN.md`.
 |---|-------|--------|------|
 | 1 | Struktur organisasi & data pegawai existing (bezetting), bisa impor Excel | Operator instansi | Struktur Unit Kerja, Data Pegawai |
 | 2 | Anjab & ABK: uraian tugas × volume × norma waktu ÷ waktu kerja efektif (75.000 menit) | Operator instansi | Anjab & ABK |
-| 3 | Usulan: rincian ditarik otomatis dari ABK final (kekurangan + proyeksi pensiun 5 th), lalu **diajukan** | Operator instansi | Usulan Kebutuhan |
+| 3 | Usulan: rincian ditarik otomatis dengan **saran sistem** (kebutuhan − existing + pensiun 5 th − formasi belum terisi − usulan lain yang diproses − redistribusi opsional), lalu **diajukan** | Operator instansi | Usulan Kebutuhan |
 | 4 | Verifikasi & **pertimbangan teknis** (jumlah rekomendasi per jabatan) | Verifikator BKN | Usulan Kebutuhan |
 | 5 | Validasi & **penetapan** (jumlah ditetapkan, nomor/tanggal SK, berkas SK) | Validator KemenPANRB | Usulan Kebutuhan, Penetapan |
 | 6 | Monitoring kebutuhan vs existing, diperbarui otomatis tiap 30 detik | Semua peran | Dashboard, Monitoring |
@@ -68,7 +77,7 @@ Jumlah rekomendasi tidak boleh melebihi usulan, dan jumlah ditetapkan tidak bole
 
 `App\Services\MonitoringService` menghitung langsung dari database, tanpa cache:
 
-- **Posisi** = unit kerja × jabatan. Kebutuhan = ABK berstatus *final*; existing = pegawai aktif.
+- **Posisi** = unit kerja × jabatan. Kebutuhan = ABK berstatus *final* (atau **kebutuhan sementara** bila posisi belum punya ABK final); existing = pegawai aktif.
 - Kurang/lebih dihitung **per posisi** lalu dijumlahkan, sehingga kelebihan di satu unit
   tidak menutupi kekurangan di unit lain.
 - Indikator: kurang, lebih (gemuk), jabatan kosong (dibutuhkan tetapi 0 pegawai), belum ada ABK,

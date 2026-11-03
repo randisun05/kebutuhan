@@ -10,7 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Pelacakan pengisian formasi yang telah ditetapkan (hasil seleksi CASN/PPPK yang sudah diangkat).
- * Sisa formasi belum terisi ikut dihitung di monitoring dan proyeksi.
+ * Sisa formasi belum terisi ikut dihitung di monitoring dan proyeksi. Jumlah terisi boleh dicatat manual
+ * atau bertambah otomatis ketika pegawai baru ditautkan ke formasi di Data Pegawai.
  */
 class FormasiController extends Controller
 {
@@ -28,6 +29,7 @@ class FormasiController extends Controller
         $ringkasan = (clone $base)->selectRaw('COALESCE(SUM(jumlah_ditetapkan),0) as ditetapkan, COALESCE(SUM(jumlah_terisi),0) as terisi')->first();
 
         $datas = (clone $base)
+            ->withCount(['pegawais as pegawai_tertaut' => fn ($q) => $q->where('is_active', true)])
             ->with(['usulan:id,nomor,tahun,instansi_id,jenis_asn', 'usulan.instansi:id,nama', 'unitKerja:id,nama', 'jabatan:id,nama', 'usulan.penetapan:id,usulan_id,nomor_sk'])
             ->orderByDesc('usulan_id')->orderBy('unit_kerja_id')
             ->paginate(25)->withQueryString();
@@ -57,6 +59,12 @@ class FormasiController extends Controller
                 $this->authorizeInstansi($detail->usulan->instansi_id);
                 abort_unless($detail->usulan->status === UsulanStatus::Ditetapkan, 422, 'Formasi belum ditetapkan.');
 
+                $tertaut = $detail->pegawais()->where('is_active', true)->count();
+                if ($item['jumlah_terisi'] < $tertaut) {
+                    throw ValidationException::withMessages([
+                        'items' => "Jumlah terisi {$detail->jabatan?->nama} tidak boleh kurang dari {$tertaut} pegawai yang sudah ditautkan ke formasi ini.",
+                    ]);
+                }
                 if ($item['jumlah_terisi'] > $detail->jumlah_ditetapkan) {
                     throw ValidationException::withMessages([
                         'items' => "Jumlah terisi {$detail->jabatan?->nama} melebihi formasi yang ditetapkan ({$detail->jumlah_ditetapkan}).",

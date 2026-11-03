@@ -16,6 +16,7 @@ Bagian berikut dibangkitkan dari kode saat halaman dibuka, jadi **jangan ditulis
 | `{{ aturan_peringatan }}`, `{{ ambang_peringatan }}` | `App\Services\PeringatanService::ATURAN`, `config/simonkeb.php` |
 | `{{ jenis_laporan }}` | `App\Services\LaporanService::JENIS` |
 | `{{ konstanta_abk }}`, `{{ kategori_pej }}`, `{{ informasi_jabatan }}`, `{{ jenis_jabatan }}`, `{{ prioritas_usulan }}` | `App\Support\Referensi` |
+| `{{ status_ai }}` | `config/gemini.php` |
 | `{{ versi }}` | judul teratas `docs/panduan/perubahan.md` |
 
 Penanda baru ditambahkan di `App\Services\PanduanService::blokDinamis()`.

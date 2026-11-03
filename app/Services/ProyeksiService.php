@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\UsulanStatus;
 use App\Models\AnjabAbk;
+use App\Models\KebutuhanSementara;
 use App\Support\Referensi;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Proyeksi kebutuhan pegawai 5 tahun berbasis ABK.
  *
- * Untuk setiap posisi (unit × jabatan) dengan ABK final terbaru:
+ * Untuk setiap posisi (unit × jabatan) dengan ABK final terbaru, atau kebutuhan sementara
+ * (tanpa pertumbuhan) bila posisi belum memiliki ABK final:
  *  - kebutuhan tahun t  = beban kerja ABK × (1 + pertumbuhan%)^(t - tahun ABK) ÷ waktu kerja efektif
  *  - existing akhir t   = pegawai aktif saat ini − pegawai yang mencapai BUP s.d. 31 Desember t
  *  - kekurangan t       = max(0, kebutuhan t − existing akhir t)
@@ -42,6 +44,22 @@ class ProyeksiService
             ->when($filters['jenis'] ?? null, fn ($q, $j) => $q->whereIn('a.jabatan_id', DB::table('jabatans')->where('jenis', $j)->select('id')))
             ->with(['unitKerja:id,nama', 'jabatan:id,nama,jenis,estimasi_biaya_tahunan'])
             ->get();
+
+        // posisi tanpa ABK final memakai kebutuhan sementara (tetap, tanpa pertumbuhan beban kerja)
+        $sementara = KebutuhanSementara::query()
+            ->where('instansi_id', $instansiId)
+            ->whereNotExists(fn ($q) => $q->from('anjab_abks as b')->whereColumn('b.unit_kerja_id', 'kebutuhan_sementara.unit_kerja_id')
+                ->whereColumn('b.jabatan_id', 'kebutuhan_sementara.jabatan_id')->where('b.status', 'final'))
+            ->when($filters['unit_ids'] ?? null, fn ($q, $ids) => $q->whereIn('unit_kerja_id', $ids))
+            ->when($filters['jenis'] ?? null, fn ($q, $j) => $q->whereIn('jabatan_id', DB::table('jabatans')->where('jenis', $j)->select('id')))
+            ->with(['unitKerja:id,nama', 'jabatan:id,nama,jenis,estimasi_biaya_tahunan'])
+            ->get()
+            ->map(fn (KebutuhanSementara $k) => (new AnjabAbk([
+                'unit_kerja_id' => $k->unit_kerja_id, 'jabatan_id' => $k->jabatan_id, 'tahun' => (int) now()->format('Y'),
+                'waktu_kerja_efektif' => Referensi::WAKTU_KERJA_EFEKTIF, 'pertumbuhan_beban' => 0, 'kebutuhan' => $k->jumlah,
+                'total_beban_kerja' => $k->jumlah * Referensi::WAKTU_KERJA_EFEKTIF,
+            ]))->setRelation('unitKerja', $k->unitKerja)->setRelation('jabatan', $k->jabatan));
+        $abks = $abks->concat($sementara);
 
         if ($abks->isEmpty()) {
             return ['tahun' => $tahun, 'rows' => [], 'total' => $this->kosong($tahun)];
@@ -91,6 +109,7 @@ class ProyeksiService
 
             return [
                 'anjab_id' => $abk->id,
+                'sumber' => $abk->exists ? 'abk' : 'sementara',
                 'unit_kerja_id' => $abk->unit_kerja_id,
                 'unit_nama' => $abk->unitKerja?->nama,
                 'jabatan_id' => $abk->jabatan_id,

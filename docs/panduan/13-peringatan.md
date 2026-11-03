@@ -34,7 +34,8 @@ Peringatan kritis/tinggi yang baru dikirim sebagai **notifikasi** ke administrat
 
 1. Klik kartu tingkat atau jenis peringatan di kiri untuk memfilter.
 2. Klik **Buka** untuk menuju halaman terkait (monitoring unit, histori, usulan, dll.).
-3. Klik **Tindak lanjut** dan tulis apa yang sudah dilakukan (misalnya "sudah diusulkan formasi 2027"). Status berubah menjadi *ditindaklanjuti*.
-4. Setelah kondisinya teratasi, deteksi berikutnya menandai peringatan **selesai**.
+3. (Opsional) Klik **Saran AI** untuk melihat penyebab yang mungkin dan langkah tindak lanjut yang disarankan ([Asisten AI](/panduan/17-asisten-ai)).
+4. Klik **Tindak lanjut** dan tulis apa yang sudah dilakukan (misalnya "sudah diusulkan formasi 2027"). Status berubah menjadi *ditindaklanjuti*.
+5. Setelah kondisinya teratasi, deteksi berikutnya menandai peringatan **selesai**.
 
 Administrator dapat menjalankan deteksi kapan saja dengan tombol **Deteksi sekarang**.

@@ -47,6 +47,19 @@
             </div>
         </div>
 
+        <div v-if="$page.props.ai" class="card mb-3 border-info">
+            <div class="card-body py-2 d-flex flex-wrap gap-2 align-items-center">
+                <i class="fa fa-magic text-info"></i>
+                <span class="small fw-semibold">Bantu isi dengan AI</span>
+                <input v-model="aiCatatan" class="form-control form-control-sm flex-grow-1" style="max-width: 420px" maxlength="500" placeholder="Catatan opsional, mis. fokus layanan perizinan online">
+                <button type="button" class="btn btn-sm btn-info text-white" :disabled="aiProses || !form.jabatan_id" @click="isiAi">
+                    <i class="fa" :class="aiProses ? 'fa-spinner fa-spin' : 'fa-magic'"></i> {{ aiProses ? 'Menyusun draf…' : 'Buat draf' }}
+                </button>
+                <span v-if="!form.jabatan_id" class="small text-muted">Pilih jabatan terlebih dahulu.</span>
+                <div class="w-100 small text-muted">Draf berisi uraian tugas (volume & norma waktu perkiraan) dan informasi jabatan. Draf disimpan di riwayat sehingga jabatan & unit yang sama tidak perlu dibuat ulang. Periksa dan sesuaikan sebelum disimpan.</div>
+            </div>
+        </div>
+
         <ul class="nav nav-tabs">
             <li class="nav-item"><a href="#" class="nav-link" :class="{ active: tab === 'abk' }" @click.prevent="tab = 'abk'">1. Uraian Tugas & Beban Kerja</a></li>
             <li class="nav-item"><a href="#" class="nav-link" :class="{ active: tab === 'info' }" @click.prevent="tab = 'info'">2. Informasi Jabatan</a></li>
@@ -141,6 +154,9 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
+import Swal from 'sweetalert2';
+import { infoRiwayat } from '../../ai';
 import { num } from '../../utils';
 
 const props = defineProps({
@@ -192,6 +208,38 @@ const gantiInstansi = () => {
     form.unit_kerja_id = '';
     router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions'] });
 };
+// draf AI: uraian tugas ditambahkan (baris kosong dibuang), informasi jabatan hanya mengisi yang masih kosong
+const aiCatatan = ref('');
+const aiProses = ref(false);
+const minta = (baru) => axios.post('/ai/anjab-draft', { jabatan_id: form.jabatan_id, unit_kerja_id: form.unit_kerja_id || null, catatan: aiCatatan.value || null, baru });
+const isiAi = async () => {
+    aiProses.value = true;
+    try {
+        let { data } = await minta(false);
+        // draf untuk jabatan/unit/catatan yang sama sudah ada di riwayat: pakai, atau minta draf baru
+        if (data.riwayat.dari_riwayat) {
+            const pilih = await Swal.fire({
+                icon: 'info', title: 'Draf AI tersimpan', text: infoRiwayat(data.riwayat),
+                showDenyButton: true, showCancelButton: true, confirmButtonText: 'Pakai draf ini', denyButtonText: 'Buat ulang', cancelButtonText: 'Batal',
+            });
+            if (pilih.isDismissed) return;
+            if (pilih.isDenied) ({ data } = await minta(true));
+        }
+        form.uraian = [...form.uraian.filter((r) => r.uraian_tugas.trim()), ...data.uraian];
+        if (!form.ikhtisar_jabatan.trim()) form.ikhtisar_jabatan = data.ikhtisar_jabatan;
+        Object.entries(data.informasi).forEach(([k, v]) => {
+            const kini = form.informasi[k];
+            if (Array.isArray(kini) ? !kini.some((x) => x.trim()) : !String(kini || '').trim()) form.informasi[k] = v;
+        });
+        tab.value = 'abk';
+        Swal.fire({ icon: 'success', title: 'Draf AI ditambahkan', text: `${data.uraian.length} uraian tugas ditambahkan dan informasi jabatan yang kosong sudah diisi. Periksa volume & norma waktu sebelum menyimpan.` });
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'AI gagal', text: e.response?.data?.message || 'Terjadi kesalahan. Silakan coba lagi.' });
+    } finally {
+        aiProses.value = false;
+    }
+};
+
 const submit = () => {
     const opts = { onError: (e) => { if (Object.keys(e).some((k) => k.startsWith('uraian'))) tab.value = 'abk'; } };
     return props.data ? form.put(`/anjab/${props.data.id}`, opts) : form.post('/anjab', opts);

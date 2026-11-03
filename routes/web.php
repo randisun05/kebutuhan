@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\AkunController;
 use App\Http\Controllers\AnalitikController;
 use App\Http\Controllers\AnjabAbkController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\FormasiController;
 use App\Http\Controllers\HistoriController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\JabatanController;
+use App\Http\Controllers\KebutuhanSementaraController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotifikasiController;
@@ -56,6 +58,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/peringatan/{peringatan}/tindak-lanjut', [PeringatanController::class, 'tindakLanjut'])->name('peringatan.tindak-lanjut');
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
     Route::get('/laporan/unduh/{format}', [LaporanController::class, 'unduh'])->name('laporan.unduh');
+
+    // Asisten AI (Gemini, API key bergiliran); dibatasi agar kuota gratis tidak cepat habis
+    Route::middleware('throttle:ai')->prefix('ai')->name('ai.')->group(function () {
+        Route::post('/anjab-draft', [AiController::class, 'draftAnjab'])->name('anjab-draft');
+        Route::post('/monitoring/{instansi}', [AiController::class, 'analisisMonitoring'])->name('monitoring');
+        Route::post('/peringatan/{peringatan}', [AiController::class, 'saranPeringatan'])->name('peringatan');
+        Route::post('/usulan/{usulan}', [AiController::class, 'justifikasiUsulan'])->name('usulan');
+    });
 
     // Monitoring kebutuhan vs existing (real-time)
     Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
@@ -106,6 +116,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/unit-kerja/import', [UnitKerjaController::class, 'import'])->name('unit-kerja.import');
         Route::post('/unit-kerja/{unitKerja}/toggle', [UnitKerjaController::class, 'toggle'])->name('unit-kerja.toggle');
         Route::resource('unit-kerja', UnitKerjaController::class)->except('show')->parameters(['unit-kerja' => 'unitKerja']);
+
+        Route::post('/kebutuhan-sementara', [KebutuhanSementaraController::class, 'simpan'])->name('kebutuhan-sementara.simpan');
 
         Route::get('/siasn', [SiasnController::class, 'index'])->name('siasn.index');
         Route::post('/siasn/sync', [SiasnController::class, 'sync'])->middleware('throttle:10,1')->name('siasn.sync');

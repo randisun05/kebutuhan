@@ -18,7 +18,7 @@ Menu **Penetapan Kebutuhan** menampilkan seluruh SK penetapan beserta rekap per 
 Setelah seleksi CASN/PPPK, operator instansi mencatat realisasinya di menu **Pengisian Formasi**:
 
 1. Filter *Belum terisi penuh* bila perlu.
-2. Isi kolom **Terisi** per jabatan (tidak boleh melebihi formasi yang ditetapkan).
+2. Isi kolom **Terisi** per jabatan (tidak boleh melebihi formasi yang ditetapkan). Bila pegawai baru sudah ditautkan ke formasi di **Data Pegawai** (*Diangkat dari formasi*), angka ini bertambah sendiri dan tidak dapat diisi lebih kecil dari jumlah pegawai yang tertaut (ikon rantai). Pencatatan manual tanpa menautkan pegawai tetap bisa.
 3. Klik **Simpan perubahan**.
 
 Sisa formasi yang belum terisi ikut dihitung di monitoring (kolom *Formasi*) dan proyeksi, dan formasi yang belum terisi lewat batas waktu memunculkan [peringatan](/panduan/13-peringatan).
