@@ -195,6 +195,8 @@ class PeringatanService
         // posisi berpegawai beserta tahun ABK final terbarunya
         $posisi = DB::table('pegawais as p')
             ->where('p.is_active', true)
+            // instansi berjalur manual (kebutuhan sementara) tidak diperingatkan soal ABK
+            ->whereNotIn('p.instansi_id', DB::table('instansis')->where('jalur_kebutuhan', 'manual')->select('id'))
             ->leftJoin(DB::raw("(SELECT unit_kerja_id, jabatan_id, MAX(tahun) as tahun FROM anjab_abks WHERE status = 'final' GROUP BY unit_kerja_id, jabatan_id) a"),
                 fn ($j) => $j->on('a.unit_kerja_id', '=', 'p.unit_kerja_id')->on('a.jabatan_id', '=', 'p.jabatan_id'))
             ->groupBy('p.instansi_id', 'p.unit_kerja_id', 'p.jabatan_id', 'a.tahun')

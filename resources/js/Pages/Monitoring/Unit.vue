@@ -33,7 +33,10 @@
     <div class="card">
         <div v-if="bolehAtur" class="card-header d-flex justify-content-between align-items-center">
             <span class="small text-muted">Kebutuhan dari ABK final; posisi tanpa ABK dapat diberi kebutuhan sementara.</span>
-            <button class="btn btn-sm btn-outline-primary" @click="aturSementara()"><i class="fa fa-plus me-1"></i> Kebutuhan sementara</button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" @click="isiDariExisting"><i class="fa fa-magic me-1"></i> Isi dari existing</button>
+                <button class="btn btn-sm btn-outline-primary" @click="aturSementara()"><i class="fa fa-plus me-1"></i> Kebutuhan sementara</button>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -112,6 +115,16 @@ const aturSementara = async (p = null) => {
         },
     });
     if (res.isConfirmed) router.post('/kebutuhan-sementara', res.value, { preserveScroll: true });
+};
+
+// salin jumlah pegawai existing menjadi kebutuhan sementara (hanya posisi tanpa ABK final dan tanpa isian)
+const isiDariExisting = async () => {
+    const res = await Swal.fire({
+        title: 'Isi dari existing?',
+        html: `<div class="small text-start">Jumlah pegawai aktif per jabatan pada <b>${escapeHtml(props.unit.nama)}</b>${props.filters.sub ? ' beserta sub-unit' : ''} disalin menjadi kebutuhan sementara. Posisi yang sudah punya ABK final atau kebutuhan sementara <b>tidak diubah</b>.</div>`,
+        icon: 'question', showCancelButton: true, confirmButtonText: 'Isi', cancelButtonText: 'Batal',
+    });
+    if (res.isConfirmed) router.post('/kebutuhan-sementara/isi-existing', { instansi_id: props.unit.instansi_id, unit_kerja_id: props.unit.id, sub: props.filters.sub ? 1 : 0 }, { preserveScroll: true });
 };
 
 const LIVE = ['summary', 'positions', 'updatedAt'];

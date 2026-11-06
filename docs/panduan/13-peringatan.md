@@ -22,7 +22,7 @@ Sistem memeriksa kondisi setiap pagi dan memunculkan peringatan. Peringatan **te
 | Kritis | Pemenuhan unit di bawah ambang kritis |
 | Tinggi | Jabatan struktural kosong, unit kekurangan yang stagnan, usulan tertahan, sinkron SIASN gagal |
 | Sedang | Jabatan fungsional/pelaksana kosong, unit gemuk, pensiun mendatang, data usang, formasi belum terisi |
-| Rendah | ABK belum ada atau kedaluwarsa |
+| Rendah | ABK belum ada atau kedaluwarsa (tidak dibuat untuk instansi berjalur **manual**) |
 
 Peringatan kritis/tinggi yang baru dikirim sebagai **notifikasi** ke administrator dan operator instansi terkait.
 

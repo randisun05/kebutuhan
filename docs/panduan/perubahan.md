@@ -9,6 +9,13 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.6.0 — 2026-11-06
+
+- **Dua jalur kebutuhan per instansi**: *Standar (ABK)* dan *Manual dari existing* (kebutuhan sementara). Diatur administrator di Ubah Instansi.
+- **Isi dari existing**: menyalin jumlah pegawai aktif menjadi kebutuhan sementara untuk seluruh instansi atau satu unit, tanpa menimpa posisi yang sudah punya ABK final atau isian.
+- **Impor Excel kebutuhan sementara** beserta template.
+- Peringatan *ABK belum ada atau kedaluwarsa* tidak lagi dibuat untuk instansi berjalur manual.
+
 ## v1.5.0 — 2026-10-28
 
 - **Kebutuhan sementara**: posisi yang belum punya ABK final dapat diberi angka kebutuhan sementara (halaman rincian unit di Monitoring), sehingga monitoring, usulan, proyeksi, dan redistribusi tetap terhitung. Otomatis digantikan hasil ABK setelah difinalkan.

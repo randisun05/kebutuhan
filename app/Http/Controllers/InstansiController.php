@@ -27,7 +27,7 @@ class InstansiController extends Controller
 
     public function create()
     {
-        return inertia('Instansi/Form', ['data' => null, 'jenisOptions' => Referensi::options(Referensi::JENIS_INSTANSI)]);
+        return inertia('Instansi/Form', ['data' => null, 'jenisOptions' => Referensi::options(Referensi::JENIS_INSTANSI), 'jalurOptions' => $this->jalurOptions()]);
     }
 
     public function store(Request $request)
@@ -39,7 +39,7 @@ class InstansiController extends Controller
 
     public function edit(Instansi $instansi)
     {
-        return inertia('Instansi/Form', ['data' => $instansi, 'jenisOptions' => Referensi::options(Referensi::JENIS_INSTANSI)]);
+        return inertia('Instansi/Form', ['data' => $instansi, 'jenisOptions' => Referensi::options(Referensi::JENIS_INSTANSI), 'jalurOptions' => $this->jalurOptions()]);
     }
 
     public function update(Request $request, Instansi $instansi)
@@ -69,8 +69,14 @@ class InstansiController extends Controller
             'nama' => 'required|string|max:255',
             'jenis' => ['required', Rule::in(array_keys(Referensi::JENIS_INSTANSI))],
             'provinsi' => 'nullable|string|max:255',
+            'jalur_kebutuhan' => ['required', Rule::in(array_keys(Instansi::JALUR_KEBUTUHAN))],
             'alamat' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
+    }
+
+    private function jalurOptions(): array
+    {
+        return collect(Instansi::JALUR_KEBUTUHAN)->map(fn ($label, $value) => compact('value', 'label'))->values()->all();
     }
 }

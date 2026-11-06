@@ -49,7 +49,8 @@ class MonitoringController extends Controller
         $filters = $this->filters();
 
         return inertia('Monitoring/Instansi', [
-            'instansi' => $instansi->only(['id', 'kode', 'nama', 'jenis']),
+            'instansi' => $instansi->only(['id', 'kode', 'nama', 'jenis', 'jalur_kebutuhan']),
+            'bolehAtur' => in_array(request()->user()->role?->value, ['admin', 'operator_instansi'], true),
             'filters' => $filters,
             'jenisOptions' => Referensi::options(Referensi::JENIS_JABATAN),
             'summary' => fn () => $this->monitoring->summary($filters + ['instansi_id' => $instansi->id]),

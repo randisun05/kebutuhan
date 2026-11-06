@@ -118,6 +118,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('unit-kerja', UnitKerjaController::class)->except('show')->parameters(['unit-kerja' => 'unitKerja']);
 
         Route::post('/kebutuhan-sementara', [KebutuhanSementaraController::class, 'simpan'])->name('kebutuhan-sementara.simpan');
+        Route::post('/kebutuhan-sementara/isi-existing', [KebutuhanSementaraController::class, 'isiDariExisting'])->name('kebutuhan-sementara.isi-existing');
+        Route::post('/kebutuhan-sementara/import', [KebutuhanSementaraController::class, 'import'])->name('kebutuhan-sementara.import');
+        Route::get('/kebutuhan-sementara/template', [KebutuhanSementaraController::class, 'template'])->name('kebutuhan-sementara.template');
 
         Route::get('/siasn', [SiasnController::class, 'index'])->name('siasn.index');
         Route::post('/siasn/sync', [SiasnController::class, 'sync'])->middleware('throttle:10,1')->name('siasn.sync');

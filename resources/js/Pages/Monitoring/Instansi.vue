@@ -10,6 +10,18 @@
         <LiveBadge :updated-at="updatedAt" @refresh="refresh" />
     </div>
 
+    <div v-if="bolehAtur" class="card mb-3">
+        <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2 small">
+            <span class="fw-semibold"><i class="fa fa-sliders me-1"></i> Jalur kebutuhan:</span>
+            <span class="badge" :class="instansi.jalur_kebutuhan === 'manual' ? 'bg-warning text-dark' : 'bg-primary'">{{ instansi.jalur_kebutuhan === 'manual' ? 'Manual dari existing' : 'Standar (ABK)' }}</span>
+            <span class="text-muted me-auto">Kebutuhan sementara dipakai pada posisi yang belum punya ABK final.</span>
+            <button class="btn btn-sm btn-outline-secondary" @click="isiDariExisting"><i class="fa fa-magic me-1"></i> Isi dari existing</button>
+            <a class="btn btn-sm btn-outline-secondary" href="/kebutuhan-sementara/template"><i class="fa fa-download me-1"></i> Template Excel</a>
+            <button class="btn btn-sm btn-outline-primary" @click="berkas.click()"><i class="fa fa-upload me-1"></i> Impor Excel</button>
+            <input ref="berkas" type="file" accept=".xlsx,.xls,.csv" class="d-none" @change="imporExcel">
+        </div>
+    </div>
+
     <MonitoringFilter :filters="filters" :jenis-options="jenisOptions" :url="`/monitoring/instansi/${instansi.id}`" :instansi-id="instansi.id" />
 
     <div class="row g-3 mb-3">
@@ -129,6 +141,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import StatCard from '../../Components/StatCard.vue';
 import BarChart from '../../Components/BarChart.vue';
@@ -138,9 +151,24 @@ import MonitoringFilter from '../../Components/MonitoringFilter.vue';
 import { infoRiwayat } from '../../ai';
 import { num, pct, barClass, COLORS } from '../../utils';
 
-const props = defineProps({ instansi: Object, filters: Object, jenisOptions: Array, summary: Object, units: Array, perJenis: Array, updatedAt: String, analisisAi: Object, kesiapan: Object });
+const props = defineProps({ instansi: Object, filters: Object, jenisOptions: Array, summary: Object, units: Array, perJenis: Array, updatedAt: String, analisisAi: Object, kesiapan: Object, bolehAtur: Boolean });
 
 const mode = ref('total');
+const berkas = ref(null);
+
+const isiDariExisting = async () => {
+    const res = await Swal.fire({
+        title: 'Isi kebutuhan dari existing?',
+        html: '<div class="small text-start">Jumlah pegawai aktif per unit dan jabatan di instansi ini disalin menjadi kebutuhan sementara. Posisi yang sudah punya ABK final atau kebutuhan sementara <b>tidak diubah</b>.</div>',
+        icon: 'question', showCancelButton: true, confirmButtonText: 'Isi', cancelButtonText: 'Batal',
+    });
+    if (res.isConfirmed) router.post('/kebutuhan-sementara/isi-existing', { instansi_id: props.instansi.id }, { preserveScroll: true });
+};
+const imporExcel = (e) => {
+    const file = e.target.files[0];
+    if (file) router.post('/kebutuhan-sementara/import', { instansi_id: props.instansi.id, file }, { forceFormData: true, preserveScroll: true });
+    e.target.value = '';
+};
 const isOperator = computed(() => usePage().props.auth.user.role === 'operator_instansi');
 const chartUnits = computed(() => props.units.filter((u) => u.own.kurang || u.own.lebih));
 

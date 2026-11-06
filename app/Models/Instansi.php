@@ -17,11 +17,14 @@ class Instansi extends Model
         return LogOptions::defaults()->logFillable()->logOnlyDirty()->dontSubmitEmptyLogs()->useLogName('master');
     }
 
-    protected $fillable = ['kode', 'siasn_instansi_id', 'siasn_satuan_kerja_id', 'nama', 'jenis', 'provinsi', 'alamat', 'is_active'];
+    protected $fillable = ['kode', 'siasn_instansi_id', 'siasn_satuan_kerja_id', 'nama', 'jenis', 'jalur_kebutuhan', 'provinsi', 'alamat', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];
 
-    protected $attributes = ['is_active' => true, 'jenis' => 'pusat'];
+    protected $attributes = ['is_active' => true, 'jenis' => 'pusat', 'jalur_kebutuhan' => 'abk'];
+
+    /** Jalur penyusunan kebutuhan: standar (ABK final) atau manual (kebutuhan sementara dari existing). */
+    public const JALUR_KEBUTUHAN = ['abk' => 'Standar (ABK)', 'manual' => 'Manual dari existing'];
 
     public function unitKerjas(): HasMany
     {

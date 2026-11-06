@@ -41,6 +41,24 @@ Agar perhitungan tidak menunggu ABK selesai, administrator dan operator instansi
 
 Begitu ABK posisi itu **difinalkan**, hasil ABK otomatis menggantikan kebutuhan sementara. Peringatan *ABK belum ada* tetap muncul sampai ABK selesai disusun.
 
+## Dua jalur kebutuhan
+
+Setiap instansi memakai salah satu jalur, yang diatur administrator di **Ubah Instansi → Jalur kebutuhan**:
+
+| Jalur | Dasar kebutuhan | Peringatan *ABK belum ada* |
+| --- | --- | --- |
+| **Standar (ABK)** | Hasil ABK final | Tetap dibuat |
+| **Manual dari existing** | Kebutuhan sementara yang diisi manual | Tidak dibuat |
+
+Kedua jalur memakai fitur yang sama (monitoring, usulan, proyeksi, redistribusi). Posisi yang sudah punya ABK final selalu memakai hasil ABK, apa pun jalur instansinya.
+
+### Mengisi kebutuhan sementara secara massal
+
+Administrator dan operator instansi dapat mengisi banyak posisi sekaligus:
+
+- **Isi dari existing** — di halaman monitoring instansi (seluruh instansi) atau halaman rincian unit (unit itu, mengikuti pilihan *Termasuk sub-unit*). Jumlah pegawai aktif per jabatan disalin menjadi kebutuhan sementara dengan dasar *Existing per tanggal ...*. Posisi yang sudah punya ABK final atau kebutuhan sementara **tidak diubah**. Setelah itu ubah angkanya per posisi lewat ikon pensil.
+- **Impor Excel** — klik **Template Excel**, isi kolom `kode_unit`, `kode_jabatan`, `jumlah`, dan `dasar`, lalu klik **Impor Excel**. Posisi yang sudah ada diperbarui; jumlah **0** menghapusnya. Baris yang gagal dilaporkan.
+
 ## Kesiapan ABK
 
 Halaman per instansi menampilkan **Kesiapan ABK**: persentase posisi yang memakai ABK final mutakhir, dibanding posisi dengan ABK lama, kebutuhan sementara, atau belum ada dasar sama sekali. Ini hanya informasi dan tidak menghalangi fitur apa pun.
