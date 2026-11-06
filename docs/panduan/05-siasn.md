@@ -33,3 +33,15 @@ Pegawai **baru** hanya ditambahkan bila unor dan jabatannya sudah terpetakan; bi
 Setiap proses tercatat: waktu, jenis, status (berjalan/selesai/gagal), jumlah berhasil & gagal, serta daftar pesan per NIP (klik tombol daftar). Sinkron yang gagal juga memunculkan [peringatan dini](/panduan/13-peringatan).
 
 Administrator dapat mengaktifkan **sinkron otomatis setiap malam**.
+
+## Pemetaan jabatan SIASN
+
+Saat sinkron data pegawai, jabatan di SIASN dicocokkan ke jabatan SIMONKEB lewat **ID jabatan SIASN** yang diisi di referensi jabatan, lalu lewat **nama jabatan yang sama**. Jabatan yang belum ada padanannya dicatat otomatis di kartu **Pemetaan jabatan SIASN** pada halaman ini, lengkap dengan jumlah pegawai yang terdampak.
+
+1. Administrator memilih **jabatan SIMONKEB** yang sesuai untuk setiap baris, lalu klik **Simpan**. Operator instansi hanya dapat melihat.
+2. Jalankan **Sinkronkan** data pegawai lagi: pegawai yang sebelumnya gagal karena jabatan belum dipetakan kini diproses.
+
+Pemetaan berlaku untuk semua instansi. Memilih *belum dipetakan* menghapus pemetaan.
+
+![Pemetaan jabatan SIASN](/img/panduan/siasn.png)
+

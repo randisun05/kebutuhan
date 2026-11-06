@@ -15,7 +15,7 @@
             <span class="fw-semibold"><i class="fa fa-sliders me-1"></i> Jalur kebutuhan:</span>
             <span class="badge" :class="instansi.jalur_kebutuhan === 'manual' ? 'bg-warning text-dark' : 'bg-primary'">{{ instansi.jalur_kebutuhan === 'manual' ? 'Manual dari existing' : 'Standar (ABK)' }}</span>
             <span class="text-muted me-auto">Kebutuhan sementara dipakai pada posisi yang belum punya ABK final.</span>
-            <button class="btn btn-sm btn-outline-secondary" @click="isiDariExisting"><i class="fa fa-magic me-1"></i> Isi dari existing</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="isiDariExisting"><i class="fa fa-magic me-1"></i> Isi dari existing / formasi</button>
             <a class="btn btn-sm btn-outline-secondary" href="/kebutuhan-sementara/template"><i class="fa fa-download me-1"></i> Template Excel</a>
             <button class="btn btn-sm btn-outline-primary" @click="berkas.click()"><i class="fa fa-upload me-1"></i> Impor Excel</button>
             <input ref="berkas" type="file" accept=".xlsx,.xls,.csv" class="d-none" @change="imporExcel">
@@ -158,11 +158,13 @@ const berkas = ref(null);
 
 const isiDariExisting = async () => {
     const res = await Swal.fire({
-        title: 'Isi kebutuhan dari existing?',
-        html: '<div class="small text-start">Jumlah pegawai aktif per unit dan jabatan di instansi ini disalin menjadi kebutuhan sementara. Posisi yang sudah punya ABK final atau kebutuhan sementara <b>tidak diubah</b>.</div>',
-        icon: 'question', showCancelButton: true, confirmButtonText: 'Isi', cancelButtonText: 'Batal',
+        title: 'Isi kebutuhan sementara?',
+        html: '<div class="small text-start">Pilih sumber angka untuk seluruh instansi. Posisi yang sudah punya ABK final atau kebutuhan sementara <b>tidak diubah</b>.</div>',
+        icon: 'question', input: 'radio', inputValue: 'existing',
+        inputOptions: { existing: 'Jumlah pegawai existing (pegawai aktif)', formasi: 'Formasi yang sudah ditetapkan (jumlah ditetapkan pada SK)' },
+        showCancelButton: true, confirmButtonText: 'Isi', cancelButtonText: 'Batal',
     });
-    if (res.isConfirmed) router.post('/kebutuhan-sementara/isi-existing', { instansi_id: props.instansi.id }, { preserveScroll: true });
+    if (res.isConfirmed) router.post('/kebutuhan-sementara/isi-existing', { instansi_id: props.instansi.id, sumber: res.value }, { preserveScroll: true });
 };
 const imporExcel = (e) => {
     const file = e.target.files[0];

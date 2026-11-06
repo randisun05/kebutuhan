@@ -11,6 +11,7 @@ use App\Http\Controllers\HistoriController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\JabatanController;
 use App\Http\Controllers\KebutuhanSementaraController;
+use App\Http\Controllers\KualitasDataController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotifikasiController;
@@ -122,9 +123,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/kebutuhan-sementara/import', [KebutuhanSementaraController::class, 'import'])->name('kebutuhan-sementara.import');
         Route::get('/kebutuhan-sementara/template', [KebutuhanSementaraController::class, 'template'])->name('kebutuhan-sementara.template');
 
+        Route::get('/kualitas-data', [KualitasDataController::class, 'index'])->name('kualitas-data');
+
         Route::get('/siasn', [SiasnController::class, 'index'])->name('siasn.index');
         Route::post('/siasn/sync', [SiasnController::class, 'sync'])->middleware('throttle:10,1')->name('siasn.sync');
         Route::post('/siasn/test', [SiasnController::class, 'test'])->name('siasn.test');
+        Route::put('/siasn/peta-jabatan/{peta}', [SiasnController::class, 'petakanJabatan'])->name('siasn.peta-jabatan');
     });
 
     // Referensi nasional, pengguna, dan audit: admin

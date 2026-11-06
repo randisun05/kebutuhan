@@ -57,6 +57,34 @@
         </div>
     </div>
 
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between">
+            <span>Pemetaan jabatan SIASN <span v-if="belumCount" class="badge bg-warning text-dark ms-1">{{ belumCount }} belum dipetakan</span></span>
+        </div>
+        <div class="card-body py-2 small text-muted">Jabatan di SIASN yang belum punya padanan dicatat saat sinkron data pegawai. Pilih jabatan SIMONKEB yang sesuai (khusus administrator), lalu sinkron ulang data pegawai.</div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead><tr><th>Jabatan di SIASN</th><th>ID SIASN</th><th class="num">Pegawai</th><th>Jabatan SIMONKEB</th><th></th></tr></thead>
+                <tbody>
+                    <tr v-for="p in petaJabatan" :key="p.id">
+                        <td>{{ p.nama_siasn || '-' }}</td>
+                        <td class="small text-muted">{{ p.siasn_jabatan_id || '-' }}</td>
+                        <td class="num">{{ p.jumlah_pegawai }}</td>
+                        <td>
+                            <select v-if="isAdmin" v-model="pilihan[p.id]" class="form-select form-select-sm">
+                                <option :value="null">- belum dipetakan -</option>
+                                <option v-for="j in jabatanOptions" :key="j.id" :value="j.id">{{ j.nama }}</option>
+                            </select>
+                            <span v-else>{{ p.jabatan?.nama || '-' }}</span>
+                        </td>
+                        <td><button v-if="isAdmin" class="btn btn-sm btn-outline-primary" :disabled="(pilihan[p.id] ?? null) === (p.jabatan_id ?? null)" @click="petakan(p)">Simpan</button></td>
+                    </tr>
+                    <tr v-if="!petaJabatan.length"><td colspan="5" class="text-center text-muted py-3">Belum ada jabatan SIASN yang perlu dipetakan.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header d-flex justify-content-between"><span>Riwayat sinkronisasi</span>
             <button class="btn btn-sm btn-link p-0" @click="router.reload({ only: ['logs'] })"><i class="fa fa-refresh"></i></button></div>
@@ -84,13 +112,16 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { waktu } from '../../utils';
 
-const props = defineProps({ configured: Boolean, mode: String, baseUrl: String, scheduled: Boolean, instansiOptions: Array, instansiId: Number, instansi: Object, pemetaan: Object, logs: Array });
+const props = defineProps({ configured: Boolean, mode: String, baseUrl: String, scheduled: Boolean, instansiOptions: Array, instansiId: Number, instansi: Object, pemetaan: Object, logs: Array, petaJabatan: { type: Array, default: () => [] }, jabatanOptions: { type: Array, default: () => [] } });
 const isAdmin = computed(() => usePage().props.auth.user.role === 'admin');
 const open = ref(null);
+const pilihan = reactive(Object.fromEntries(props.petaJabatan.map((p) => [p.id, p.jabatan_id ?? null])));
+const belumCount = computed(() => props.petaJabatan.filter((p) => !p.jabatan_id).length);
+const petakan = (p) => router.put(`/siasn/peta-jabatan/${p.id}`, { jabatan_id: pilihan[p.id] }, { preserveScroll: true });
 const form = useForm({ instansi_id: props.instansiId, jenis: 'unor', nips: '' });
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0) + '%';
 const submit = () => form.post('/siasn/sync', { preserveScroll: true });

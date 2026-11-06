@@ -10,6 +10,7 @@ use App\Models\UnitKerja;
 use App\Services\KebutuhanSementaraService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -57,6 +58,7 @@ class KebutuhanSementaraController extends Controller
             'instansi_id' => 'required|exists:instansis,id',
             'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
             'sub' => 'nullable|boolean',
+            'sumber' => ['nullable', Rule::in(array_keys(KebutuhanSementaraService::SUMBER))],
         ]);
         $this->authorizeInstansi((int) $data['instansi_id']);
 
@@ -67,8 +69,8 @@ class KebutuhanSementaraController extends Controller
             $unitIds = ($data['sub'] ?? true) ? UnitKerja::descendantIds($unit->id) : [$unit->id];
         }
 
-        $hasil = $service->isiDariExisting((int) $data['instansi_id'], $unitIds, $request->user()->id);
-        $pesan = "Kebutuhan sementara dari existing: {$hasil['dibuat']} posisi diisi, {$hasil['dilewati_abk']} dilewati (sudah ada ABK final), {$hasil['dilewati_ada']} dilewati (sudah ada kebutuhan sementara).";
+        $hasil = $service->isi((int) $data['instansi_id'], $unitIds, $request->user()->id, $data['sumber'] ?? 'existing');
+        $pesan = 'Kebutuhan sementara dari '.strtolower(KebutuhanSementaraService::SUMBER[$data['sumber'] ?? 'existing']).": {$hasil['dibuat']} posisi diisi, {$hasil['dilewati_abk']} dilewati (sudah ada ABK final), {$hasil['dilewati_ada']} dilewati (sudah ada kebutuhan sementara).";
 
         return back()->with($hasil['dibuat'] ? 'success' : 'info', $pesan);
     }

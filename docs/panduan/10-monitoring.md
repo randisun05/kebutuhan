@@ -56,8 +56,14 @@ Kedua jalur memakai fitur yang sama (monitoring, usulan, proyeksi, redistribusi)
 
 Administrator dan operator instansi dapat mengisi banyak posisi sekaligus:
 
-- **Isi dari existing** — di halaman monitoring instansi (seluruh instansi) atau halaman rincian unit (unit itu, mengikuti pilihan *Termasuk sub-unit*). Jumlah pegawai aktif per jabatan disalin menjadi kebutuhan sementara dengan dasar *Existing per tanggal ...*. Posisi yang sudah punya ABK final atau kebutuhan sementara **tidak diubah**. Setelah itu ubah angkanya per posisi lewat ikon pensil.
+- **Isi dari existing / formasi** — di halaman monitoring instansi (seluruh instansi) atau halaman rincian unit (unit itu, mengikuti pilihan *Termasuk sub-unit*). Pilih sumber angka:
+  - **Jumlah pegawai existing**: pegawai aktif per jabatan, dengan dasar *Existing per tanggal ...*.
+  - **Formasi yang sudah ditetapkan**: total *jumlah ditetapkan* per unit dan jabatan dari usulan berstatus *ditetapkan*, dengan dasar *Formasi ditetapkan per tanggal ...*.
+
+  Posisi yang sudah punya ABK final atau kebutuhan sementara **tidak diubah**. Setelah itu ubah angkanya per posisi lewat ikon pensil.
 - **Impor Excel** — klik **Template Excel**, isi kolom `kode_unit`, `kode_jabatan`, `jumlah`, dan `dasar`, lalu klik **Impor Excel**. Posisi yang sudah ada diperbarui; jumlah **0** menghapusnya. Baris yang gagal dilaporkan.
+
+![Monitoring instansi: jalur kebutuhan dan isi massal](/img/panduan/monitoring-instansi.png)
 
 ## Kesiapan ABK
 

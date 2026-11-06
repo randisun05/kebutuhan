@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Enums\Role;
+use App\Enums\UsulanStatus;
 use App\Exports\ArrayExport;
 use App\Models\KebutuhanSementara;
 use App\Models\Peringatan;
+use App\Models\Usulan;
+use App\Models\UsulanDetail;
 use App\Services\MonitoringService;
 use App\Services\PeringatanService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,6 +45,28 @@ class JalurKebutuhanTest extends TestCase
         // kebutuhan = existing untuk A, ABK untuk B, isian untuk C
         $s = app(MonitoringService::class)->summary(['instansi_id' => $instansi->id]);
         $this->assertSame(3 + 7 + 9, $s['kebutuhan']);
+    }
+
+    public function test_isi_dari_formasi_yang_ditetapkan(): void
+    {
+        $instansi = $this->instansi();
+        $unit = $this->unit($instansi, 'U');
+        [$a, $b] = [$this->jabatan('A'), $this->jabatan('B')];
+        $this->pegawai($unit, $a, 1);
+        $ditetapkan = Usulan::create(['instansi_id' => $instansi->id, 'tahun' => 2026, 'perihal' => 'U1', 'status' => UsulanStatus::Ditetapkan]);
+        $draft = Usulan::create(['instansi_id' => $instansi->id, 'tahun' => 2027, 'perihal' => 'U2', 'status' => UsulanStatus::Draft]);
+        foreach ([[$ditetapkan, $a, 4], [$ditetapkan, $b, 2], [$draft, $b, 9]] as [$u, $j, $n]) {
+            UsulanDetail::create(['usulan_id' => $u->id, 'unit_kerja_id' => $unit->id, 'jabatan_id' => $j->id, 'jumlah_usul' => $n, 'jumlah_ditetapkan' => $u === $draft ? null : $n]);
+        }
+
+        $this->actingAs($this->user(Role::OperatorInstansi, $instansi))
+            ->post('/kebutuhan-sementara/isi-existing', ['instansi_id' => $instansi->id, 'sumber' => 'formasi'])
+            ->assertSessionHas('success');
+
+        // hanya usulan berstatus ditetapkan yang dihitung; existing tidak dipakai
+        $this->assertSame(4, KebutuhanSementara::where('jabatan_id', $a->id)->value('jumlah'));
+        $this->assertSame(2, KebutuhanSementara::where('jabatan_id', $b->id)->value('jumlah'));
+        $this->assertStringContainsString('Formasi ditetapkan', KebutuhanSementara::first()->dasar);
     }
 
     public function test_isi_dari_existing_satu_unit_dan_batas_instansi(): void

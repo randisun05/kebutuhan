@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\SinkronSiasn;
 use App\Models\Instansi;
 use App\Models\Jabatan;
+use App\Models\SiasnJabatanPeta;
 use App\Models\SiasnSyncLog;
 use App\Models\UnitKerja;
 use App\Services\Siasn\SiasnClient;
@@ -32,11 +33,31 @@ class SiasnController extends Controller
                 'jabatan_total' => Jabatan::count(),
                 'jabatan_terpetakan' => Jabatan::whereNotNull('siasn_jabatan_id')->count(),
             ],
+            'petaJabatan' => fn () => SiasnJabatanPeta::with('jabatan:id,nama')
+                ->orderByRaw('CASE WHEN jabatan_id IS NULL THEN 0 ELSE 1 END')->orderByDesc('jumlah_pegawai')->limit(200)->get(),
+            'jabatanOptions' => fn () => $this->bolehMemetakan() ? Jabatan::where('is_active', true)->orderBy('nama')->get(['id', 'nama']) : [],
             'logs' => fn () => $this->scoped(SiasnSyncLog::query())
                 ->with(['instansi:id,nama', 'user:id,name'])
                 ->when($instansiId, fn ($q) => $q->where('instansi_id', $instansiId))
                 ->latest()->limit(20)->get(),
         ]);
+    }
+
+    /** Petakan jabatan SIASN ke jabatan SIMONKEB (referensi nasional, khusus administrator). */
+    public function petakanJabatan(Request $request, SiasnJabatanPeta $peta)
+    {
+        abort_unless($this->bolehMemetakan(), 403);
+        $data = $request->validate(['jabatan_id' => 'nullable|exists:jabatans,id']);
+        $peta->update(['jabatan_id' => $data['jabatan_id'] ?? null]);
+
+        return back()->with('success', $peta->jabatan_id
+            ? 'Pemetaan disimpan. Jalankan sinkron data pegawai agar pegawai terkait diperbarui.'
+            : 'Pemetaan dihapus.');
+    }
+
+    private function bolehMemetakan(): bool
+    {
+        return (bool) request()->user()?->isAdmin();
     }
 
     public function sync(Request $request, SiasnClient $client)

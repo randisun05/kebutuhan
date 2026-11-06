@@ -48,6 +48,7 @@ export default {
                     { label: 'Organisasi & Unit Kerja', href: '/unit-kerja', icon: 'fa-sitemap', roles: ['admin', 'operator_instansi'] },
                     { label: 'Peta Jabatan', href: '/peta-jabatan', icon: 'fa-th-list', roles: ALL },
                     { label: 'Data Pegawai (Existing)', href: '/pegawai', icon: 'fa-users', roles: ['admin', 'operator_instansi'] },
+                    { label: 'Kualitas Data', href: '/kualitas-data', icon: 'fa-check-square-o', roles: ['admin', 'operator_instansi'] },
                     { label: 'Integrasi SIASN', href: '/siasn', icon: 'fa-exchange', roles: ['admin', 'operator_instansi'] },
                 ] },
                 { label: 'Hulu: ABK & Perencanaan', items: [

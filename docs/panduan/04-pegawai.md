@@ -4,7 +4,7 @@ ringkas: Input manual, impor Excel, riwayat mutasi, dan status aktif pegawai.
 bagian: Hulu — organisasi & data
 urutan: 11
 peran: [admin, operator_instansi]
-menu: [/pegawai]
+menu: [/pegawai, /kualitas-data]
 ---
 
 Data pegawai aktif adalah angka **existing** pada monitoring. Ada tiga cara memperbaruinya: **manual**, **impor Excel**, dan **sinkron SIASN** (lihat [Integrasi SIASN](/panduan/05-siasn)).
@@ -30,3 +30,23 @@ Di halaman ubah pegawai terdapat **Riwayat jabatan & mutasi**: masuk/aktif, kelu
 ## Filter
 
 Filter berdasarkan unit (termasuk sub-unit), jenis jabatan, status aktif, atau **Pensiun ≤ 5 th** untuk melihat pegawai yang segera mencapai BUP.
+
+## Kualitas data
+
+Menu **Kualitas Data** memeriksa otomatis pegawai aktif satu instansi dan menampilkan jumlah temuan beserta contohnya (klik ikon pensil untuk langsung memperbaiki):
+
+| Pemeriksaan | Tingkat |
+| --- | --- |
+| NIP bukan 18 digit angka | Tinggi |
+| Tanggal lahir kosong (pensiun dan proyeksi tidak terhitung) | Tinggi |
+| Tanggal lahir tidak wajar (umur < 17 atau > 75 tahun) | Tinggi |
+| Masih aktif padahal sudah melewati TMT pensiun | Tinggi |
+| Ditempatkan di unit kerja nonaktif | Sedang |
+| Memakai jabatan nonaktif | Sedang |
+| Kemungkinan data ganda (nama dan tanggal lahir sama) | Sedang |
+| Golongan atau pendidikan kosong | Rendah |
+| PNS belum pernah atau lama tidak disinkron SIASN (bila integrasi aktif) | Rendah |
+
+Pemeriksaan ini hanya informasi dan tidak memblokir fitur apa pun.
+
+![Kualitas data](/img/panduan/kualitas-data.png)

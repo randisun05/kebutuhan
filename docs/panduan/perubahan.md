@@ -15,6 +15,9 @@ Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan 
 - **Isi dari existing**: menyalin jumlah pegawai aktif menjadi kebutuhan sementara untuk seluruh instansi atau satu unit, tanpa menimpa posisi yang sudah punya ABK final atau isian.
 - **Impor Excel kebutuhan sementara** beserta template.
 - Peringatan *ABK belum ada atau kedaluwarsa* tidak lagi dibuat untuk instansi berjalur manual.
+- **Isi dari formasi yang ditetapkan**: kebutuhan sementara dapat diisi dari total jumlah ditetapkan pada usulan berstatus ditetapkan, selain dari existing.
+- **Pemetaan jabatan SIASN**: jabatan SIASN yang belum punya padanan dicatat saat sinkron dan dapat dipetakan administrator di halaman Integrasi SIASN.
+- **Kualitas Data** (menu baru): pemeriksaan otomatis data pegawai aktif (NIP, tanggal lahir, melewati pensiun, unit/jabatan nonaktif, data ganda, dan lainnya).
 
 ## v1.5.0 — 2026-10-28
 

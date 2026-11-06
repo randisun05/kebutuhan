@@ -14,6 +14,7 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 **Hulu: organisasi & data existing**
 - Manajemen organisasi: instansi, unit kerja bertingkat, aktif/nonaktif, nama jabatan pimpinan, impor struktur dari Excel, peta jabatan (kelas, B, K, +/−) siap cetak.
 - Data pegawai existing: input manual, impor Excel, atau **sinkron dari SIASN BKN**; setiap mutasi unit/ganti jabatan/keluar-masuk tercatat di riwayat pegawai.
+- Kualitas data existing: pemeriksaan otomatis (NIP, tanggal lahir, melewati pensiun, unit/jabatan nonaktif, data ganda). Pemetaan jabatan SIASN ke jabatan lokal oleh administrator.
 - Integrasi SIASN: tarik unor (`referensi/ref-unor`) menjadi unit kerja beserta hierarkinya, dan data utama PNS (`pns/data-utama/{nip}`) untuk memperbarui unit, jabatan, golongan, pendidikan, tanggal lahir, dan status aktif. Bisa manual dari menu, via `php artisan siasn:sync`, atau terjadwal tiap malam.
 
 **Hulu: manajemen ABK (PermenPANRB 1/2020)**
@@ -27,7 +28,7 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 **Hilir: usulan → penetapan → pengisian**
 - Satu rumus saran usulan (`App\Services\SaranUsulanService`) untuk menarik rincian dan memeriksa usulan; rincian yang melebihi saran atau tanpa dasar kebutuhan ditandai untuk operator, BKN, dan KemenPANRB, tanpa memblokir alur.
 - Kebutuhan sementara per posisi agar perhitungan tidak menunggu ABK; kesiapan ABK per instansi.
-- **Dua jalur kebutuhan per instansi**: standar (ABK final) atau manual dari existing (kebutuhan sementara). Tersedia **Isi dari existing** (salin jumlah pegawai aktif) dan **impor Excel**; jalur manual tidak memunculkan peringatan ABK belum ada.
+- **Dua jalur kebutuhan per instansi**: standar (ABK final) atau manual dari existing (kebutuhan sementara). Tersedia **Isi dari existing / formasi ditetapkan** dan **impor Excel**; jalur manual tidak memunculkan peringatan ABK belum ada.
 - Pegawai baru dapat ditautkan ke formasi yang ditetapkan sehingga jumlah terisi bertambah otomatis.
 - Usulan dengan prioritas per jabatan, estimasi anggaran, verifikasi & pertimbangan teknis BKN, validasi & penetapan KemenPANRB, PDF lampiran penetapan.
 - Pelacakan pengisian formasi (realisasi hasil seleksi); sisa formasi belum terisi tampil di monitoring dan proyeksi.

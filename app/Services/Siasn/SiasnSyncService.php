@@ -5,6 +5,7 @@ namespace App\Services\Siasn;
 use App\Models\Instansi;
 use App\Models\Jabatan;
 use App\Models\Pegawai;
+use App\Models\SiasnJabatanPeta;
 use App\Models\SiasnSyncLog;
 use App\Models\UnitKerja;
 use Illuminate\Support\Arr;
@@ -110,6 +111,9 @@ class SiasnSyncService
             $units = UnitKerja::where('instansi_id', $instansi->id)->whereNotNull('siasn_unor_id')->pluck('id', 'siasn_unor_id');
             $jabatanBySiasn = Jabatan::whereNotNull('siasn_jabatan_id')->pluck('id', 'siasn_jabatan_id');
             $jabatanByNama = Jabatan::pluck('id', 'nama')->mapWithKeys(fn ($id, $nama) => [Str::lower(trim($nama)) => $id]);
+            // pemetaan manual oleh administrator (menu Integrasi SIASN)
+            $peta = SiasnJabatanPeta::whereNotNull('jabatan_id')->pluck('jabatan_id', 'kunci');
+            $belumDipetakan = [];
 
             foreach ($nips as $nip) {
                 try {
@@ -121,7 +125,11 @@ class SiasnSyncService
                     }
 
                     $unitId = $units[(string) $this->val($data, 'unor_id')] ?? null;
-                    $jabatanId = $this->cariJabatan($data, $jabatanBySiasn, $jabatanByNama);
+                    $jabatanId = $this->cariJabatan($data, $jabatanBySiasn, $jabatanByNama, $peta);
+                    if (! $jabatanId && ($kunci = $this->kunciJabatan($data))) {
+                        $belumDipetakan[$kunci['kunci']] ??= $kunci + ['jumlah' => 0, 'nip' => $nip];
+                        $belumDipetakan[$kunci['kunci']]['jumlah']++;
+                    }
                     $pegawai = Pegawai::where('nip', $nip)->first();
 
                     if ($pegawai && (int) $pegawai->instansi_id !== $instansi->id) {
@@ -163,19 +171,57 @@ class SiasnSyncService
                     $this->gagal($log, $pesan, "{$nip}: ".$e->getMessage());
                 }
             }
+
+            $this->catatBelumDipetakan($belumDipetakan, $instansi->id);
         });
     }
 
-    private function cariJabatan(array $data, $bySiasn, $byNama): ?int
+    private function cariJabatan(array $data, $bySiasn, $byNama, $peta = null): ?int
     {
+        $peta ??= collect();
         foreach (['jab_struktural', 'jab_fungsional', 'jab_pelaksana'] as $key) {
             $id = (string) $this->val($data, $key);
             if ($id !== '' && isset($bySiasn[$id])) {
                 return $bySiasn[$id];
             }
+            if ($id !== '' && isset($peta['id:'.$id])) {
+                return $peta['id:'.$id];
+            }
         }
 
-        return $byNama[Str::lower(trim((string) $this->val($data, 'jab_nama')))] ?? null;
+        $nama = Str::lower(trim((string) $this->val($data, 'jab_nama')));
+
+        return $byNama[$nama] ?? ($nama !== '' ? ($peta['nama:'.$nama] ?? null) : null);
+    }
+
+    /** Kunci pemetaan untuk jabatan SIASN pegawai: ID jabatan bila ada, jika tidak nama. */
+    private function kunciJabatan(array $data): ?array
+    {
+        foreach (['jab_struktural', 'jab_fungsional', 'jab_pelaksana'] as $key) {
+            $id = trim((string) $this->val($data, $key));
+            if ($id !== '') {
+                return ['kunci' => 'id:'.$id, 'siasn_jabatan_id' => $id, 'nama' => trim((string) $this->val($data, 'jab_nama')) ?: null];
+            }
+        }
+        $nama = trim((string) $this->val($data, 'jab_nama'));
+
+        return $nama !== '' ? ['kunci' => 'nama:'.Str::lower($nama), 'siasn_jabatan_id' => null, 'nama' => $nama] : null;
+    }
+
+    /** Simpan jabatan SIASN yang belum punya padanan agar administrator dapat memetakannya. */
+    private function catatBelumDipetakan(array $daftar, int $instansiId): void
+    {
+        foreach ($daftar as $k) {
+            $peta = SiasnJabatanPeta::firstOrNew(['kunci' => $k['kunci']]);
+            if ($peta->jabatan_id) {
+                continue;
+            }
+            $peta->fill([
+                'siasn_jabatan_id' => $k['siasn_jabatan_id'], 'nama_siasn' => $k['nama'] ?? $peta->nama_siasn,
+                'instansi_id' => $instansiId, 'jumlah_pegawai' => $k['jumlah'], 'contoh_nip' => $k['nip'],
+                'terakhir_terlihat' => now(),
+            ])->save();
+        }
     }
 
     private function run(SiasnSyncLog $log, callable $work): SiasnSyncLog
