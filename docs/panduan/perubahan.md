@@ -18,7 +18,9 @@ Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan 
 - Notifikasi sukses dan info kini berupa **toast kecil** di pojok layar, tidak lagi menutupi halaman.
 - **Kualitas Data**: daftar lengkap dengan halaman, filter unit kerja, dan unduh Excel.
 - **Pemetaan jabatan SIASN**: pencarian, filter *belum dipetakan*, dan saran berdasarkan kemiripan nama.
-- **Peringatan Dini**: tampilan *Ringkas per unit*.
+- **Peringatan Dini**: tampilan *Ringkas per unit*, serta dua jenis baru: *Jabatan/unor SIASN belum dipetakan* dan *Kualitas data existing rendah*.
+- **Pemetaan unor SIASN** lewat antarmuka (halaman Integrasi SIASN), dan **laporan hasil sinkron** SIASN berupa notifikasi.
+- Pemantauan produksi: endpoint `/health` dan panduan deploy untuk administrator server (`docs/DEPLOY.md`).
 
 ## v1.6.0 — 2026-11-06
 

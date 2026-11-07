@@ -7,6 +7,7 @@ use App\Models\Instansi;
 use App\Models\Jabatan;
 use App\Models\SiasnJabatanPeta;
 use App\Models\SiasnSyncLog;
+use App\Models\SiasnUnorPeta;
 use App\Models\UnitKerja;
 use App\Services\Siasn\SiasnClient;
 use Illuminate\Http\Request;
@@ -34,6 +35,9 @@ class SiasnController extends Controller
                 'jabatan_terpetakan' => Jabatan::whereNotNull('siasn_jabatan_id')->count(),
             ],
             'petaJabatan' => fn () => $this->petaDenganSaran(),
+            'petaUnor' => fn () => $instansiId ? SiasnUnorPeta::with('unitKerja:id,nama')->where('instansi_id', $instansiId)
+                ->orderByRaw('CASE WHEN unit_kerja_id IS NULL THEN 0 ELSE 1 END')->orderByDesc('jumlah_pegawai')->limit(500)->get() : [],
+            'unitOptions' => fn () => $instansiId ? UnitKerja::flatTree((int) $instansiId)->where('is_active', true)->values() : [],
             'jabatanOptions' => fn () => $this->bolehMemetakan() ? Jabatan::where('is_active', true)->orderBy('nama')->get(['id', 'nama']) : [],
             'logs' => fn () => $this->scoped(SiasnSyncLog::query())
                 ->with(['instansi:id,nama', 'user:id,name'])
@@ -52,6 +56,21 @@ class SiasnController extends Controller
         return back()->with('success', $peta->jabatan_id
             ? 'Pemetaan disimpan. Jalankan sinkron data pegawai agar pegawai terkait diperbarui.'
             : 'Pemetaan dihapus.');
+    }
+
+    /** Petakan unor SIASN ke unit kerja instansi (administrator dan operator instansi yang bersangkutan). */
+    public function petakanUnor(Request $request, SiasnUnorPeta $petaUnor)
+    {
+        $this->authorizeInstansi($petaUnor->instansi_id);
+        $data = $request->validate(['unit_kerja_id' => 'nullable|exists:unit_kerjas,id']);
+        if (! empty($data['unit_kerja_id'])) {
+            abort_unless(UnitKerja::where('id', $data['unit_kerja_id'])->where('instansi_id', $petaUnor->instansi_id)->exists(), 403, 'Unit bukan milik instansi ini.');
+        }
+        $petaUnor->update(['unit_kerja_id' => $data['unit_kerja_id'] ?? null]);
+
+        return back()->with('success', $petaUnor->unit_kerja_id
+            ? 'Pemetaan unor disimpan. Jalankan sinkron data pegawai agar pegawai terkait diperbarui.'
+            : 'Pemetaan unor dihapus.');
     }
 
     /** Daftar pemetaan jabatan beserta saran jabatan SIMONKEB terdekat (kemiripan nama) untuk yang belum dipetakan. */

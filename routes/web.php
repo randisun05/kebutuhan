@@ -7,6 +7,7 @@ use App\Http\Controllers\AnjabAbkController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormasiController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HistoriController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\JabatanController;
@@ -31,6 +32,9 @@ use Illuminate\Support\Facades\Route;
 // Login, logout, lupa/reset password, 2FA dan konfirmasi password disediakan Laravel Fortify.
 
 Route::redirect('/', '/dashboard');
+
+// Pemeriksaan kesehatan untuk pemantauan produksi (tanpa login, tanpa data sensitif)
+Route::get('/health', HealthController::class)->middleware('throttle:60,1')->name('health');
 
 // Login SSO SIASN (OpenID Connect)
 Route::middleware('guest')->group(function () {
@@ -131,6 +135,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/siasn', [SiasnController::class, 'index'])->name('siasn.index');
         Route::post('/siasn/sync', [SiasnController::class, 'sync'])->middleware('throttle:10,1')->name('siasn.sync');
         Route::post('/siasn/test', [SiasnController::class, 'test'])->name('siasn.test');
+        Route::put('/siasn/peta-unor/{petaUnor}', [SiasnController::class, 'petakanUnor'])->name('siasn.peta-unor');
         Route::put('/siasn/peta-jabatan/{peta}', [SiasnController::class, 'petakanJabatan'])->name('siasn.peta-jabatan');
     });
 

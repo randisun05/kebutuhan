@@ -34,6 +34,19 @@ Setiap proses tercatat: waktu, jenis, status (berjalan/selesai/gagal), jumlah be
 
 Administrator dapat mengaktifkan **sinkron otomatis setiap malam**.
 
+## Pemetaan unit organisasi (unor) SIASN
+
+Unor di SIASN yang belum punya padanan unit kerja dicatat otomatis saat sinkron data pegawai dan tampil di kartu **Pemetaan unit organisasi (unor) SIASN**. Administrator maupun operator instansi dapat memilih **unit kerja** yang sesuai lalu **Simpan**; beberapa unor boleh dipetakan ke satu unit. Setelah itu jalankan **Sinkronkan** data pegawai lagi.
+
+## Laporan hasil sinkron
+
+Setiap sinkronisasi menghasilkan **notifikasi** (lonceng, dan email bila diaktifkan) berisi jumlah berhasil, gagal, serta jabatan dan unor yang belum dipetakan:
+
+- Sinkron **terjadwal** dilaporkan ke administrator dan operator instansi yang bersangkutan.
+- Sinkron **manual** dilaporkan ke pengguna yang menjalankannya.
+
+Jabatan atau unor yang belum dipetakan juga memunculkan peringatan dini *Jabatan/unor SIASN belum dipetakan*.
+
 ## Pemetaan jabatan SIASN
 
 Saat sinkron data pegawai, jabatan di SIASN dicocokkan ke jabatan SIMONKEB lewat **ID jabatan SIASN** yang diisi di referensi jabatan, lalu lewat **nama jabatan yang sama**. Jabatan yang belum ada padanannya dicatat otomatis di kartu **Pemetaan jabatan SIASN** pada halaman ini, lengkap dengan jumlah pegawai yang terdampak.

@@ -22,6 +22,12 @@ class KualitasDataService
         ])->values()->all();
     }
 
+    /** Jumlah pegawai unik yang punya masalah tingkat tinggi (NIP, tanggal lahir, melewati pensiun). */
+    public function jumlahBermasalahTinggi(int $instansiId): int
+    {
+        return $this->analisis($instansiId)->where('tingkat', 'tinggi')->flatMap(fn ($c) => $c['temuan']->pluck('id'))->unique()->count();
+    }
+
     /** Seluruh temuan satu jenis pemeriksaan, opsional dibatasi unit kerja. */
     public function rincian(int $instansiId, string $kode, ?int $unitId = null): ?array
     {

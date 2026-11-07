@@ -22,5 +22,7 @@ return [
         'formasi_belum_terisi_bulan' => (int) env('PERINGATAN_FORMASI_BULAN', 12),
         'abk_maks_umur_tahun' => (int) env('PERINGATAN_ABK_UMUR_TAHUN', 2),
         'pensiun_bulan' => (int) env('PERINGATAN_PENSIUN_BULAN', 12),
+        'peta_siasn_pegawai' => (int) env('PERINGATAN_PETA_SIASN_PEGAWAI', 10),
+        'kualitas_data_persen' => (int) env('PERINGATAN_KUALITAS_DATA_PERSEN', 5),
     ],
 ];

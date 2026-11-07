@@ -52,6 +52,11 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Login Laravel Fortify: lupa/reset password, ganti password, 2FA (aplikasi autentikator + kode pemulihan), 2FA wajib per peran (`WAJIB_2FA_PERAN`).
 - Log audit perubahan data master, organisasi, pegawai, ABK, dan pengguna.
 
+## Operasional
+
+Panduan deploy produksi (server, antrean, scheduler, cadangan, keamanan) ada di `docs/DEPLOY.md`. Endpoint `GET /health`
+mengembalikan status database, scheduler, dan antrean untuk uptime monitor. CI menjalankan test di SQLite dan MySQL 8.
+
 ## Panduan pengguna
 
 Panduan ada di dalam aplikasi (menu **Panduan Pengguna**, tombol **Bantuan** di setiap halaman, unduh PDF),

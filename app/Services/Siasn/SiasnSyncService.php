@@ -2,15 +2,20 @@
 
 namespace App\Services\Siasn;
 
+use App\Enums\Role;
 use App\Models\Instansi;
 use App\Models\Jabatan;
 use App\Models\Pegawai;
 use App\Models\SiasnJabatanPeta;
 use App\Models\SiasnSyncLog;
+use App\Models\SiasnUnorPeta;
 use App\Models\UnitKerja;
+use App\Models\User;
+use App\Notifications\HasilSinkronSiasn;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -30,6 +35,7 @@ class SiasnSyncService
         'nama' => ['nama', 'namaLengkap'],
         'tgl_lahir' => ['tglLahir', 'tgl_lahir', 'tanggalLahir'],
         'unor_id' => ['unorId', 'unor_id'],
+        'unor_nama_pegawai' => ['unorNama', 'unor_nama', 'namaUnor'],
         'jab_struktural' => ['jabatanStrukturalId', 'jabatan_struktural_id'],
         'jab_fungsional' => ['jabatanFungsionalId', 'jabatan_fungsional_id'],
         'jab_pelaksana' => ['jabatanFungsionalUmumId', 'jabatan_fungsional_umum_id'],
@@ -50,6 +56,9 @@ class SiasnSyncService
 
     /** Kedudukan hukum yang berarti pegawai tidak lagi aktif. */
     private const TIDAK_AKTIF = ['pensiun', 'berhenti', 'wafat', 'meninggal', 'pemberhentian', 'mpp', 'masa persiapan pensiun'];
+
+    /** Jumlah jabatan/unor yang belum dipetakan pada sinkron data pegawai terakhir (untuk laporan hasil). */
+    private array $belumDipetakan = ['jabatan' => 0, 'unor' => 0];
 
     public function __construct(private SiasnClient $client) {}
 
@@ -100,6 +109,7 @@ class SiasnSyncService
      */
     public function syncPegawai(Instansi $instansi, ?array $nips = null, ?int $userId = null): SiasnSyncLog
     {
+        $this->belumDipetakan = ['jabatan' => 0, 'unor' => 0];
         $log = $this->startLog($instansi, 'pegawai', $userId);
 
         return $this->run($log, function (SiasnSyncLog $log, array &$pesan) use ($instansi, $nips) {
@@ -109,6 +119,9 @@ class SiasnSyncService
             $log->total = count($nips);
 
             $units = UnitKerja::where('instansi_id', $instansi->id)->whereNotNull('siasn_unor_id')->pluck('id', 'siasn_unor_id');
+            // pemetaan unor manual (banyak unor SIASN boleh menuju satu unit)
+            $units = SiasnUnorPeta::where('instansi_id', $instansi->id)->whereNotNull('unit_kerja_id')->pluck('unit_kerja_id', 'siasn_unor_id')->union($units);
+            $unorBelum = [];
             $jabatanBySiasn = Jabatan::whereNotNull('siasn_jabatan_id')->pluck('id', 'siasn_jabatan_id');
             $jabatanByNama = Jabatan::pluck('id', 'nama')->mapWithKeys(fn ($id, $nama) => [Str::lower(trim($nama)) => $id]);
             // pemetaan manual oleh administrator (menu Integrasi SIASN)
@@ -124,7 +137,12 @@ class SiasnSyncService
                         continue;
                     }
 
-                    $unitId = $units[(string) $this->val($data, 'unor_id')] ?? null;
+                    $unorId = trim((string) $this->val($data, 'unor_id'));
+                    $unitId = $units[$unorId] ?? null;
+                    if (! $unitId && $unorId !== '') {
+                        $unorBelum[$unorId] ??= ['nama' => trim((string) $this->val($data, 'unor_nama_pegawai')) ?: null, 'jumlah' => 0, 'nip' => $nip];
+                        $unorBelum[$unorId]['jumlah']++;
+                    }
                     $jabatanId = $this->cariJabatan($data, $jabatanBySiasn, $jabatanByNama, $peta);
                     if (! $jabatanId && ($kunci = $this->kunciJabatan($data))) {
                         $belumDipetakan[$kunci['kunci']] ??= $kunci + ['jumlah' => 0, 'nip' => $nip];
@@ -173,6 +191,8 @@ class SiasnSyncService
             }
 
             $this->catatBelumDipetakan($belumDipetakan, $instansi->id);
+            $this->catatUnorBelumDipetakan($unorBelum, $instansi->id);
+            $this->belumDipetakan = ['jabatan' => count($belumDipetakan), 'unor' => count($unorBelum)];
         });
     }
 
@@ -224,6 +244,36 @@ class SiasnSyncService
         }
     }
 
+    /** Simpan unor SIASN yang belum punya padanan unit kerja agar dapat dipetakan lewat antarmuka. */
+    private function catatUnorBelumDipetakan(array $daftar, int $instansiId): void
+    {
+        foreach ($daftar as $unorId => $k) {
+            $peta = SiasnUnorPeta::firstOrNew(['instansi_id' => $instansiId, 'siasn_unor_id' => (string) $unorId]);
+            if ($peta->unit_kerja_id) {
+                continue;
+            }
+            $peta->fill(['nama_siasn' => $k['nama'] ?? $peta->nama_siasn, 'jumlah_pegawai' => $k['jumlah'], 'contoh_nip' => $k['nip'], 'terakhir_terlihat' => now()])->save();
+        }
+    }
+
+    /** Laporan hasil sinkron: terjadwal ke admin + operator instansi, manual ke pemulanya. */
+    private function beritahuHasil(SiasnSyncLog $log): void
+    {
+        $instansi = $log->instansi?->nama ?? '-';
+        $belum = $log->jenis === 'pegawai' ? $this->belumDipetakan : ['jabatan' => 0, 'unor' => 0];
+        $notif = new HasilSinkronSiasn($log, $instansi, $belum);
+
+        if ($log->user_id) {
+            Notification::send(User::where('id', $log->user_id)->get(), $notif);
+
+            return;
+        }
+
+        $penerima = User::where('is_active', true)->where(fn ($q) => $q->where('role', Role::Admin)
+            ->orWhere(fn ($w) => $w->where('role', Role::OperatorInstansi)->where('instansi_id', $log->instansi_id)))->get();
+        Notification::send($penerima, $notif);
+    }
+
     private function run(SiasnSyncLog $log, callable $work): SiasnSyncLog
     {
         $pesan = [];
@@ -238,6 +288,12 @@ class SiasnSyncService
         $log->pesan = array_slice($pesan, 0, 500);
         $log->finished_at = now();
         $log->save();
+
+        try {
+            $this->beritahuHasil($log->loadMissing('instansi:id,nama'));
+        } catch (Throwable) {
+            // kegagalan notifikasi tidak boleh menggagalkan sinkronisasi
+        }
 
         return $log;
     }

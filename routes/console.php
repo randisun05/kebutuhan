@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -17,3 +18,6 @@ Schedule::command('kebutuhan:snapshot')->dailyAt('23:30')->withoutOverlapping();
 
 // Sistem peringatan dini, dijalankan setiap pagi
 Schedule::command('peringatan:deteksi')->dailyAt('06:00')->withoutOverlapping();
+
+// Detak scheduler untuk /health: bila berhenti berarti cron `schedule:run` tidak berjalan
+Schedule::call(fn () => Cache::put('scheduler:detak', now(), now()->addHour()))->everyMinute()->name('detak-scheduler');

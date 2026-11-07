@@ -58,6 +58,31 @@
     </div>
 
     <div class="card mb-3">
+        <div class="card-header"><span>Pemetaan unit organisasi (unor) SIASN <span v-if="unorBelum" class="badge bg-warning text-dark ms-1">{{ unorBelum }} belum dipetakan</span></span></div>
+        <div class="card-body py-2 small text-muted">Unor di SIASN yang belum punya padanan unit kerja dicatat saat sinkron data pegawai. Pilih unit kerja yang sesuai (boleh beberapa unor ke satu unit), lalu sinkron ulang data pegawai.</div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead><tr><th>Unor di SIASN</th><th>ID unor</th><th class="num">Pegawai</th><th>Unit kerja SIMONKEB</th><th></th></tr></thead>
+                <tbody>
+                    <tr v-for="p in petaUnor" :key="p.id">
+                        <td>{{ p.nama_siasn || '-' }}</td>
+                        <td class="small text-muted">{{ p.siasn_unor_id }}</td>
+                        <td class="num">{{ p.jumlah_pegawai }}</td>
+                        <td>
+                            <select v-model="pilihanUnor[p.id]" class="form-select form-select-sm">
+                                <option :value="null">- belum dipetakan -</option>
+                                <option v-for="u in unitOptions" :key="u.id" :value="u.id">{{ '— '.repeat(u.depth || 0) + u.nama }}</option>
+                            </select>
+                        </td>
+                        <td><button class="btn btn-sm btn-outline-primary" :disabled="(pilihanUnor[p.id] ?? null) === (p.unit_kerja_id ?? null)" @click="petakanUnor(p)">Simpan</button></td>
+                    </tr>
+                    <tr v-if="!petaUnor.length"><td colspan="5" class="text-center text-muted py-3">Belum ada unor SIASN yang perlu dipetakan.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-3">
         <div class="card-header d-flex justify-content-between">
             <span>Pemetaan jabatan SIASN <span v-if="belumCount" class="badge bg-warning text-dark ms-1">{{ belumCount }} belum dipetakan</span></span>
             <span class="d-flex gap-2 align-items-center">
@@ -123,10 +148,13 @@ import { computed, reactive, ref } from 'vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { waktu } from '../../utils';
 
-const props = defineProps({ configured: Boolean, mode: String, baseUrl: String, scheduled: Boolean, instansiOptions: Array, instansiId: Number, instansi: Object, pemetaan: Object, logs: Array, petaJabatan: { type: Array, default: () => [] }, jabatanOptions: { type: Array, default: () => [] } });
+const props = defineProps({ configured: Boolean, mode: String, baseUrl: String, scheduled: Boolean, instansiOptions: Array, instansiId: Number, instansi: Object, pemetaan: Object, logs: Array, petaJabatan: { type: Array, default: () => [] }, petaUnor: { type: Array, default: () => [] }, unitOptions: { type: Array, default: () => [] }, jabatanOptions: { type: Array, default: () => [] } });
 const isAdmin = computed(() => usePage().props.auth.user.role === 'admin');
 const open = ref(null);
 const pilihan = reactive(Object.fromEntries(props.petaJabatan.map((p) => [p.id, p.jabatan_id ?? null])));
+const pilihanUnor = reactive(Object.fromEntries(props.petaUnor.map((p) => [p.id, p.unit_kerja_id ?? null])));
+const unorBelum = computed(() => props.petaUnor.filter((p) => !p.unit_kerja_id).length);
+const petakanUnor = (p) => router.put(`/siasn/peta-unor/${p.id}`, { unit_kerja_id: pilihanUnor[p.id] }, { preserveScroll: true });
 const cari = ref('');
 const hanyaBelum = ref(false);
 const petaTampil = computed(() => props.petaJabatan.filter((p) => (!hanyaBelum.value || !p.jabatan_id)

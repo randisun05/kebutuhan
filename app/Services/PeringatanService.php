@@ -30,6 +30,8 @@ class PeringatanService
         'usulan_tertahan' => 'Usulan tertahan di satu tahap',
         'formasi_belum_terisi' => 'Formasi ditetapkan belum terisi',
         'siasn_gagal' => 'Sinkronisasi SIASN gagal',
+        'peta_siasn' => 'Jabatan/unor SIASN belum dipetakan',
+        'kualitas_data' => 'Kualitas data existing rendah',
     ];
 
     public function __construct(private MonitoringService $monitoring, private HistoriService $histori) {}
@@ -49,7 +51,9 @@ class PeringatanService
             ->merge($this->pensiunMendatang($cfg))
             ->merge($this->usulanTertahan($cfg))
             ->merge($this->formasiBelumTerisi($cfg))
-            ->merge($this->siasnGagal());
+            ->merge($this->siasnGagal())
+            ->merge($this->petaSiasnBelum($cfg))
+            ->merge($this->kualitasDataRendah($cfg));
 
         $now = now();
         $baru = collect();
@@ -323,6 +327,62 @@ class PeringatanService
             'data' => ['log_id' => $l->id],
             'url' => "/siasn?instansi_id={$l->instansi_id}",
         ]);
+    }
+
+    /** Jabatan/unor SIASN yang belum dipetakan sehingga pegawai terkait gagal tersinkron. */
+    private function petaSiasnBelum(array $cfg): Collection
+    {
+        $jabatan = DB::table('siasn_jabatan_peta')->whereNull('jabatan_id')->whereNotNull('instansi_id')
+            ->groupBy('instansi_id')->selectRaw('instansi_id, COUNT(*) as n, SUM(jumlah_pegawai) as pegawai')->get()->keyBy('instansi_id');
+        $unor = DB::table('siasn_unor_peta')->whereNull('unit_kerja_id')
+            ->groupBy('instansi_id')->selectRaw('instansi_id, COUNT(*) as n, SUM(jumlah_pegawai) as pegawai')->get()->keyBy('instansi_id');
+        $nama = DB::table('instansis')->pluck('nama', 'id');
+
+        return $jabatan->keys()->merge($unor->keys())->unique()->map(function ($id) use ($jabatan, $unor, $nama, $cfg) {
+            $j = (int) ($jabatan[$id]->n ?? 0);
+            $u = (int) ($unor[$id]->n ?? 0);
+            $pegawai = (int) ($jabatan[$id]->pegawai ?? 0) + (int) ($unor[$id]->pegawai ?? 0);
+
+            return [
+                'kode' => 'peta_siasn', 'tingkat' => $pegawai >= $cfg['peta_siasn_pegawai'] ? 'tinggi' : 'sedang',
+                'instansi_id' => (int) $id, 'unit_kerja_id' => null, 'jabatan_id' => null,
+                'kunci' => "peta_siasn:{$id}",
+                'judul' => "{$j} jabatan dan {$u} unor SIASN {$nama[$id]} belum dipetakan",
+                'pesan' => "Sekitar {$pegawai} pegawai belum dapat tersinkron. Petakan di menu Integrasi SIASN lalu sinkron ulang.",
+                'data' => ['jabatan' => $j, 'unor' => $u, 'pegawai' => $pegawai],
+                'url' => "/siasn?instansi_id={$id}",
+            ];
+        })->values();
+    }
+
+    /** Persentase pegawai aktif dengan masalah data tingkat tinggi per instansi melebihi ambang. */
+    private function kualitasDataRendah(array $cfg): Collection
+    {
+        $kualitas = app(KualitasDataService::class);
+        $instansis = DB::table('instansis')->where('is_active', true)->pluck('nama', 'id');
+        $aktif = DB::table('pegawais')->where('is_active', true)->groupBy('instansi_id')->selectRaw('instansi_id, COUNT(*) as n')->pluck('n', 'instansi_id');
+
+        return $instansis->map(function ($nama, $id) use ($kualitas, $aktif, $cfg) {
+            $total = (int) ($aktif[$id] ?? 0);
+            if ($total === 0) {
+                return null;
+            }
+            $bermasalah = $kualitas->jumlahBermasalahTinggi((int) $id);
+            $persen = round($bermasalah / $total * 100, 1);
+            if ($persen < $cfg['kualitas_data_persen']) {
+                return null;
+            }
+
+            return [
+                'kode' => 'kualitas_data', 'tingkat' => $persen >= $cfg['kualitas_data_persen'] * 2 ? 'tinggi' : 'sedang',
+                'instansi_id' => (int) $id, 'unit_kerja_id' => null, 'jabatan_id' => null,
+                'kunci' => "kualitas_data:{$id}",
+                'judul' => "{$bermasalah} pegawai ({$persen}%) {$nama} bermasalah pada data",
+                'pesan' => 'NIP tidak valid, tanggal lahir kosong/tidak wajar, atau melewati TMT pensiun. Benahi lewat menu Kualitas Data.',
+                'data' => ['bermasalah' => $bermasalah, 'persen' => $persen],
+                'url' => "/kualitas-data?instansi_id={$id}",
+            ];
+        })->filter()->values();
     }
 
     /** Ringkasan peringatan penting baru ke admin dan operator instansi terkait. */
