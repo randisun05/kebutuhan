@@ -60,13 +60,17 @@
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between">
             <span>Pemetaan jabatan SIASN <span v-if="belumCount" class="badge bg-warning text-dark ms-1">{{ belumCount }} belum dipetakan</span></span>
+            <span class="d-flex gap-2 align-items-center">
+                <input v-model="cari" class="form-control form-control-sm" style="width: 200px" placeholder="Cari jabatan SIASN...">
+                <label class="small text-nowrap mb-0"><input v-model="hanyaBelum" type="checkbox" class="form-check-input me-1">Belum dipetakan</label>
+            </span>
         </div>
         <div class="card-body py-2 small text-muted">Jabatan di SIASN yang belum punya padanan dicatat saat sinkron data pegawai. Pilih jabatan SIMONKEB yang sesuai (khusus administrator), lalu sinkron ulang data pegawai.</div>
         <div class="table-responsive">
             <table class="table table-hover table-sm mb-0">
                 <thead><tr><th>Jabatan di SIASN</th><th>ID SIASN</th><th class="num">Pegawai</th><th>Jabatan SIMONKEB</th><th></th></tr></thead>
                 <tbody>
-                    <tr v-for="p in petaJabatan" :key="p.id">
+                    <tr v-for="p in petaTampil" :key="p.id">
                         <td>{{ p.nama_siasn || '-' }}</td>
                         <td class="small text-muted">{{ p.siasn_jabatan_id || '-' }}</td>
                         <td class="num">{{ p.jumlah_pegawai }}</td>
@@ -76,10 +80,13 @@
                                 <option v-for="j in jabatanOptions" :key="j.id" :value="j.id">{{ j.nama }}</option>
                             </select>
                             <span v-else>{{ p.jabatan?.nama || '-' }}</span>
+                            <div v-if="isAdmin && p.saran && (pilihan[p.id] ?? null) !== p.saran.id" class="small mt-1">
+                                Saran: <a href="#" @click.prevent="pilihan[p.id] = p.saran.id">{{ p.saran.nama }}</a> <span class="text-muted">({{ p.saran.skor }}% mirip)</span>
+                            </div>
                         </td>
                         <td><button v-if="isAdmin" class="btn btn-sm btn-outline-primary" :disabled="(pilihan[p.id] ?? null) === (p.jabatan_id ?? null)" @click="petakan(p)">Simpan</button></td>
                     </tr>
-                    <tr v-if="!petaJabatan.length"><td colspan="5" class="text-center text-muted py-3">Belum ada jabatan SIASN yang perlu dipetakan.</td></tr>
+                    <tr v-if="!petaTampil.length"><td colspan="5" class="text-center text-muted py-3">{{ petaJabatan.length ? 'Tidak ada yang cocok dengan pencarian.' : 'Belum ada jabatan SIASN yang perlu dipetakan.' }}</td></tr>
                 </tbody>
             </table>
         </div>
@@ -120,6 +127,10 @@ const props = defineProps({ configured: Boolean, mode: String, baseUrl: String, 
 const isAdmin = computed(() => usePage().props.auth.user.role === 'admin');
 const open = ref(null);
 const pilihan = reactive(Object.fromEntries(props.petaJabatan.map((p) => [p.id, p.jabatan_id ?? null])));
+const cari = ref('');
+const hanyaBelum = ref(false);
+const petaTampil = computed(() => props.petaJabatan.filter((p) => (!hanyaBelum.value || !p.jabatan_id)
+    && (!cari.value || (p.nama_siasn || '').toLowerCase().includes(cari.value.toLowerCase()) || (p.siasn_jabatan_id || '').includes(cari.value))));
 const belumCount = computed(() => props.petaJabatan.filter((p) => !p.jabatan_id).length);
 const petakan = (p) => router.put(`/siasn/peta-jabatan/${p.id}`, { jabatan_id: pilihan[p.id] }, { preserveScroll: true });
 const form = useForm({ instansi_id: props.instansiId, jenis: 'unor', nips: '' });

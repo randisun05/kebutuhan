@@ -70,6 +70,7 @@ class InstansiController extends Controller
             'jenis' => ['required', Rule::in(array_keys(Referensi::JENIS_INSTANSI))],
             'provinsi' => 'nullable|string|max:255',
             'jalur_kebutuhan' => ['required', Rule::in(array_keys(Instansi::JALUR_KEBUTUHAN))],
+            'kebutuhan_perlu_persetujuan' => 'boolean',
             'alamat' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);

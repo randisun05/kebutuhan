@@ -16,11 +16,40 @@ class KualitasDataService
     /** @return array<int, array{kode: string, judul: string, saran: string, tingkat: string, jumlah: int, contoh: array}> */
     public function periksa(int $instansiId): array
     {
+        return $this->analisis($instansiId)->map(fn ($c) => [
+            'kode' => $c['kode'], 'judul' => $c['judul'], 'saran' => $c['saran'], 'tingkat' => $c['tingkat'],
+            'jumlah' => $c['temuan']->count(), 'contoh' => $c['temuan']->take(self::CONTOH)->values()->all(),
+        ])->values()->all();
+    }
+
+    /** Seluruh temuan satu jenis pemeriksaan, opsional dibatasi unit kerja. */
+    public function rincian(int $instansiId, string $kode, ?int $unitId = null): ?array
+    {
+        $c = $this->analisis($instansiId)->firstWhere('kode', $kode);
+        if (! $c) {
+            return null;
+        }
+
+        return ['kode' => $c['kode'], 'judul' => $c['judul'], 'saran' => $c['saran'], 'tingkat' => $c['tingkat'],
+            'temuan' => $c['temuan']->when($unitId, fn ($t) => $t->where('unit_id', $unitId))->values()];
+    }
+
+    /** Seluruh temuan semua pemeriksaan sebagai baris datar (untuk ekspor Excel). */
+    public function semuaTemuan(int $instansiId): array
+    {
+        return $this->analisis($instansiId)->flatMap(fn ($c) => $c['temuan']->map(fn ($t) => [
+            $c['judul'], strtoupper($c['tingkat']), $t['nip'], $t['nama'], $t['unit'], $t['keterangan'], $c['saran'],
+        ]))->values()->all();
+    }
+
+    /** @return Collection<int, array{kode: string, judul: string, saran: string, tingkat: string, temuan: Collection}> */
+    private function analisis(int $instansiId): Collection
+    {
         $pegawai = DB::table('pegawais as p')
             ->join('unit_kerjas as u', 'u.id', '=', 'p.unit_kerja_id')
             ->join('jabatans as j', 'j.id', '=', 'p.jabatan_id')
             ->where('p.instansi_id', $instansiId)->where('p.is_active', true)
-            ->get(['p.id', 'p.nip', 'p.nama', 'p.golongan', 'p.pendidikan', 'p.tanggal_lahir', 'p.tmt_pensiun', 'p.sumber', 'p.siasn_synced_at',
+            ->get(['p.id', 'p.unit_kerja_id', 'p.nip', 'p.nama', 'p.golongan', 'p.pendidikan', 'p.tanggal_lahir', 'p.tmt_pensiun', 'p.sumber', 'p.siasn_synced_at',
                 'p.status_kepegawaian', 'u.nama as unit', 'u.is_active as unit_aktif', 'j.nama as jabatan', 'j.is_active as jabatan_aktif']);
 
         $lahirMin = now()->subYears(17)->toDateString();
@@ -53,20 +82,22 @@ class KualitasDataService
 
         $hasil = collect($cek)->map(function ($c) use ($pegawai) {
             [$kode, $judul, $saran, $tingkat, $uji, $ket] = $c;
-            $temuan = $pegawai->filter($uji)->values();
 
             return [
-                'kode' => $kode, 'judul' => $judul, 'saran' => $saran, 'tingkat' => $tingkat, 'jumlah' => $temuan->count(),
-                'contoh' => $temuan->take(self::CONTOH)->map(fn ($p) => [
-                    'id' => $p->id, 'nip' => $p->nip, 'nama' => $p->nama, 'unit' => $p->unit, 'keterangan' => $ket($p),
-                ])->all(),
+                'kode' => $kode, 'judul' => $judul, 'saran' => $saran, 'tingkat' => $tingkat,
+                'temuan' => $pegawai->filter($uji)->values()->map(fn ($p) => $this->baris($p, $ket($p))),
             ];
         });
 
         // NIP ganda tidak mungkin (unik), tetapi nama + tanggal lahir yang sama patut dicurigai sebagai data ganda
         $hasil->push($this->kemungkinanGanda($pegawai));
 
-        return $hasil->values()->all();
+        return $hasil->values();
+    }
+
+    private function baris(object $p, string $keterangan): array
+    {
+        return ['id' => $p->id, 'unit_id' => $p->unit_kerja_id, 'nip' => $p->nip, 'nama' => $p->nama, 'unit' => $p->unit, 'keterangan' => $keterangan];
     }
 
     private function kemungkinanGanda(Collection $pegawai): array
@@ -79,10 +110,7 @@ class KualitasDataService
         return [
             'kode' => 'kemungkinan_ganda', 'judul' => 'Kemungkinan data ganda (nama dan tanggal lahir sama)',
             'saran' => 'Periksa apakah satu orang tercatat dengan dua NIP; nonaktifkan salah satunya.', 'tingkat' => 'sedang',
-            'jumlah' => $temuan->count(),
-            'contoh' => $temuan->take(self::CONTOH)->map(fn ($p) => [
-                'id' => $p->id, 'nip' => $p->nip, 'nama' => $p->nama, 'unit' => $p->unit, 'keterangan' => 'Lahir '.substr((string) $p->tanggal_lahir, 0, 10),
-            ])->all(),
+            'temuan' => $temuan->map(fn ($p) => $this->baris($p, 'Lahir '.substr((string) $p->tanggal_lahir, 0, 10))),
         ];
     }
 }

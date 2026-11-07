@@ -47,7 +47,7 @@ trait BuildsKebutuhanData
         for ($i = 0; $i < $jumlah; $i++) {
             Pegawai::create([
                 'instansi_id' => $unit->instansi_id, 'unit_kerja_id' => $unit->id, 'jabatan_id' => $jabatan->id,
-                'nip' => str_pad((string) ++$this->nipSeq, 18, '1', STR_PAD_LEFT), 'nama' => 'Pegawai '.$this->nipSeq,
+                'nip' => str_pad((string) ++$this->nipSeq, 18, '0', STR_PAD_LEFT), 'nama' => 'Pegawai '.$this->nipSeq,
                 'tanggal_lahir' => $tanggalLahir,
             ]);
         }

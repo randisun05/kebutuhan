@@ -49,4 +49,6 @@ Menu **Kualitas Data** memeriksa otomatis pegawai aktif satu instansi dan menamp
 
 Pemeriksaan ini hanya informasi dan tidak memblokir fitur apa pun.
 
+Setiap pemeriksaan menampilkan beberapa contoh. Klik **Lihat semua temuan** untuk daftar lengkap dengan halaman dan **filter unit kerja**, atau **Unduh semua temuan** untuk mengekspor seluruh temuan instansi ke Excel.
+
 ![Kualitas data](/img/panduan/kualitas-data.png)

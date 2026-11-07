@@ -61,4 +61,27 @@ class KualitasDataTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('instansiId', $a->id));
         $this->actingAs($this->user(Role::VerifikatorBkn))->get('/kualitas-data')->assertForbidden();
     }
+
+    public function test_rincian_dipaginasi_difilter_unit_dan_dapat_diekspor(): void
+    {
+        $instansi = $this->instansi();
+        $a = $this->unit($instansi, 'A');
+        $b = $this->unit($instansi, 'B');
+        $jab = $this->jabatan('J');
+        $this->pegawai($a, $jab, 30, null);
+        $this->pegawai($b, $jab, 4, null);
+        $admin = $this->user(Role::Admin);
+
+        // ringkasan memuat contoh terbatas, rincian memuat semuanya dengan pagination
+        $hasil = app(KualitasDataService::class)->periksa($instansi->id);
+        $this->assertSame(34, $this->jumlah($hasil, 'tanggal_lahir_kosong'));
+        $this->assertCount(KualitasDataService::CONTOH, collect($hasil)->firstWhere('kode', 'tanggal_lahir_kosong')['contoh']);
+
+        $this->actingAs($admin)->get("/kualitas-data?instansi_id={$instansi->id}&kode=tanggal_lahir_kosong")->assertOk()
+            ->assertInertia(fn ($p) => $p->where('rincian.temuan.total', 34)->where('rincian.temuan.per_page', 25)->has('rincian.temuan.data', 25));
+        $this->get("/kualitas-data?instansi_id={$instansi->id}&kode=tanggal_lahir_kosong&unit_id={$b->id}")
+            ->assertInertia(fn ($p) => $p->where('rincian.temuan.total', 4));
+
+        $this->get("/kualitas-data/export?instansi_id={$instansi->id}")->assertOk();
+    }
 }

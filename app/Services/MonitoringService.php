@@ -42,6 +42,7 @@ class MonitoringService
 
         // kebutuhan sementara hanya untuk posisi yang belum memiliki ABK final
         $sementara = DB::table('kebutuhan_sementara as ks')
+            ->where('ks.status', 'disetujui')
             ->whereNotExists(fn ($q) => $q->from('anjab_abks as b')
                 ->whereColumn('b.unit_kerja_id', 'ks.unit_kerja_id')->whereColumn('b.jabatan_id', 'ks.jabatan_id')
                 ->where('b.status', 'final')

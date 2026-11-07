@@ -15,13 +15,25 @@ export default {
         this.off && this.off();
     },
     methods: {
+        // sukses & info: toast kecil di pojok (tidak menutupi halaman); peringatan & galat: dialog yang harus dibaca
+        tampilkan(jenis, pesan) {
+            if (jenis === 'success' || jenis === 'info') {
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: ICON[jenis], title: pesan, showConfirmButton: false, showCloseButton: true,
+                    timer: Math.min(9000, 3500 + pesan.length * 40), timerProgressBar: true, width: 'min(440px, 92vw)',
+                    customClass: { title: 'text-start fs-6 fw-normal' },
+                });
+                return;
+            }
+            Swal.fire({ icon: ICON[jenis], title: pesan, customClass: { title: 'fs-6 fw-normal' }, confirmButtonText: 'Mengerti' });
+        },
         show() {
             const session = this.$page.props.session || {};
             const errors = this.$page.props.errors || {};
             for (const key of Object.keys(ICON)) {
                 if (session[key] && this.lastShown !== session[key] + key) {
                     this.lastShown = session[key] + key;
-                    Swal.fire({ icon: ICON[key], title: session[key], timer: key === 'success' ? 2200 : undefined, showConfirmButton: key !== 'success' });
+                    this.tampilkan(key, session[key]);
                     return;
                 }
             }

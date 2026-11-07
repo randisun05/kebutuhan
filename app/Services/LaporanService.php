@@ -24,6 +24,7 @@ class LaporanService
         'abk' => 'Rekap ABK dan efektivitas jabatan',
         'tidak_bergerak' => 'Unit tanpa pergerakan data existing',
         'peringatan' => 'Peringatan dini terbuka',
+        'sementara_vs_abk' => 'Perbandingan kebutuhan sementara dengan hasil ABK',
     ];
 
     public function __construct(
@@ -58,6 +59,7 @@ class LaporanService
             'abk' => $this->abk($p),
             'tidak_bergerak' => $this->tidakBergerak($filters, (int) ($p['bulan'] ?? 6)),
             'peringatan' => $this->peringatan($p),
+            'sementara_vs_abk' => $this->sementaraVsAbk($filters),
         };
 
         return ['judul' => self::JENIS[$jenis], 'subjudul' => $sub] + $hasil;
@@ -198,6 +200,44 @@ class LaporanService
                 $r->pertama_terdeteksi_at?->format('Y-m-d'), $r->status, $r->catatan_tindak_lanjut])->all(),
             'total' => null,
             'angka' => $rows->groupBy('tingkat')->map->count()->all(),
+        ];
+    }
+
+    /** Posisi berkebutuhan sementara beserta ABK final (bila sudah ada): untuk melihat selisih saat beralih ke jalur standar. */
+    private function sementaraVsAbk(array $filters): array
+    {
+        $abk = DB::table('anjab_abks as a')->where('a.status', 'final')
+            ->whereRaw('a.tahun = (SELECT MAX(b.tahun) FROM anjab_abks b WHERE b.unit_kerja_id = a.unit_kerja_id AND b.jabatan_id = a.jabatan_id AND b.status = ?)', ['final'])
+            ->select('a.unit_kerja_id', 'a.jabatan_id', 'a.kebutuhan', 'a.tahun');
+        $existing = DB::table('pegawais')->where('is_active', true)->groupBy('unit_kerja_id', 'jabatan_id')
+            ->selectRaw('unit_kerja_id, jabatan_id, COUNT(*) as jumlah');
+
+        $rows = DB::table('kebutuhan_sementara as k')
+            ->join('instansis as i', 'i.id', '=', 'k.instansi_id')
+            ->join('unit_kerjas as u', 'u.id', '=', 'k.unit_kerja_id')
+            ->join('jabatans as j', 'j.id', '=', 'k.jabatan_id')
+            ->leftJoinSub($abk, 'ab', fn ($q) => $q->on('ab.unit_kerja_id', '=', 'k.unit_kerja_id')->on('ab.jabatan_id', '=', 'k.jabatan_id'))
+            ->leftJoinSub($existing, 'ex', fn ($q) => $q->on('ex.unit_kerja_id', '=', 'k.unit_kerja_id')->on('ex.jabatan_id', '=', 'k.jabatan_id'))
+            ->when($filters['instansi_id'] ?? null, fn ($q, $id) => $q->where('k.instansi_id', $id))
+            ->when($filters['unit_ids'] ?? null, fn ($q, $ids) => $q->whereIn('k.unit_kerja_id', $ids))
+            ->when($filters['jenis'] ?? null, fn ($q, $jenis) => $q->where('j.jenis', $jenis))
+            ->orderBy('i.nama')->orderBy('u.nama')->orderBy('j.nama')
+            ->get(['i.nama as instansi', 'u.nama as unit', 'j.nama as jabatan', 'k.jumlah as sementara', 'k.status', 'ab.kebutuhan as abk', 'ab.tahun as tahun_abk', 'ex.jumlah as existing']);
+
+        $baris = $rows->map(function ($r) {
+            $keterangan = $r->abk !== null ? 'ABK final menggantikan' : ($r->status === 'menunggu' ? 'Menunggu persetujuan' : 'Masih sementara');
+
+            return [$r->instansi, $r->unit, $r->jabatan, (int) $r->sementara, $r->abk !== null ? (int) $r->abk : '-', $r->abk !== null ? (int) $r->abk - (int) $r->sementara : '-',
+                $r->tahun_abk ?? '-', (int) ($r->existing ?? 0), $keterangan];
+        })->all();
+
+        $dgAbk = collect($baris)->filter(fn ($b) => $b[4] !== '-');
+
+        return [
+            'kolom' => ['Instansi', 'Unit kerja', 'Jabatan', 'Kebutuhan sementara', 'Kebutuhan ABK', 'Selisih (ABK − sementara)', 'Tahun ABK', 'Existing', 'Keterangan'],
+            'baris' => $baris,
+            'total' => ['Jumlah', '', '', array_sum(array_column($baris, 3)), $dgAbk->sum(4), $dgAbk->sum(5), '', array_sum(array_column($baris, 7)), ''],
+            'angka' => ['posisi' => count($baris), 'sudah_abk' => $dgAbk->count(), 'masih_sementara' => count($baris) - $dgAbk->count()],
         ];
     }
 }

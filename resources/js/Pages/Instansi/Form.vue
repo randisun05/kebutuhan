@@ -11,6 +11,7 @@
             <Field class="col-md-12" label="Jalur kebutuhan" help="Standar: kebutuhan dari ABK final. Manual: kebutuhan sementara diisi dari existing atau impor Excel; peringatan ABK belum ada tidak dibuat.">
                 <select v-model="form.jalur_kebutuhan" class="form-select"><option v-for="j in jalurOptions" :key="j.value" :value="j.value">{{ j.label }}</option></select>
             </Field>
+            <div class="col-12 form-check form-switch ms-2"><input v-model="form.kebutuhan_perlu_persetujuan" class="form-check-input" type="checkbox" id="persetujuan"><label for="persetujuan" class="form-check-label">Isian kebutuhan sementara oleh operator perlu persetujuan administrator</label></div>
             <Field class="col-md-6" label="ID Instansi SIASN" help="Untuk menyaring unor saat sinkronisasi"><input v-model="form.siasn_instansi_id" class="form-control"></Field>
             <Field class="col-md-6" label="ID Satuan Kerja SIASN"><input v-model="form.siasn_satuan_kerja_id" class="form-control"></Field>
             <Field class="col-md-6" label="Provinsi"><input v-model="form.provinsi" class="form-control"></Field>
@@ -27,7 +28,7 @@ import Field from '../../Components/Field.vue';
 
 const props = defineProps({ data: Object, jenisOptions: Array, jalurOptions: Array });
 const form = useForm({
-    kode: props.data?.kode ?? '', nama: props.data?.nama ?? '', jenis: props.data?.jenis ?? 'pusat', jalur_kebutuhan: props.data?.jalur_kebutuhan ?? 'abk',
+    kode: props.data?.kode ?? '', nama: props.data?.nama ?? '', jenis: props.data?.jenis ?? 'pusat', jalur_kebutuhan: props.data?.jalur_kebutuhan ?? 'abk', kebutuhan_perlu_persetujuan: props.data?.kebutuhan_perlu_persetujuan ?? false,
     provinsi: props.data?.provinsi ?? '', siasn_instansi_id: props.data?.siasn_instansi_id ?? '', siasn_satuan_kerja_id: props.data?.siasn_satuan_kerja_id ?? '', alamat: props.data?.alamat ?? '', is_active: props.data?.is_active ?? true,
 });
 const submit = () => (props.data ? form.put(`/instansi/${props.data.id}`) : form.post('/instansi'));

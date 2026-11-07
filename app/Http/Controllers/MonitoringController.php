@@ -6,6 +6,7 @@ use App\Exports\MonitoringExport;
 use App\Models\Instansi;
 use App\Models\Jabatan;
 use App\Models\KebutuhanSementara;
+use App\Models\KebutuhanSementaraBatch;
 use App\Models\UnitKerja;
 use App\Services\Ai\AsistenAi;
 use App\Services\MonitoringService;
@@ -49,7 +50,7 @@ class MonitoringController extends Controller
         $filters = $this->filters();
 
         return inertia('Monitoring/Instansi', [
-            'instansi' => $instansi->only(['id', 'kode', 'nama', 'jenis', 'jalur_kebutuhan']),
+            'instansi' => $instansi->only(['id', 'kode', 'nama', 'jenis', 'jalur_kebutuhan', 'kebutuhan_perlu_persetujuan']),
             'bolehAtur' => in_array(request()->user()->role?->value, ['admin', 'operator_instansi'], true),
             'filters' => $filters,
             'jenisOptions' => Referensi::options(Referensi::JENIS_JABATAN),
@@ -57,6 +58,13 @@ class MonitoringController extends Controller
             'units' => fn () => $this->monitoring->byUnit($instansi->id, $filters),
             'perJenis' => fn () => $this->monitoring->byJenisJabatan($filters + ['instansi_id' => $instansi->id]),
             'kesiapan' => fn () => app(SaranUsulanService::class)->kesiapanAbk($instansi->id),
+            // pengisian massal terakhir yang masih dapat dibatalkan
+            'batchTerakhir' => fn () => KebutuhanSementaraBatch::where('instansi_id', $instansi->id)->whereNull('dibatalkan_at')
+                ->where('created_at', '>=', now()->subDays(30))->latest('id')->first(['uuid', 'jumlah_dibuat', 'sumber', 'created_at']),
+            // isian operator yang menunggu persetujuan (hanya administrator)
+            'menunggu' => fn () => request()->user()->isAdmin()
+                ? KebutuhanSementara::with('unitKerja:id,nama', 'jabatan:id,nama')->where('instansi_id', $instansi->id)->where('status', 'menunggu')->limit(200)->get()
+                : [],
             // analisis AI terakhir yang tersimpan (tidak memanggil AI)
             'analisisAi' => fn () => app(AsistenAi::class)->analisisMonitoringTersimpan($instansi, array_intersect_key($filters, ['jenis' => 1, 'q' => 1])),
             'updatedAt' => fn () => now()->toIso8601String(),
@@ -82,7 +90,7 @@ class MonitoringController extends Controller
             'positions' => fn () => $this->monitoring->positions($filters, 2000),
             // kebutuhan sementara pada unit ini (dipakai selama posisi belum punya ABK final)
             'sementara' => fn () => KebutuhanSementara::whereIn('unit_kerja_id', $filters['unit_ids'])
-                ->get(['id', 'unit_kerja_id', 'jabatan_id', 'jumlah', 'dasar', 'updated_at'])
+                ->get(['id', 'unit_kerja_id', 'jabatan_id', 'jumlah', 'dasar', 'status', 'updated_at'])
                 ->keyBy(fn ($k) => $k->unit_kerja_id.'-'.$k->jabatan_id),
             'bolehAtur' => in_array(request()->user()->role?->value, ['admin', 'operator_instansi'], true),
             'jabatanOptions' => fn () => Jabatan::where('is_active', true)->orderBy('jenis')->orderBy('nama')->get(['id', 'nama']),

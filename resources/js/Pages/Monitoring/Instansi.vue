@@ -15,11 +15,29 @@
             <span class="fw-semibold"><i class="fa fa-sliders me-1"></i> Jalur kebutuhan:</span>
             <span class="badge" :class="instansi.jalur_kebutuhan === 'manual' ? 'bg-warning text-dark' : 'bg-primary'">{{ instansi.jalur_kebutuhan === 'manual' ? 'Manual dari existing' : 'Standar (ABK)' }}</span>
             <span class="text-muted me-auto">Kebutuhan sementara dipakai pada posisi yang belum punya ABK final.</span>
+            <button v-if="batchTerakhir" class="btn btn-sm btn-outline-danger" @click="batalkanIsi(batchTerakhir)"><i class="fa fa-undo me-1"></i> Batalkan pengisian terakhir</button>
             <button class="btn btn-sm btn-outline-secondary" @click="isiDariExisting"><i class="fa fa-magic me-1"></i> Isi dari existing / formasi</button>
             <a class="btn btn-sm btn-outline-secondary" href="/kebutuhan-sementara/template"><i class="fa fa-download me-1"></i> Template Excel</a>
             <button class="btn btn-sm btn-outline-primary" @click="berkas.click()"><i class="fa fa-upload me-1"></i> Impor Excel</button>
             <input ref="berkas" type="file" accept=".xlsx,.xls,.csv" class="d-none" @change="imporExcel">
         </div>
+    </div>
+
+    <div v-if="menunggu.length" class="card mb-3 border-warning">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fa fa-hourglass-half me-1"></i> {{ menunggu.length }} kebutuhan sementara menunggu persetujuan</span>
+            <span class="d-flex gap-2">
+                <button class="btn btn-sm btn-success" @click="setujui('setujui')">Setujui semua</button>
+                <button class="btn btn-sm btn-outline-danger" @click="setujui('tolak')">Tolak semua</button>
+            </span>
+        </div>
+        <div class="table-responsive"><table class="table table-sm mb-0">
+            <thead><tr><th>Unit</th><th>Jabatan</th><th class="num">Jumlah</th><th>Dasar</th><th></th></tr></thead>
+            <tbody><tr v-for="m in menunggu" :key="m.id">
+                <td>{{ m.unit_kerja?.nama }}</td><td>{{ m.jabatan?.nama }}</td><td class="num">{{ m.jumlah }}</td><td class="small text-muted">{{ m.dasar }}</td>
+                <td class="text-end text-nowrap"><button class="btn btn-sm btn-light" @click="setujui('setujui', [m.id])">Setujui</button> <button class="btn btn-sm btn-light text-danger" @click="setujui('tolak', [m.id])">Tolak</button></td>
+            </tr></tbody>
+        </table></div>
     </div>
 
     <MonitoringFilter :filters="filters" :jenis-options="jenisOptions" :url="`/monitoring/instansi/${instansi.id}`" :instansi-id="instansi.id" />
@@ -142,6 +160,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { isiMassal, batalkanIsi } from '../../kebutuhanSementara';
 import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
 import StatCard from '../../Components/StatCard.vue';
 import BarChart from '../../Components/BarChart.vue';
@@ -151,21 +170,13 @@ import MonitoringFilter from '../../Components/MonitoringFilter.vue';
 import { infoRiwayat } from '../../ai';
 import { num, pct, barClass, COLORS } from '../../utils';
 
-const props = defineProps({ instansi: Object, filters: Object, jenisOptions: Array, summary: Object, units: Array, perJenis: Array, updatedAt: String, analisisAi: Object, kesiapan: Object, bolehAtur: Boolean });
+const props = defineProps({ instansi: Object, filters: Object, jenisOptions: Array, summary: Object, units: Array, perJenis: Array, updatedAt: String, analisisAi: Object, kesiapan: Object, bolehAtur: Boolean, batchTerakhir: Object, menunggu: { type: Array, default: () => [] } });
 
 const mode = ref('total');
 const berkas = ref(null);
 
-const isiDariExisting = async () => {
-    const res = await Swal.fire({
-        title: 'Isi kebutuhan sementara?',
-        html: '<div class="small text-start">Pilih sumber angka untuk seluruh instansi. Posisi yang sudah punya ABK final atau kebutuhan sementara <b>tidak diubah</b>.</div>',
-        icon: 'question', input: 'radio', inputValue: 'existing',
-        inputOptions: { existing: 'Jumlah pegawai existing (pegawai aktif)', formasi: 'Formasi yang sudah ditetapkan (jumlah ditetapkan pada SK)' },
-        showCancelButton: true, confirmButtonText: 'Isi', cancelButtonText: 'Batal',
-    });
-    if (res.isConfirmed) router.post('/kebutuhan-sementara/isi-existing', { instansi_id: props.instansi.id, sumber: res.value }, { preserveScroll: true });
-};
+const isiDariExisting = () => isiMassal({ instansiId: props.instansi.id, target: 'seluruh instansi ' + props.instansi.nama });
+const setujui = (aksi, ids = []) => router.post('/kebutuhan-sementara/persetujuan', { instansi_id: props.instansi.id, aksi, ids }, { preserveScroll: true });
 const imporExcel = (e) => {
     const file = e.target.files[0];
     if (file) router.post('/kebutuhan-sementara/import', { instansi_id: props.instansi.id, file }, { forceFormData: true, preserveScroll: true });

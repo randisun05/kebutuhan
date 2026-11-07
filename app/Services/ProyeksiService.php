@@ -46,7 +46,7 @@ class ProyeksiService
             ->get();
 
         // posisi tanpa ABK final memakai kebutuhan sementara (tetap, tanpa pertumbuhan beban kerja)
-        $sementara = KebutuhanSementara::query()
+        $sementara = KebutuhanSementara::query()->disetujui()
             ->where('instansi_id', $instansiId)
             ->whereNotExists(fn ($q) => $q->from('anjab_abks as b')->whereColumn('b.unit_kerja_id', 'kebutuhan_sementara.unit_kerja_id')
                 ->whereColumn('b.jabatan_id', 'kebutuhan_sementara.jabatan_id')->where('b.status', 'final'))

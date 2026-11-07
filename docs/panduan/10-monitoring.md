@@ -61,9 +61,25 @@ Administrator dan operator instansi dapat mengisi banyak posisi sekaligus:
   - **Formasi yang sudah ditetapkan**: total *jumlah ditetapkan* per unit dan jabatan dari usulan berstatus *ditetapkan*, dengan dasar *Formasi ditetapkan per tanggal ...*.
 
   Posisi yang sudah punya ABK final atau kebutuhan sementara **tidak diubah**. Setelah itu ubah angkanya per posisi lewat ikon pensil.
+
+  Sebelum menulis, aplikasi menampilkan **pratinjau**: berapa posisi akan diisi, total kebutuhan, berapa yang dilewati, dan beberapa contoh. Klik **Isi sekarang** untuk melanjutkan.
+
+  Salah isi? Selama 30 hari tombol **Batalkan pengisian terakhir** muncul di halaman monitoring instansi. Baris hasil pengisian itu dihapus, sedangkan baris yang sudah Anda ubah setelahnya **dipertahankan**.
 - **Impor Excel** — klik **Template Excel**, isi kolom `kode_unit`, `kode_jabatan`, `jumlah`, dan `dasar`, lalu klik **Impor Excel**. Posisi yang sudah ada diperbarui; jumlah **0** menghapusnya. Baris yang gagal dilaporkan.
 
 ![Monitoring instansi: jalur kebutuhan dan isi massal](/img/panduan/monitoring-instansi.png)
+
+### Persetujuan administrator (opsional)
+
+Pada **Ubah Instansi** administrator dapat mengaktifkan *Isian kebutuhan sementara oleh operator perlu persetujuan administrator*. Bila aktif:
+
+- Isian operator (manual, isi massal, maupun impor) berstatus **menunggu persetujuan** dan **belum dipakai** di monitoring, usulan, dan proyeksi. Posisinya ditandai *menunggu persetujuan*.
+- Administrator melihat daftarnya di halaman monitoring instansi, lalu memilih **Setujui** atau **Tolak** per baris, atau **Setujui semua / Tolak semua**. Isian yang ditolak dihapus.
+- Isian administrator langsung berlaku. Mengubah isian yang sudah disetujui oleh operator mengembalikannya ke status menunggu.
+
+### Perbandingan dengan hasil ABK
+
+Laporan **Perbandingan kebutuhan sementara dengan hasil ABK** (menu Laporan) menampilkan setiap posisi berkebutuhan sementara beserta kebutuhan ABK final-nya bila sudah ada, selisihnya, dan keterangan *ABK final menggantikan*, *masih sementara*, atau *menunggu persetujuan*. Gunakan untuk melihat dampak saat instansi beralih ke jalur standar.
 
 ## Kesiapan ABK
 

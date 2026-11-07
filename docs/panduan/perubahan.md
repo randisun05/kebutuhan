@@ -9,6 +9,17 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.7.0 — 2026-11-07
+
+- **Isi massal lebih aman**: ada **pratinjau** sebelum menulis dan tombol **Batalkan pengisian terakhir**.
+- **Persetujuan administrator** (opsional per instansi) untuk isian kebutuhan sementara oleh operator.
+- Laporan baru **Perbandingan kebutuhan sementara dengan hasil ABK**.
+- Impor Excel: sel jumlah yang kosong kini dilaporkan dengan pesan yang jelas.
+- Notifikasi sukses dan info kini berupa **toast kecil** di pojok layar, tidak lagi menutupi halaman.
+- **Kualitas Data**: daftar lengkap dengan halaman, filter unit kerja, dan unduh Excel.
+- **Pemetaan jabatan SIASN**: pencarian, filter *belum dipetakan*, dan saran berdasarkan kemiripan nama.
+- **Peringatan Dini**: tampilan *Ringkas per unit*.
+
 ## v1.6.0 — 2026-11-06
 
 - **Dua jalur kebutuhan per instansi**: *Standar (ABK)* dan *Manual dari existing* (kebutuhan sementara). Diatur administrator di Ubah Instansi.

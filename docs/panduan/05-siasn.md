@@ -38,8 +38,9 @@ Administrator dapat mengaktifkan **sinkron otomatis setiap malam**.
 
 Saat sinkron data pegawai, jabatan di SIASN dicocokkan ke jabatan SIMONKEB lewat **ID jabatan SIASN** yang diisi di referensi jabatan, lalu lewat **nama jabatan yang sama**. Jabatan yang belum ada padanannya dicatat otomatis di kartu **Pemetaan jabatan SIASN** pada halaman ini, lengkap dengan jumlah pegawai yang terdampak.
 
-1. Administrator memilih **jabatan SIMONKEB** yang sesuai untuk setiap baris, lalu klik **Simpan**. Operator instansi hanya dapat melihat.
-2. Jalankan **Sinkronkan** data pegawai lagi: pegawai yang sebelumnya gagal karena jabatan belum dipetakan kini diproses.
+1. Gunakan kolom **Cari** atau centang **Belum dipetakan** untuk menyaring daftar.
+2. Administrator memilih **jabatan SIMONKEB** yang sesuai untuk setiap baris, lalu klik **Simpan**. Bila ada jabatan dengan nama yang mirip, aplikasi menampilkan **Saran** beserta tingkat kemiripannya; klik saran itu untuk memilihnya, lalu periksa dan simpan. Operator instansi hanya dapat melihat.
+3. Jalankan **Sinkronkan** data pegawai lagi: pegawai yang sebelumnya gagal karena jabatan belum dipetakan kini diproses.
 
 Pemetaan berlaku untuk semua instansi. Memilih *belum dipetakan* menghapus pemetaan.
 

@@ -45,7 +45,8 @@ class DatabaseSeeder extends Seeder
 
         $instansis = [
             ['kode' => 'KAB-SJT', 'nama' => 'Pemerintah Kabupaten Sejahtera', 'jenis' => 'kabupaten', 'provinsi' => 'Jawa Barat'],
-            ['kode' => 'KOT-MDN', 'nama' => 'Pemerintah Kota Madani', 'jenis' => 'kota', 'provinsi' => 'Jawa Tengah'],
+            // jalur manual: sebagian posisi memakai kebutuhan sementara (tanpa ABK), peringatan ABK tidak dibuat
+            ['kode' => 'KOT-MDN', 'nama' => 'Pemerintah Kota Madani', 'jenis' => 'kota', 'provinsi' => 'Jawa Tengah', 'jalur_kebutuhan' => 'manual'],
             ['kode' => 'PROV-NSN', 'nama' => 'Pemerintah Provinsi Nusantara', 'jenis' => 'provinsi', 'provinsi' => 'Nusantara'],
             ['kode' => 'KL-ADM', 'nama' => 'Kementerian Administrasi Contoh', 'jenis' => 'pusat', 'provinsi' => 'DKI Jakarta'],
         ];
@@ -272,7 +273,8 @@ class DatabaseSeeder extends Seeder
                 }
 
                 for ($n = 0; $n < $existing; $n++) {
-                    $lahir = $faker->dateTimeBetween('-59 years', '-24 years');
+                    // usia pegawai aktif tetap di bawah batas usia pensiun jabatan (BUP)
+                    $lahir = $faker->dateTimeBetween('-'.($jabatan->bup - 1).' years', '-24 years');
                     Pegawai::create([
                         'instansi_id' => $instansi->id, 'unit_kerja_id' => $unit->id, 'jabatan_id' => $jabatan->id,
                         'nip' => $lahir->format('Ymd').$faker->numerify('20##').str_pad((string) mt_rand(1, 12), 2, '0', STR_PAD_LEFT).mt_rand(1, 2).$faker->numerify('###'),
@@ -283,6 +285,17 @@ class DatabaseSeeder extends Seeder
                         'tanggal_lahir' => $lahir->format('Y-m-d'),
                         'tmt_jabatan' => $faker->dateTimeBetween('-10 years', '-1 month')->format('Y-m-d'),
                     ]);
+                }
+
+                // instansi berjalur manual: sebagian posisi hanya punya kebutuhan sementara (belum ada ABK)
+                if ($instansi->jalur_kebutuhan === 'manual' && mt_rand(0, 2) === 0) {
+                    KebutuhanSementara::create([
+                        'instansi_id' => $instansi->id, 'unit_kerja_id' => $unit->id, 'jabatan_id' => $jabatan->id,
+                        'jumlah' => $kebutuhan, 'dasar' => ['Peta jabatan tahun sebelumnya', 'Kesepakatan pimpinan', 'Formasi lama'][mt_rand(0, 2)],
+                        'created_by' => $operator->id, 'disetujui_by' => $operator->id, 'disetujui_at' => now(),
+                    ]);
+
+                    continue;
                 }
 
                 // ABK: beban kerja disusun agar menghasilkan kebutuhan yang direncanakan

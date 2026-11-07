@@ -33,8 +33,7 @@ class SiasnController extends Controller
                 'jabatan_total' => Jabatan::count(),
                 'jabatan_terpetakan' => Jabatan::whereNotNull('siasn_jabatan_id')->count(),
             ],
-            'petaJabatan' => fn () => SiasnJabatanPeta::with('jabatan:id,nama')
-                ->orderByRaw('CASE WHEN jabatan_id IS NULL THEN 0 ELSE 1 END')->orderByDesc('jumlah_pegawai')->limit(200)->get(),
+            'petaJabatan' => fn () => $this->petaDenganSaran(),
             'jabatanOptions' => fn () => $this->bolehMemetakan() ? Jabatan::where('is_active', true)->orderBy('nama')->get(['id', 'nama']) : [],
             'logs' => fn () => $this->scoped(SiasnSyncLog::query())
                 ->with(['instansi:id,nama', 'user:id,name'])
@@ -53,6 +52,37 @@ class SiasnController extends Controller
         return back()->with('success', $peta->jabatan_id
             ? 'Pemetaan disimpan. Jalankan sinkron data pegawai agar pegawai terkait diperbarui.'
             : 'Pemetaan dihapus.');
+    }
+
+    /** Daftar pemetaan jabatan beserta saran jabatan SIMONKEB terdekat (kemiripan nama) untuk yang belum dipetakan. */
+    private function petaDenganSaran()
+    {
+        $peta = SiasnJabatanPeta::with('jabatan:id,nama')
+            ->orderByRaw('CASE WHEN jabatan_id IS NULL THEN 0 ELSE 1 END')->orderByDesc('jumlah_pegawai')->limit(500)->get();
+        $belum = $peta->whereNull('jabatan_id');
+        if ($belum->isEmpty()) {
+            return $peta;
+        }
+
+        $normal = fn (string $t) => preg_replace('/\s+/', ' ', trim(mb_strtolower(preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $t))));
+        $kandidat = Jabatan::where('is_active', true)->get(['id', 'nama'])->map(fn ($j) => ['id' => $j->id, 'nama' => $j->nama, 'n' => $normal($j->nama)]);
+
+        return $peta->map(function (SiasnJabatanPeta $p) use ($normal, $kandidat) {
+            $p->saran = null;
+            if (! $p->jabatan_id && $p->nama_siasn) {
+                $n = $normal($p->nama_siasn);
+                $terbaik = $kandidat->map(function ($k) use ($n) {
+                    similar_text($n, $k['n'], $persen);
+
+                    return $k + ['skor' => (int) round($persen)];
+                })->sortByDesc('skor')->first();
+                if ($terbaik && $terbaik['skor'] >= 60) {
+                    $p->saran = ['id' => $terbaik['id'], 'nama' => $terbaik['nama'], 'skor' => $terbaik['skor']];
+                }
+            }
+
+            return $p;
+        });
     }
 
     private function bolehMemetakan(): bool

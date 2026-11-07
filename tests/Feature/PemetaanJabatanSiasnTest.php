@@ -69,4 +69,17 @@ class PemetaanJabatanSiasnTest extends TestCase
         $this->actingAs($this->user(Role::Admin))->get('/siasn')->assertOk()
             ->assertInertia(fn ($page) => $page->has('petaJabatan', 1)->has('jabatanOptions'));
     }
+
+    public function test_saran_pemetaan_berdasarkan_kemiripan_nama(): void
+    {
+        $this->jabatan('JF-ASDM-1')->update(['nama' => 'Analis Sumber Daya Manusia Aparatur Ahli Pertama']);
+        $this->jabatan('JF-LAIN')->update(['nama' => 'Dokter Gigi Ahli Madya']);
+        SiasnJabatanPeta::create(['kunci' => 'nama:a', 'nama_siasn' => 'ANALIS SUMBER DAYA MANUSIA APARATUR AHLI PERTAMA', 'jumlah_pegawai' => 2]);
+        SiasnJabatanPeta::create(['kunci' => 'nama:b', 'nama_siasn' => 'Pilot Helikopter', 'jumlah_pegawai' => 1]);
+
+        $this->actingAs($this->user(Role::Admin))->get('/siasn')->assertInertia(fn ($page) => $page
+            ->where('petaJabatan.0.saran.nama', 'Analis Sumber Daya Manusia Aparatur Ahli Pertama')
+            ->where('petaJabatan.0.saran.skor', 100)
+            ->where('petaJabatan.1.saran', null));
+    }
 }

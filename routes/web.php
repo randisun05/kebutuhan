@@ -119,11 +119,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('unit-kerja', UnitKerjaController::class)->except('show')->parameters(['unit-kerja' => 'unitKerja']);
 
         Route::post('/kebutuhan-sementara', [KebutuhanSementaraController::class, 'simpan'])->name('kebutuhan-sementara.simpan');
+        Route::post('/kebutuhan-sementara/pratinjau', [KebutuhanSementaraController::class, 'pratinjau'])->name('kebutuhan-sementara.pratinjau');
+        Route::post('/kebutuhan-sementara/batal/{batch}', [KebutuhanSementaraController::class, 'batal'])->name('kebutuhan-sementara.batal');
         Route::post('/kebutuhan-sementara/isi-existing', [KebutuhanSementaraController::class, 'isiDariExisting'])->name('kebutuhan-sementara.isi-existing');
         Route::post('/kebutuhan-sementara/import', [KebutuhanSementaraController::class, 'import'])->name('kebutuhan-sementara.import');
         Route::get('/kebutuhan-sementara/template', [KebutuhanSementaraController::class, 'template'])->name('kebutuhan-sementara.template');
 
         Route::get('/kualitas-data', [KualitasDataController::class, 'index'])->name('kualitas-data');
+        Route::get('/kualitas-data/export', [KualitasDataController::class, 'export'])->name('kualitas-data.export');
 
         Route::get('/siasn', [SiasnController::class, 'index'])->name('siasn.index');
         Route::post('/siasn/sync', [SiasnController::class, 'sync'])->middleware('throttle:10,1')->name('siasn.sync');
@@ -133,6 +136,7 @@ Route::middleware('auth')->group(function () {
 
     // Referensi nasional, pengguna, dan audit: admin
     Route::middleware('role:admin')->group(function () {
+        Route::post('/kebutuhan-sementara/persetujuan', [KebutuhanSementaraController::class, 'persetujuan'])->name('kebutuhan-sementara.persetujuan');
         Route::resource('instansi', InstansiController::class)->except('show');
         Route::resource('jabatan', JabatanController::class)->except('show');
         Route::resource('users', UserController::class)->except('show');

@@ -17,9 +17,9 @@ class Instansi extends Model
         return LogOptions::defaults()->logFillable()->logOnlyDirty()->dontSubmitEmptyLogs()->useLogName('master');
     }
 
-    protected $fillable = ['kode', 'siasn_instansi_id', 'siasn_satuan_kerja_id', 'nama', 'jenis', 'jalur_kebutuhan', 'provinsi', 'alamat', 'is_active'];
+    protected $fillable = ['kode', 'siasn_instansi_id', 'siasn_satuan_kerja_id', 'nama', 'jenis', 'jalur_kebutuhan', 'kebutuhan_perlu_persetujuan', 'provinsi', 'alamat', 'is_active'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = ['is_active' => 'boolean', 'kebutuhan_perlu_persetujuan' => 'boolean'];
 
     protected $attributes = ['is_active' => true, 'jenis' => 'pusat', 'jalur_kebutuhan' => 'abk'];
 

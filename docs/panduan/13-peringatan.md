@@ -32,7 +32,7 @@ Peringatan kritis/tinggi yang baru dikirim sebagai **notifikasi** ke administrat
 
 ## Menindaklanjuti
 
-1. Klik kartu tingkat atau jenis peringatan di kiri untuk memfilter.
+1. Klik kartu tingkat atau jenis peringatan di kiri untuk memfilter. Bila peringatannya banyak, pilih tampilan **Ringkas per unit**: peringatan dikelompokkan per unit kerja dengan tingkat tertinggi, jumlah per tingkat, dan contohnya, lalu klik **Buka unit** untuk rinciannya.
 2. Klik **Buka** untuk menuju halaman terkait (monitoring unit, histori, usulan, dll.).
 3. (Opsional) Klik **Saran AI** untuk melihat penyebab yang mungkin dan langkah tindak lanjut yang disarankan ([Asisten AI](/panduan/17-asisten-ai)).
 4. Klik **Tindak lanjut** dan tulis apa yang sudah dilakukan (misalnya "sudah diusulkan formasi 2027"). Status berubah menjadi *ditindaklanjuti*.

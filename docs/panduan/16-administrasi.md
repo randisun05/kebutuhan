@@ -11,6 +11,8 @@ menu: [/instansi, /jabatan, /users, /audit, /pedoman]
 
 Tambah/ubah instansi (kode, nama, jenis, provinsi) dan **ID Instansi/Satuan Kerja SIASN**. Ikon struktur pada baris instansi membuka manajemen organisasinya.
 
+Di form instansi, **Jalur kebutuhan** menentukan dasar kebutuhan (*Standar* dari ABK atau *Manual dari existing* dengan kebutuhan sementara; lihat [Monitoring](/panduan/10-monitoring)). Opsi **perlu persetujuan administrator** membuat isian kebutuhan sementara oleh operator menunggu persetujuan lebih dulu.
+
 ## Referensi jabatan
 
 Isi kode, nama, jenis, kategori/jenjang (jabatan fungsional), **kelas jabatan**, **BUP** (menentukan TMT pensiun), kualifikasi pendidikan, **ID jabatan SIASN** (untuk pemetaan sinkron), dan **estimasi belanja pegawai per orang per tahun** (untuk estimasi anggaran). Jabatan yang sudah dipakai tidak dapat dihapus — nonaktifkan saja.

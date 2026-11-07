@@ -47,7 +47,33 @@
                 </select>
             </div></div>
 
-            <div class="card">
+            <div class="d-flex justify-content-end mb-2">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn" :class="!f.kelompok ? 'btn-primary' : 'btn-outline-primary'" @click="setFilter('kelompok', '')"><i class="fa fa-list me-1"></i> Daftar</button>
+                    <button class="btn" :class="f.kelompok === 'unit' ? 'btn-primary' : 'btn-outline-primary'" @click="setFilter('kelompok', 'unit')"><i class="fa fa-sitemap me-1"></i> Ringkas per unit</button>
+                </div>
+            </div>
+
+            <div v-if="kelompok" class="card">
+                <ul class="list-group list-group-flush">
+                    <li v-for="k in kelompok" :key="(k.unit_id || 'i') + k.nama" class="list-group-item">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div style="min-width: 0">
+                                <span class="badge me-1" :style="{ background: warna[k.tertinggi] }">{{ k.tertinggi.toUpperCase() }}</span>
+                                <span class="fw-semibold">{{ k.nama }}</span> <span class="small text-muted">· {{ k.instansi }}</span>
+                                <div class="small mt-1">
+                                    <span v-for="(n, t) in k.per_tingkat" :key="t" class="me-2"><span class="badge" :style="{ background: warna[t] }">{{ n }}</span> {{ t }}</span>
+                                </div>
+                                <ul class="small text-muted mb-0 mt-1 ps-3"><li v-for="c in k.contoh" :key="c">{{ c }}</li><li v-if="k.total > k.contoh.length">…dan {{ k.total - k.contoh.length }} lainnya</li></ul>
+                            </div>
+                            <div class="flex-shrink-0"><Link v-if="k.unit_id" :href="`/monitoring/unit/${k.unit_id}`" class="btn btn-sm btn-light">Buka unit <i class="fa fa-angle-right"></i></Link></div>
+                        </div>
+                    </li>
+                    <li v-if="!kelompok.length" class="list-group-item text-center text-muted py-4">Tidak ada peringatan.</li>
+                </ul>
+            </div>
+
+            <div v-else class="card">
                 <ul class="list-group list-group-flush">
                     <li v-for="p in datas.data" :key="p.id" class="list-group-item">
                         <div class="d-flex justify-content-between gap-3">
@@ -89,7 +115,7 @@ import Pagination from '../../Components/Pagination.vue';
 import { tanggal, waktu } from '../../utils';
 import { escapeHtml, infoRiwayat } from '../../ai';
 
-const props = defineProps({ datas: Object, filters: Object, aturan: Object, instansiOptions: Array, perTingkat: Object, perKode: Object, terakhirDeteksi: String, canRun: Boolean });
+const props = defineProps({ kelompok: { type: Array, default: null }, datas: Object, filters: Object, aturan: Object, instansiOptions: Array, perTingkat: Object, perKode: Object, terakhirDeteksi: String, canRun: Boolean });
 
 // warna status (bukan warna seri) selalu disertai ikon + label
 const warna = { kritis: '#d03b3b', tinggi: '#ec835a', sedang: '#b77900', rendah: '#6b7280' };

@@ -25,7 +25,9 @@ class PeringatanController extends Controller
 
         return inertia('Peringatan/Index', [
             'datas' => $datas,
-            'filters' => request()->only('kode', 'tingkat', 'instansi_id') + ['status' => $status],
+            // tampilan ringkas: peringatan dikelompokkan per unit kerja (mengurangi kebisingan banyak peringatan per posisi)
+            'kelompok' => request('kelompok') === 'unit' ? $this->kelompokPerUnit($base) : null,
+            'filters' => request()->only('kode', 'tingkat', 'instansi_id', 'kelompok') + ['status' => $status],
             'aturan' => PeringatanService::ATURAN,
             'instansiOptions' => $this->instansiOptions(),
             'perTingkat' => $base()->selectRaw('tingkat, COUNT(*) as jumlah')->groupBy('tingkat')->pluck('jumlah', 'tingkat'),
@@ -56,5 +58,30 @@ class PeringatanController extends Controller
         $hasil = $service->deteksi();
 
         return back()->with('success', "Deteksi selesai: {$hasil['baru']} baru, {$hasil['aktif']} aktif, {$hasil['selesai']} selesai.");
+    }
+
+    /** Kelompokkan peringatan (sesuai filter jenis/tingkat) per unit kerja; yang tidak terkait unit dikelompokkan per instansi. */
+    private function kelompokPerUnit(\Closure $base): array
+    {
+        $urut = ['kritis' => 1, 'tinggi' => 2, 'sedang' => 3, 'rendah' => 4];
+
+        return $base()
+            ->when(request('kode'), fn ($q, $k) => $q->where('kode', $k))
+            ->when(request('tingkat'), fn ($q, $t) => $q->where('tingkat', $t))
+            ->with(['instansi:id,nama', 'unitKerja:id,nama'])
+            ->limit(3000)->get(['id', 'instansi_id', 'unit_kerja_id', 'kode', 'tingkat', 'judul'])
+            ->groupBy(fn ($p) => $p->unit_kerja_id ? 'u'.$p->unit_kerja_id : 'i'.$p->instansi_id)
+            ->map(function ($g) use ($urut) {
+                $p = $g->first();
+                $tertinggi = $g->sortBy(fn ($x) => $urut[$x->tingkat] ?? 9)->first()->tingkat;
+
+                return [
+                    'unit_id' => $p->unit_kerja_id, 'nama' => $p->unitKerja?->nama ?? '(tingkat instansi)', 'instansi' => $p->instansi?->nama,
+                    'total' => $g->count(), 'tertinggi' => $tertinggi, 'per_tingkat' => $g->countBy('tingkat')->all(),
+                    'contoh' => $g->sortBy(fn ($x) => $urut[$x->tingkat] ?? 9)->take(3)->pluck('judul')->values()->all(),
+                ];
+            })
+            ->sortBy([fn ($a, $b) => ($urut[$a['tertinggi']] ?? 9) <=> ($urut[$b['tertinggi']] ?? 9), fn ($a, $b) => $b['total'] <=> $a['total']])
+            ->values()->all();
     }
 }

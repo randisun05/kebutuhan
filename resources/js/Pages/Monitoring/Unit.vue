@@ -54,6 +54,7 @@
                         <td class="small">{{ p.jenis_label }}</td>
                         <td class="num">
                             {{ num(p.kebutuhan) }}
+                            <span v-if="sementaraDari(p)?.status === 'menunggu'" class="badge bg-secondary ms-1" title="Menunggu persetujuan administrator; belum dipakai di perhitungan">menunggu persetujuan</span>
                             <span v-if="p.sumber === 'sementara'" class="badge bg-warning text-dark ms-1" :title="'Kebutuhan sementara' + (sementaraDari(p)?.dasar ? ': ' + sementaraDari(p).dasar : '')">sementara</span>
                         </td>
                         <td class="num">{{ num(p.existing) }}</td>
@@ -82,6 +83,7 @@ import MonitoringFilter from '../../Components/MonitoringFilter.vue';
 import { num, pct } from '../../utils';
 import { escapeHtml } from '../../ai';
 import Swal from 'sweetalert2';
+import { isiMassal } from '../../kebutuhanSementara';
 
 const props = defineProps({
     unit: Object, filters: Object, jenisOptions: Array, summary: Object, positions: Array, updatedAt: String,
@@ -117,17 +119,7 @@ const aturSementara = async (p = null) => {
     if (res.isConfirmed) router.post('/kebutuhan-sementara', res.value, { preserveScroll: true });
 };
 
-// salin jumlah pegawai existing menjadi kebutuhan sementara (hanya posisi tanpa ABK final dan tanpa isian)
-const isiDariExisting = async () => {
-    const res = await Swal.fire({
-        title: 'Isi kebutuhan sementara?',
-        html: `<div class="small text-start">Pilih sumber angka untuk <b>${escapeHtml(props.unit.nama)}</b>${props.filters.sub ? ' beserta sub-unit' : ''}. Posisi yang sudah punya ABK final atau kebutuhan sementara <b>tidak diubah</b>.</div>`,
-        icon: 'question', input: 'radio', inputValue: 'existing',
-        inputOptions: { existing: 'Jumlah pegawai existing (pegawai aktif)', formasi: 'Formasi yang sudah ditetapkan (jumlah ditetapkan pada SK)' },
-        showCancelButton: true, confirmButtonText: 'Isi', cancelButtonText: 'Batal',
-    });
-    if (res.isConfirmed) router.post('/kebutuhan-sementara/isi-existing', { instansi_id: props.unit.instansi_id, unit_kerja_id: props.unit.id, sub: props.filters.sub ? 1 : 0, sumber: res.value }, { preserveScroll: true });
-};
+const isiDariExisting = () => isiMassal({ instansiId: props.unit.instansi_id, unitId: props.unit.id, sub: props.filters.sub, target: props.unit.nama + (props.filters.sub ? ' beserta sub-unit' : '') });
 
 const LIVE = ['summary', 'positions', 'updatedAt'];
 usePoll(30000, { only: LIVE });

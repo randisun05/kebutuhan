@@ -27,7 +27,7 @@ class KebutuhanSementaraImport implements ToCollection, WithHeadingRow
 
     public array $errors = [];
 
-    public function __construct(private int $instansiId, private ?int $userId) {}
+    public function __construct(private int $instansiId, private ?int $userId, public string $status = 'disetujui') {}
 
     public function collection(Collection $rows): void
     {
@@ -45,6 +45,11 @@ class KebutuhanSementaraImport implements ToCollection, WithHeadingRow
 
                 if (! $unitId || ! $jabatanId) {
                     $this->errors[] = "Baris {$line}: kode_unit atau kode_jabatan tidak dikenal di instansi ini.";
+
+                    continue;
+                }
+                if ($jumlah === null || trim((string) $jumlah) === '') {
+                    $this->errors[] = "Baris {$line}: jumlah kosong. Isi angka kebutuhan (0 untuk menghapus posisi ini).";
 
                     continue;
                 }
@@ -68,12 +73,12 @@ class KebutuhanSementaraImport implements ToCollection, WithHeadingRow
 
                 $dasar = mb_substr(trim((string) ($row['dasar'] ?? '')), 0, 255) ?: null;
                 if ($model) {
-                    $model->update(['jumlah' => (int) $jumlah, 'dasar' => $dasar ?? $model->dasar]);
+                    $model->update(['jumlah' => (int) $jumlah, 'dasar' => $dasar ?? $model->dasar] + $this->persetujuan());
                     $this->updated++;
                 } else {
                     KebutuhanSementara::create($kunci + [
                         'instansi_id' => $this->instansiId, 'jumlah' => (int) $jumlah, 'dasar' => $dasar, 'created_by' => $this->userId,
-                    ]);
+                    ] + $this->persetujuan());
                     $this->created++;
                 }
                 if (isset($abk[$unitId.'-'.$jabatanId])) {
@@ -81,5 +86,15 @@ class KebutuhanSementaraImport implements ToCollection, WithHeadingRow
                 }
             }
         });
+    }
+
+    /** Kolom status/persetujuan sesuai status isian (menunggu atau disetujui). */
+    private function persetujuan(): array
+    {
+        return [
+            'status' => $this->status,
+            'disetujui_by' => $this->status === 'disetujui' ? $this->userId : null,
+            'disetujui_at' => $this->status === 'disetujui' ? now() : null,
+        ];
     }
 }
