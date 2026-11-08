@@ -579,7 +579,7 @@
     ],
     "harapan": "Detail tampil; PDF terunduh (application/pdf).",
     "status": "LULUS",
-    "catatan": "Detail tampil. PDF: HTTP 200, application/pdf, 879.434 byte",
+    "catatan": "Detail tampil. PDF: HTTP 200, application/pdf, 879.435 byte",
     "gambar": "23-abk-detail.png",
     "ekstra": [],
     "bagianNama": "C. Analisis Beban Kerja (ABK)",
@@ -630,7 +630,7 @@
     ],
     "harapan": "Berkas Excel terunduh; rekap unit tampil.",
     "status": "LULUS",
-    "catatan": "Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 28.172 byte. Templat: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 6.622 byte. Rekap unit tampil.",
+    "catatan": "Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 28.163 byte. Templat: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 6.622 byte. Rekap unit tampil.",
     "gambar": "25-abk-ekspor.png",
     "ekstra": [],
     "bagianNama": "C. Analisis Beban Kerja (ABK)",
@@ -679,7 +679,7 @@
     ],
     "harapan": "Tabel/grafik proyeksi tampil; ekspor sukses.",
     "status": "LULUS",
-    "catatan": "Proyeksi tampil. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 13.138 byte",
+    "catatan": "Proyeksi tampil. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 13.106 byte",
     "gambar": "27-proyeksi.png",
     "ekstra": [],
     "bagianNama": "D. Perencanaan",
@@ -909,7 +909,7 @@
     ],
     "harapan": "Status *ditetapkan*; lampiran penetapan tersedia dan PDF dapat diunduh.",
     "status": "LULUS",
-    "catatan": "Ditetapkan. Lampiran: HTTP 200, application/pdf, 886.962 byte",
+    "catatan": "Ditetapkan. Lampiran: HTTP 200, application/pdf, 886.948 byte",
     "gambar": "36-wf-tetapkan.png",
     "ekstra": [],
     "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
@@ -1040,7 +1040,7 @@
     ],
     "harapan": "Tabel tampil; drill-down berfungsi; ekspor sukses.",
     "status": "LULUS",
-    "catatan": "Drill-down OK. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 23.157 byte",
+    "catatan": "Drill-down OK. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 23.285 byte",
     "gambar": "41-monitoring.png",
     "ekstra": [],
     "bagianNama": "F. Monitoring, analitik, histori, peringatan, laporan",
@@ -1090,7 +1090,7 @@
     ],
     "harapan": "Tren tampil; ekspor sukses.",
     "status": "LULUS",
-    "catatan": "Histori tampil. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 6.970 byte",
+    "catatan": "Histori tampil. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 6.920 byte",
     "gambar": "43-histori.png",
     "ekstra": [],
     "bagianNama": "F. Monitoring, analitik, histori, peringatan, laporan",
@@ -1143,7 +1143,7 @@
     ],
     "harapan": "Semua unduhan HTTP 200 dengan tipe berkas benar.",
     "status": "LULUS",
-    "catatan": "9 jenis × 2 format berhasil. rekap_instansi: xlsx 6.954 byte, pdf 880.516 byte | rekap_unit: xlsx 6.541 byte, pdf 879.080 byte | rekap_jabatan: xlsx 7.751 byte, pdf 883.779 byte | posisi_bermasalah: xlsx 16.223 byte, pdf 954.221 byte | usulan_penetapan: xlsx 6.873 byte, pdf 880.034 byte | pensiun: xlsx 17.584 byte, pdf 932.305 byte | abk: xlsx 21.952 byte, pdf 986.026 byte | tidak_bergerak: xlsx 6.455 byte, pdf 878.524 byte | peringatan: xlsx 11.933 byte, pdf 917.682 byte",
+    "catatan": "9 jenis × 2 format berhasil. rekap_instansi: xlsx 6.948 byte, pdf 880.508 byte | rekap_unit: xlsx 6.540 byte, pdf 879.078 byte | rekap_jabatan: xlsx 7.745 byte, pdf 883.767 byte | posisi_bermasalah: xlsx 16.491 byte, pdf 956.268 byte | usulan_penetapan: xlsx 6.873 byte, pdf 880.036 byte | pensiun: xlsx 17.523 byte, pdf 932.086 byte | abk: xlsx 21.997 byte, pdf 986.017 byte | tidak_bergerak: xlsx 6.455 byte, pdf 878.523 byte | peringatan: xlsx 11.961 byte, pdf 917.821 byte",
     "gambar": "45-laporan-semua.png",
     "ekstra": [],
     "bagianNama": "F. Monitoring, analitik, histori, peringatan, laporan",
@@ -1294,7 +1294,7 @@
     ],
     "harapan": "Panduan tampil; PDF terunduh.",
     "status": "LULUS",
-    "catatan": "Panduan tampil. PDF: HTTP 200, application/pdf, 1.330.493 byte",
+    "catatan": "Panduan tampil. PDF: HTTP 200, application/pdf, 1.331.488 byte",
     "gambar": "51-panduan.png",
     "ekstra": [],
     "bagianNama": "G. Administrasi & pendukung",
@@ -1355,10 +1355,533 @@
     "tahap": 8,
     "tahapDari": 8,
     "sebelum": "52. Pedoman rumus ABK",
-    "berikut": null,
+    "berikut": "54. Operator ditolak membuka menu khusus admin",
     "langkahAlur": [
       "Pertama, buka **Instansi**, cari `KL-ADM` (sudah punya usulan) → klik ikon tempat sampah → konfirmasi.",
       "Terakhir, cari `UJI-01` (data uji, tanpa usulan) → hapus → konfirmasi."
+    ]
+  },
+  {
+    "nn": "54",
+    "id": "h-akses-operator",
+    "akun": "kab",
+    "judul": "Operator ditolak membuka menu khusus admin",
+    "fungsi": "Menu Pengguna, Audit, Instansi, dan Jabatan hanya untuk administrator. Mengetik alamatnya langsung tidak boleh menjadi jalan pintas.",
+    "langkah": [
+      "Masuk sebagai operator Kabupaten.",
+      "Ketik langsung alamat `/users`, `/audit`, `/instansi`, dan `/jabatan` di peramban."
+    ],
+    "harapan": "Setiap alamat menjawab 403 (dilarang) dan tidak menampilkan datanya.",
+    "status": "LULUS",
+    "catatan": "/users=403, /audit=403, /instansi=403, /jabatan=403",
+    "gambar": "54-h-akses-operator.png",
+    "ekstra": [
+      {
+        "f": "54-h-akses-operator-1.png",
+        "ket": "Halaman /users untuk operator: ditolak 403."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 1,
+    "tahapDari": 17,
+    "sebelum": "53. Hapus instansi: penjaga usulan dan pembersihan data uji",
+    "berikut": "55. Pimpinan (hanya baca) ditolak mengubah atau mengelola data",
+    "langkahAlur": [
+      "Pertama, masuk sebagai operator Kabupaten.",
+      "Terakhir, ketik langsung alamat `/users`, `/audit`, `/instansi`, dan `/jabatan` di peramban."
+    ]
+  },
+  {
+    "nn": "55",
+    "id": "h-akses-pimpinan",
+    "akun": "pimpinan",
+    "judul": "Pimpinan (hanya baca) ditolak mengubah atau mengelola data",
+    "fungsi": "Peran Pimpinan hanya melihat. Halaman kelola data dan pembuatan usulan harus tertutup.",
+    "langkah": [
+      "Masuk sebagai Pimpinan.",
+      "Ketik langsung `/pegawai`, `/unit-kerja`, `/siasn`, `/users`, dan `/usulan/create`."
+    ],
+    "harapan": "Semuanya menjawab 403.",
+    "status": "LULUS",
+    "catatan": "/pegawai=403, /unit-kerja=403, /siasn=403, /users=403, /usulan/create=403",
+    "gambar": "55-h-akses-pimpinan.png",
+    "ekstra": [],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 2,
+    "tahapDari": 17,
+    "sebelum": "54. Operator ditolak membuka menu khusus admin",
+    "berikut": "56. Operator tidak dapat membuka usulan instansi lain",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Pimpinan.",
+      "Terakhir, ketik langsung `/pegawai`, `/unit-kerja`, `/siasn`, `/users`, dan `/usulan/create`."
+    ]
+  },
+  {
+    "nn": "56",
+    "id": "h-lintas-instansi",
+    "akun": "kab",
+    "judul": "Operator tidak dapat membuka usulan instansi lain",
+    "fungsi": "Operator dibatasi ke instansinya; usulan milik Provinsi dan Kementerian tidak boleh terbaca walau ID-nya ditebak.",
+    "langkah": [
+      "Masuk sebagai operator Kabupaten.",
+      "Ketik langsung alamat usulan milik instansi lain: `/usulan/3` (Provinsi) dan `/usulan/4` (Kementerian)."
+    ],
+    "harapan": "Ditolak (403) atau tidak ditemukan (404).",
+    "status": "LULUS",
+    "catatan": "/usulan/3=403, /usulan/4=403",
+    "gambar": "56-h-lintas-instansi.png",
+    "ekstra": [
+      {
+        "f": "56-h-lintas-instansi-1.png",
+        "ket": "Usulan Provinsi dibuka operator Kabupaten: ditolak."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 3,
+    "tahapDari": 17,
+    "sebelum": "55. Pimpinan (hanya baca) ditolak mengubah atau mengelola data",
+    "berikut": "57. Aksi alur kerja yang tidak sah ditolak server",
+    "langkahAlur": [
+      "Pertama, masuk sebagai operator Kabupaten.",
+      "Terakhir, ketik langsung alamat usulan milik instansi lain: `/usulan/3` (Provinsi) dan `/usulan/4` (Kementerian)."
+    ]
+  },
+  {
+    "nn": "57",
+    "id": "h-aksi-tidak-sah",
+    "akun": "kab",
+    "judul": "Aksi alur kerja yang tidak sah ditolak server",
+    "fungsi": "Server memeriksa peran dan status pada setiap aksi, bukan hanya menyembunyikan tombol di layar.",
+    "langkah": [
+      "Masuk sebagai operator Kabupaten, buka usulannya yang sudah ditetapkan (`/usulan/1`).",
+      "Kirim langsung permintaan aksi **tetapkan** dan **ajukan** ke server (tanpa lewat tombol).",
+      "Kirim aksi ke usulan milik instansi lain (`/usulan/3`)."
+    ],
+    "harapan": "Dua aksi pertama ditolak 422 dengan pesan status/peran tidak sesuai; aksi ke usulan lain ditolak 403.",
+    "status": "LULUS",
+    "catatan": "tetapkan=422, ajukan=422, usulan lain=403.",
+    "gambar": "57-h-aksi-tidak-sah.png",
+    "ekstra": [
+      {
+        "f": "57-h-aksi-tidak-sah-1.png",
+        "ket": "Tiga permintaan aksi yang tidak sah dan jawaban server."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 4,
+    "tahapDari": 17,
+    "sebelum": "56. Operator tidak dapat membuka usulan instansi lain",
+    "berikut": "58. Tahapan tidak dapat dilompati",
+    "langkahAlur": [
+      "Pertama, masuk sebagai operator Kabupaten, buka usulannya yang sudah ditetapkan (`/usulan/1`).",
+      "Kemudian, kirim langsung permintaan aksi **tetapkan** dan **ajukan** ke server (tanpa lewat tombol).",
+      "Terakhir, kirim aksi ke usulan milik instansi lain (`/usulan/3`)."
+    ]
+  },
+  {
+    "nn": "58",
+    "id": "h-urutan-tahap",
+    "akun": "kemenpan",
+    "judul": "Tahapan tidak dapat dilompati",
+    "fungsi": "Usulan harus melewati verifikasi BKN dan pertimbangan teknis sebelum divalidasi dan ditetapkan.",
+    "langkah": [
+      "Masuk sebagai Validator Kemenpan, buka usulan yang masih berstatus *diajukan* (`/usulan/3`).",
+      "Periksa tombol tindakan yang tersedia.",
+      "Kirim langsung aksi **tetapkan** ke server."
+    ],
+    "harapan": "Tombol Mulai Validasi dan Tetapkan Kebutuhan tidak tampil; aksi langsung ditolak 422.",
+    "status": "LULUS",
+    "catatan": "Tombol terlarang: 0. Server menjawab 422: {\"aksi\":[\"Aksi \\\"Tetapkan Kebutuhan\\\" tidak dapat dilakukan pada status Diajukan Instansi.\"]}",
+    "gambar": "58-h-urutan-tahap.png",
+    "ekstra": [
+      {
+        "f": "58-h-urutan-tahap-1.png",
+        "ket": "Aksi tetapkan pada usulan berstatus diajukan."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 5,
+    "tahapDari": 17,
+    "sebelum": "57. Aksi alur kerja yang tidak sah ditolak server",
+    "berikut": "59. Catatan wajib saat mengembalikan atau menolak usulan",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Validator Kemenpan, buka usulan yang masih berstatus *diajukan* (`/usulan/3`).",
+      "Kemudian, periksa tombol tindakan yang tersedia.",
+      "Terakhir, kirim langsung aksi **tetapkan** ke server."
+    ]
+  },
+  {
+    "nn": "59",
+    "id": "h-catatan-wajib",
+    "akun": "bkn",
+    "judul": "Catatan wajib saat mengembalikan atau menolak usulan",
+    "fungsi": "Alasan pengembalian/penolakan harus tertulis agar operator tahu apa yang diperbaiki.",
+    "langkah": [
+      "Masuk sebagai Verifikator BKN, buka `/usulan/3`, klik **Mulai Verifikasi** dan konfirmasi.",
+      "Klik **Kembalikan untuk Perbaikan**, biarkan catatan kosong, lalu klik **Ya, lanjutkan**.",
+      "Kirim juga aksi kembalikan dan tolak dengan catatan kosong langsung ke server."
+    ],
+    "harapan": "Dialog menolak dengan tulisan \"Catatan wajib diisi\"; server juga menolak 422; status tetap *verifikasi BKN*.",
+    "status": "LULUS",
+    "catatan": "Dialog: \"Catatan wajib diisi\". Server: 422/422. Status tetap Verifikasi BKN.",
+    "gambar": "59-h-catatan-wajib.png",
+    "ekstra": [
+      {
+        "f": "59-h-catatan-wajib-1.png",
+        "ket": "Dialog menolak catatan kosong."
+      },
+      {
+        "f": "59-h-catatan-wajib-2.png",
+        "ket": "Server menolak catatan kosong."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 6,
+    "tahapDari": 17,
+    "sebelum": "58. Tahapan tidak dapat dilompati",
+    "berikut": "60. Rekomendasi melebihi jumlah diusulkan ditolak",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Verifikator BKN, buka `/usulan/3`, klik **Mulai Verifikasi** dan konfirmasi.",
+      "Kemudian, klik **Kembalikan untuk Perbaikan**, biarkan catatan kosong, lalu klik **Ya, lanjutkan**.",
+      "Terakhir, kirim juga aksi kembalikan dan tolak dengan catatan kosong langsung ke server."
+    ]
+  },
+  {
+    "nn": "60",
+    "id": "h-rekomendasi-lebih",
+    "akun": "bkn",
+    "judul": "Rekomendasi melebihi jumlah diusulkan ditolak",
+    "fungsi": "Jumlah rekomendasi BKN tidak boleh lebih besar daripada jumlah yang diusulkan instansi.",
+    "langkah": [
+      "Masuk sebagai Verifikator BKN, buka `/usulan/3` (berstatus verifikasi).",
+      "Pada kolom **Rekomendasi BKN** baris pertama isi `99999`.",
+      "Klik **Beri Pertimbangan Teknis** dan konfirmasi."
+    ],
+    "harapan": "Tidak ada perubahan; status tetap *verifikasi BKN* dan kolom ditandai salah.",
+    "status": "LULUS",
+    "catatan": "Ditolak; status tetap Verifikasi BKN.",
+    "gambar": "60-h-rekomendasi-lebih.png",
+    "ekstra": [
+      {
+        "f": "60-h-rekomendasi-lebih-1.png",
+        "ket": "Kolom rekomendasi ditandai salah setelah ditolak server."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 7,
+    "tahapDari": 17,
+    "sebelum": "59. Catatan wajib saat mengembalikan atau menolak usulan",
+    "berikut": "61. Berkas SK selain PDF ditolak",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Verifikator BKN, buka `/usulan/3` (berstatus verifikasi).",
+      "Kemudian, pada kolom **Rekomendasi BKN** baris pertama isi `99999`.",
+      "Terakhir, klik **Beri Pertimbangan Teknis** dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "61",
+    "id": "h-sk-bukan-pdf",
+    "akun": "kemenpan",
+    "judul": "Berkas SK selain PDF ditolak",
+    "fungsi": "Lampiran SK penetapan hanya boleh berupa PDF.",
+    "langkah": [
+      "Masuk sebagai Validator Kemenpan.",
+      "Kirim aksi **tetapkan** dengan berkas `sk.txt` (bukan PDF) langsung ke server."
+    ],
+    "harapan": "Ditolak 422 dengan pesan berkas harus PDF; usulan tidak berubah.",
+    "status": "LULUS",
+    "catatan": "Ditolak 422: {\"file_sk\":[\"Berkas SK harus berupa berkas bertipe: pdf.\"]}",
+    "gambar": "61-h-sk-bukan-pdf.png",
+    "ekstra": [
+      {
+        "f": "61-h-sk-bukan-pdf-1.png",
+        "ket": "Berkas SK .txt ditolak."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 8,
+    "tahapDari": 17,
+    "sebelum": "60. Rekomendasi melebihi jumlah diusulkan ditolak",
+    "berikut": "62. Usulan tanpa rincian jabatan tidak dapat diajukan",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Validator Kemenpan.",
+      "Terakhir, kirim aksi **tetapkan** dengan berkas `sk.txt` (bukan PDF) langsung ke server."
+    ]
+  },
+  {
+    "nn": "62",
+    "id": "h-ajukan-tanpa-rincian",
+    "akun": "kab",
+    "judul": "Usulan tanpa rincian jabatan tidak dapat diajukan",
+    "fungsi": "Usulan kosong tidak boleh masuk antrean verifikasi.",
+    "langkah": [
+      "Menu **Usulan** → **Buat Usulan**, isi Tahun 2029 dan Perihal `Usulan Kosong Uji`, simpan.",
+      "Tanpa mengisi rincian, klik **Ajukan Usulan** dan konfirmasi."
+    ],
+    "harapan": "Pengajuan ditolak dan status tetap *Draft*.",
+    "status": "LULUS",
+    "catatan": "Ditolak; status tetap Draft.",
+    "gambar": "62-h-ajukan-tanpa-rincian.png",
+    "ekstra": [
+      {
+        "f": "62-h-ajukan-tanpa-rincian-1.png",
+        "ket": "Pengajuan ditolak; usulan masih Draft."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 9,
+    "tahapDari": 17,
+    "sebelum": "61. Berkas SK selain PDF ditolak",
+    "berikut": "63. Usulan yang sudah ditetapkan terkunci",
+    "langkahAlur": [
+      "Pertama, menu **Usulan** → **Buat Usulan**, isi Tahun 2029 dan Perihal `Usulan Kosong Uji`, simpan.",
+      "Terakhir, tanpa mengisi rincian, klik **Ajukan Usulan** dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "63",
+    "id": "h-usulan-terkunci",
+    "akun": "kl",
+    "judul": "Usulan yang sudah ditetapkan terkunci",
+    "fungsi": "Setelah diproses, usulan tidak boleh diubah atau dihapus operator.",
+    "langkah": [
+      "Masuk sebagai operator Kementerian, buka usulan yang sudah ditetapkan (`/usulan/4`).",
+      "Periksa tombol ubah rincian, ajukan, dan tarik dari ABK.",
+      "Kirim langsung permintaan hapus usulan ke server."
+    ],
+    "harapan": "Tombol ubah tidak tampil; hapus ditolak (hanya draft yang dapat dihapus).",
+    "status": "LULUS",
+    "catatan": "Tombol ubah: 0. Hapus ditolak 403.",
+    "gambar": "63-h-usulan-terkunci.png",
+    "ekstra": [
+      {
+        "f": "63-h-usulan-terkunci-1.png",
+        "ket": "Hapus usulan yang sudah ditetapkan."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 10,
+    "tahapDari": 17,
+    "sebelum": "62. Usulan tanpa rincian jabatan tidak dapat diajukan",
+    "berikut": "64. Impor pegawai: berkas salah tipe dan baris tidak valid",
+    "langkahAlur": [
+      "Pertama, masuk sebagai operator Kementerian, buka usulan yang sudah ditetapkan (`/usulan/4`).",
+      "Kemudian, periksa tombol ubah rincian, ajukan, dan tarik dari ABK.",
+      "Terakhir, kirim langsung permintaan hapus usulan ke server."
+    ]
+  },
+  {
+    "nn": "64",
+    "id": "h-impor-salah",
+    "akun": "admin",
+    "judul": "Impor pegawai: berkas salah tipe dan baris tidak valid",
+    "fungsi": "Impor Excel harus menolak tipe berkas yang salah dan melaporkan baris yang gagal tanpa menambah data rusak.",
+    "langkah": [
+      "Menu **Pegawai** → **Impor**, pilih instansi Kabupaten Sejahtera.",
+      "Unggah berkas `salah.txt` lalu klik **Impor**.",
+      "Unggah berkas CSV berisi dua baris dengan NIP dan kode unit yang tidak valid, lalu klik **Impor**."
+    ],
+    "harapan": "Berkas .txt ditolak dengan pesan tipe berkas; CSV menghasilkan peringatan \"baris gagal\" beserta daftar alasan.",
+    "status": "LULUS",
+    "catatan": ".txt ditolak. CSV: ×!Impor selesai: 0 ditambahkan, 0 diperbarui. 2 baris gagal.OKNoCancel.",
+    "gambar": "64-h-impor-salah.png",
+    "ekstra": [
+      {
+        "f": "64-h-impor-salah-1.png",
+        "ket": "Berkas .txt ditolak."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 11,
+    "tahapDari": 17,
+    "sebelum": "63. Usulan yang sudah ditetapkan terkunci",
+    "berikut": "65. Isian wajib dikosongkan: pesan Bahasa Indonesia",
+    "langkahAlur": [
+      "Pertama, menu **Pegawai** → **Impor**, pilih instansi Kabupaten Sejahtera.",
+      "Kemudian, unggah berkas `salah.txt` lalu klik **Impor**.",
+      "Terakhir, unggah berkas CSV berisi dua baris dengan NIP dan kode unit yang tidak valid, lalu klik **Impor**."
+    ]
+  },
+  {
+    "nn": "65",
+    "id": "h-validasi-form",
+    "akun": "admin",
+    "judul": "Isian wajib dikosongkan: pesan Bahasa Indonesia",
+    "fungsi": "Form menolak isian kosong dengan pesan yang jelas di dekat kolomnya.",
+    "langkah": [
+      "Buka form **Tambah Unit Kerja** (instansi Kabupaten sudah terisi), kosongkan nama, klik **Simpan**.",
+      "Buka form **Tambah Pegawai**, biarkan semua kosong, klik **Simpan**."
+    ],
+    "harapan": "Muncul pesan \"wajib diisi\" (Bahasa Indonesia) dan data tidak tersimpan.",
+    "status": "LULUS",
+    "catatan": "Kedua form menolak isian kosong dengan pesan \"wajib diisi\".",
+    "gambar": "65-h-validasi-form.png",
+    "ekstra": [
+      {
+        "f": "65-h-validasi-form-1.png",
+        "ket": "Form unit kerja kosong ditolak."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 12,
+    "tahapDari": 17,
+    "sebelum": "64. Impor pegawai: berkas salah tipe dan baris tidak valid",
+    "berikut": "66. Unit kerja yang masih berisi tidak dapat dihapus",
+    "langkahAlur": [
+      "Pertama, buka form **Tambah Unit Kerja** (instansi Kabupaten sudah terisi), kosongkan nama, klik **Simpan**.",
+      "Terakhir, buka form **Tambah Pegawai**, biarkan semua kosong, klik **Simpan**."
+    ]
+  },
+  {
+    "nn": "66",
+    "id": "h-hapus-terlindungi",
+    "akun": "admin",
+    "judul": "Unit kerja yang masih berisi tidak dapat dihapus",
+    "fungsi": "Unit yang masih punya sub-unit atau pegawai dilindungi dari penghapusan.",
+    "langkah": [
+      "Menu **Organisasi & Unit Kerja**, filter instansi Kabupaten Sejahtera.",
+      "Klik ikon tempat sampah pada unit pertama (unit tertinggi) dan konfirmasi."
+    ],
+    "harapan": "Penghapusan ditolak dengan pesan \"masih memiliki pegawai atau sub-unit\"; unit tetap ada.",
+    "status": "LULUS",
+    "catatan": "Ditolak: \"× Unit kerja masih memiliki pegawai atau sub-unit.OKNoCancel\"",
+    "gambar": "66-h-hapus-terlindungi.png",
+    "ekstra": [
+      {
+        "f": "66-h-hapus-terlindungi-1.png",
+        "ket": "Penghapusan unit yang masih berisi ditolak."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 13,
+    "tahapDari": 17,
+    "sebelum": "65. Isian wajib dikosongkan: pesan Bahasa Indonesia",
+    "berikut": "67. Administrator tidak dapat menghapus akunnya sendiri",
+    "langkahAlur": [
+      "Pertama, menu **Organisasi & Unit Kerja**, filter instansi Kabupaten Sejahtera.",
+      "Terakhir, klik ikon tempat sampah pada unit pertama (unit tertinggi) dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "67",
+    "id": "h-hapus-diri",
+    "akun": "admin",
+    "judul": "Administrator tidak dapat menghapus akunnya sendiri",
+    "fungsi": "Mencegah aplikasi kehilangan seluruh administrator karena salah hapus.",
+    "langkah": [
+      "Menu **Pengguna**, cari baris `admin@simonkeb.test` (akun yang sedang dipakai).",
+      "Klik ikon tempat sampah pada baris itu dan konfirmasi."
+    ],
+    "harapan": "Ditolak dengan pesan \"Tidak dapat menghapus akun sendiri\".",
+    "status": "LULUS",
+    "catatan": "Ditolak: \"× Tidak dapat menghapus akun sendiri.OKNoCancel\"",
+    "gambar": "67-h-hapus-diri.png",
+    "ekstra": [
+      {
+        "f": "67-h-hapus-diri-1.png",
+        "ket": "Penghapusan akun sendiri ditolak."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 14,
+    "tahapDari": 17,
+    "sebelum": "66. Unit kerja yang masih berisi tidak dapat dihapus",
+    "berikut": "68. Lupa password: email tidak dikenal dan token tidak valid",
+    "langkahAlur": [
+      "Pertama, menu **Pengguna**, cari baris `admin@simonkeb.test` (akun yang sedang dipakai).",
+      "Terakhir, klik ikon tempat sampah pada baris itu dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "68",
+    "id": "h-lupa-password",
+    "akun": "tamu",
+    "judul": "Lupa password: email tidak dikenal dan token tidak valid",
+    "fungsi": "Alur pemulihan password harus memberi pesan jelas dan menolak token palsu.",
+    "langkah": [
+      "Buka `/forgot-password`, isi email yang tidak terdaftar, klik **Kirim tautan reset**.",
+      "Isi email terdaftar `admin@simonkeb.test` dan kirim.",
+      "Buka `/reset-password/token-palsu?email=admin@simonkeb.test`, isi password baru dan konfirmasinya, klik **Simpan password**."
+    ],
+    "harapan": "Email tidak dikenal ditolak; email terdaftar menerima konfirmasi pengiriman; token palsu ditolak.",
+    "status": "LULUS",
+    "catatan": "Email tidak dikenal ditolak, email terdaftar menerima konfirmasi, token palsu ditolak.",
+    "gambar": "68-h-lupa-password.png",
+    "ekstra": [
+      {
+        "f": "68-h-lupa-password-1.png",
+        "ket": "Email tidak terdaftar ditolak."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 15,
+    "tahapDari": 17,
+    "sebelum": "67. Administrator tidak dapat menghapus akunnya sendiri",
+    "berikut": "69. Percobaan login berulang dibatasi",
+    "langkahAlur": [
+      "Pertama, buka `/forgot-password`, isi email yang tidak terdaftar, klik **Kirim tautan reset**.",
+      "Kemudian, isi email terdaftar `admin@simonkeb.test` dan kirim.",
+      "Terakhir, buka `/reset-password/token-palsu?email=admin@simonkeb.test`, isi password baru dan konfirmasinya, klik **Simpan password**."
+    ]
+  },
+  {
+    "nn": "69",
+    "id": "h-login-throttle",
+    "akun": "tamu",
+    "judul": "Percobaan login berulang dibatasi",
+    "fungsi": "Perlindungan terhadap tebak password: setelah 5 kegagalan per menit, login dikunci sementara.",
+    "langkah": [
+      "Buka `/login`.",
+      "Coba masuk 6 kali berturut-turut dengan email `uji-throttle@simonkeb.test` (tidak terdaftar) dan password salah."
+    ],
+    "harapan": "Percobaan ke-6 ditolak dengan pesan \"Terlalu banyak percobaan masuk\".",
+    "status": "LULUS",
+    "catatan": "Percobaan ke-6 dibatasi.",
+    "gambar": "69-h-login-throttle.png",
+    "ekstra": [
+      {
+        "f": "69-h-login-throttle-1.png",
+        "ket": "Percobaan ke-6 dibatasi."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 16,
+    "tahapDari": 17,
+    "sebelum": "68. Lupa password: email tidak dikenal dan token tidak valid",
+    "berikut": "70. Alamat atau data yang tidak ada menjawab 404",
+    "langkahAlur": [
+      "Pertama, buka `/login`.",
+      "Terakhir, coba masuk 6 kali berturut-turut dengan email `uji-throttle@simonkeb.test` (tidak terdaftar) dan password salah."
+    ]
+  },
+  {
+    "nn": "70",
+    "id": "h-halaman-tidak-ada",
+    "akun": "admin",
+    "judul": "Alamat atau data yang tidak ada menjawab 404",
+    "fungsi": "Alamat ngawur atau ID yang tidak ada harus menjawab 404, bukan galat server atau halaman kosong.",
+    "langkah": [
+      "Masuk sebagai admin.",
+      "Buka `/usulan/999999` dan `/rute-yang-tidak-ada`."
+    ],
+    "harapan": "Keduanya menjawab 404.",
+    "status": "LULUS",
+    "catatan": "/usulan/999999=404, /rute-yang-tidak-ada=404.",
+    "gambar": "70-h-halaman-tidak-ada.png",
+    "ekstra": [
+      {
+        "f": "70-h-halaman-tidak-ada-1.png",
+        "ket": "Usulan dengan ID yang tidak ada."
+      }
+    ],
+    "bagianNama": "H. Penanganan error & hak akses",
+    "tahap": 17,
+    "tahapDari": 17,
+    "sebelum": "69. Percobaan login berulang dibatasi",
+    "berikut": null,
+    "langkahAlur": [
+      "Pertama, masuk sebagai admin.",
+      "Terakhir, buka `/usulan/999999` dan `/rute-yang-tidak-ada`."
     ]
   }
 ]

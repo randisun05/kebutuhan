@@ -289,7 +289,7 @@ uji({
         await buka(p, '/pegawai'); await cari(p, 'input[placeholder^="NIP"]', U.nip);
         await p.locator(`tr:has-text("${U.pegawai}") a:has(.fa-pencil)`).first().click(); await tenang(p);
         await F(p, 'Golongan').fill('III/b'); await F(p, 'Keterangan perubahan (dicatat di riwayat bila unit/jabatan/status berubah)').fill('SK Uji 1/2026'); await klikSimpan(p);
-        await p.locator(`tr:has-text("${U.pegawai}") a:has(.fa-pencil)`).first().click(); await tenang(p); tegas(await adaTeks(p, 'Riwayat jabatan'), 'panel riwayat tidak ada'); return 'Perubahan tersimpan; panel riwayat tampil.';
+        await p.locator(`tr:has-text("${U.pegawai}") a:has(.fa-pencil)`).first().click(); await tenang(p); await p.getByText('Riwayat jabatan').first().waitFor({ timeout: 8000 }).catch(() => {}); tegas(await adaTeks(p, 'Riwayat jabatan'), 'panel riwayat tidak ada'); return 'Perubahan tersimpan; panel riwayat tampil.';
     },
 });
 uji({
@@ -636,6 +636,287 @@ uji({
     },
 });
 
+
+// ===== H. Penanganan error & hak akses =====
+bagian('H. Penanganan error & hak akses', 'Jalur gagal yang sengaja dicoba: akses yang tidak berhak, tahapan yang dilompati, isian yang salah, berkas yang salah, serta penghapusan yang dilindungi. Aplikasi harus menolak dengan pesan yang jelas, tanpa merusak data.');
+
+async function api(p, method, path, { json, form } = {}) {
+    return p.evaluate(async ({ method, path, json, form }) => {
+        const xsrf = decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1] || '');
+        const h = { 'X-XSRF-TOKEN': xsrf, 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' };
+        let body;
+        if (form) {
+            body = new FormData();
+            for (const [k, v] of Object.entries(form)) { if (v && v.nama) body.append(k, new Blob([v.isi], { type: v.tipe }), v.nama); else body.append(k, v); }
+        } else if (json) { h['Content-Type'] = 'application/json'; body = JSON.stringify(json); }
+        const r = await fetch(path, { method, headers: h, body, credentials: 'same-origin' });
+        let data = null; try { data = await r.json(); } catch { /* bukan JSON */ }
+        return { status: r.status, data };
+    }, { method, path, json, form });
+}
+async function bukti(p, ket, obj) {
+    await p.evaluate(({ ket, t }) => {
+        let d = document.getElementById('bukti');
+        if (!d) { d = document.createElement('pre'); d.id = 'bukti'; d.style.cssText = 'position:fixed;right:16px;bottom:16px;max-width:600px;z-index:99999;background:#111827;color:#e5e7eb;padding:12px 14px;border-radius:8px;font:12px/1.5 Consolas,monospace;white-space:pre-wrap;box-shadow:0 4px 16px rgba(0,0,0,.4)'; document.body.appendChild(d); }
+        d.textContent = 'Respons server\n' + t;
+    }, { ket, t: JSON.stringify(obj, null, 1).slice(0, 900) });
+    await ambil(p, ket);
+}
+const pesanApi = (r) => JSON.stringify(r.data?.errors || r.data?.message || r.data || '').slice(0, 200);
+const popup = async (p) => ((await p.locator('.swal2-popup:visible').first().textContent({ timeout: 1500 }).catch(() => '')) || '').replace(/\s+/g, ' ').trim();
+async function idKabupaten(p) {
+    await p.goto(base + '/unit-kerja'); await tenang(p, 300);
+    return p.evaluate(() => { const o = [...document.querySelectorAll('select option')].find((x) => x.text.includes('Kabupaten Sejahtera')); return o ? o.value : ''; });
+}
+
+uji({
+    id: 'h-akses-operator', akun: 'kab', judul: 'Operator ditolak membuka menu khusus admin',
+    fungsi: 'Menu Pengguna, Audit, Instansi, dan Jabatan hanya untuk administrator. Mengetik alamatnya langsung tidak boleh menjadi jalan pintas.',
+    langkah: ['Masuk sebagai operator Kabupaten.', 'Ketik langsung alamat `/users`, `/audit`, `/instansi`, dan `/jabatan` di peramban.'],
+    harapan: 'Setiap alamat menjawab 403 (dilarang) dan tidak menampilkan datanya.',
+    run: async (p) => {
+        const hasil = [];
+        for (const path of ['/users', '/audit', '/instansi', '/jabatan']) {
+            const st = await buka(p, path); hasil.push(`${path}=${st}`);
+            if (path === '/users') await ambil(p, 'Halaman /users untuk operator: ditolak 403.');
+            tegas(st === 403, `${path} seharusnya 403, dapat ${st}`);
+        }
+        return hasil.join(', ');
+    },
+});
+uji({
+    id: 'h-akses-pimpinan', akun: 'pimpinan', judul: 'Pimpinan (hanya baca) ditolak mengubah atau mengelola data',
+    fungsi: 'Peran Pimpinan hanya melihat. Halaman kelola data dan pembuatan usulan harus tertutup.',
+    langkah: ['Masuk sebagai Pimpinan.', 'Ketik langsung `/pegawai`, `/unit-kerja`, `/siasn`, `/users`, dan `/usulan/create`.'],
+    harapan: 'Semuanya menjawab 403.',
+    run: async (p) => {
+        const hasil = [];
+        for (const path of ['/pegawai', '/unit-kerja', '/siasn', '/users', '/usulan/create']) {
+            const st = await buka(p, path); hasil.push(`${path}=${st}`); tegas(st === 403, `${path} seharusnya 403, dapat ${st}`);
+        }
+        return hasil.join(', ');
+    },
+});
+uji({
+    id: 'h-lintas-instansi', akun: 'kab', judul: 'Operator tidak dapat membuka usulan instansi lain',
+    fungsi: 'Operator dibatasi ke instansinya; usulan milik Provinsi dan Kementerian tidak boleh terbaca walau ID-nya ditebak.',
+    langkah: ['Masuk sebagai operator Kabupaten.', 'Ketik langsung alamat usulan milik instansi lain: `/usulan/3` (Provinsi) dan `/usulan/4` (Kementerian).'],
+    harapan: 'Ditolak (403) atau tidak ditemukan (404).',
+    run: async (p) => {
+        const hasil = [];
+        for (const path of ['/usulan/3', '/usulan/4']) { const st = await buka(p, path); hasil.push(`${path}=${st}`); tegas([403, 404].includes(st), `${path} dapat ${st}`); if (path === '/usulan/3') await ambil(p, 'Usulan Provinsi dibuka operator Kabupaten: ditolak.'); }
+        return hasil.join(', ');
+    },
+});
+uji({
+    id: 'h-aksi-tidak-sah', akun: 'kab', judul: 'Aksi alur kerja yang tidak sah ditolak server',
+    fungsi: 'Server memeriksa peran dan status pada setiap aksi, bukan hanya menyembunyikan tombol di layar.',
+    langkah: ['Masuk sebagai operator Kabupaten, buka usulannya yang sudah ditetapkan (`/usulan/1`).', 'Kirim langsung permintaan aksi **tetapkan** dan **ajukan** ke server (tanpa lewat tombol).', 'Kirim aksi ke usulan milik instansi lain (`/usulan/3`).'],
+    harapan: 'Dua aksi pertama ditolak 422 dengan pesan status/peran tidak sesuai; aksi ke usulan lain ditolak 403.',
+    run: async (p) => {
+        await buka(p, '/usulan/1');
+        const a = await api(p, 'POST', '/usulan/1/aksi', { json: { aksi: 'tetapkan' } });
+        const b = await api(p, 'POST', '/usulan/1/aksi', { json: { aksi: 'ajukan' } });
+        const c = await api(p, 'POST', '/usulan/3/aksi', { json: { aksi: 'mulai_verifikasi' } });
+        await bukti(p, 'Tiga permintaan aksi yang tidak sah dan jawaban server.', { tetapkan_oleh_operator: [a.status, pesanApi(a)], ajukan_saat_ditetapkan: [b.status, pesanApi(b)], usulan_instansi_lain: [c.status] });
+        tegas(a.status === 422 && b.status === 422 && c.status === 403, `status ${a.status}/${b.status}/${c.status}`);
+        return `tetapkan=${a.status}, ajukan=${b.status}, usulan lain=${c.status}.`;
+    },
+});
+uji({
+    id: 'h-urutan-tahap', akun: 'kemenpan', judul: 'Tahapan tidak dapat dilompati',
+    fungsi: 'Usulan harus melewati verifikasi BKN dan pertimbangan teknis sebelum divalidasi dan ditetapkan.',
+    langkah: ['Masuk sebagai Validator Kemenpan, buka usulan yang masih berstatus *diajukan* (`/usulan/3`).', 'Periksa tombol tindakan yang tersedia.', 'Kirim langsung aksi **tetapkan** ke server.'],
+    harapan: 'Tombol Mulai Validasi dan Tetapkan Kebutuhan tidak tampil; aksi langsung ditolak 422.',
+    run: async (p) => {
+        await buka(p, '/usulan/3');
+        const tombol = (await p.getByRole('button', { name: /Tetapkan Kebutuhan|Mulai Validasi/ }).count());
+        const r = await api(p, 'POST', '/usulan/3/aksi', { json: { aksi: 'tetapkan', nomor_sk: 'X', tanggal_sk: '2026-11-08' } });
+        await bukti(p, 'Aksi tetapkan pada usulan berstatus diajukan.', { status: r.status, pesan: pesanApi(r) });
+        tegas(tombol === 0, 'tombol terlarang tampil'); tegas(r.status === 422, 'status ' + r.status);
+        return `Tombol terlarang: ${tombol}. Server menjawab ${r.status}: ${pesanApi(r)}`;
+    },
+});
+uji({
+    id: 'h-catatan-wajib', akun: 'bkn', judul: 'Catatan wajib saat mengembalikan atau menolak usulan',
+    fungsi: 'Alasan pengembalian/penolakan harus tertulis agar operator tahu apa yang diperbaiki.',
+    langkah: ['Masuk sebagai Verifikator BKN, buka `/usulan/3`, klik **Mulai Verifikasi** dan konfirmasi.', 'Klik **Kembalikan untuk Perbaikan**, biarkan catatan kosong, lalu klik **Ya, lanjutkan**.', 'Kirim juga aksi kembalikan dan tolak dengan catatan kosong langsung ke server.'],
+    harapan: 'Dialog menolak dengan tulisan "Catatan wajib diisi"; server juga menolak 422; status tetap *verifikasi BKN*.',
+    run: async (p) => {
+        await buka(p, '/usulan/3'); await p.getByRole('button', { name: /Mulai Verifikasi/ }).click(); await konfirmasi(p); await buka(p, '/usulan/3');
+        await p.getByRole('button', { name: /Kembalikan untuk Perbaikan/ }).click(); await p.locator('.swal2-popup').waitFor({ state: 'visible' });
+        await p.locator('.swal2-confirm').click(); await p.waitForTimeout(500);
+        const dialog = (await p.locator('.swal2-validation-message').textContent().catch(() => '')) || '';
+        await ambil(p, 'Dialog menolak catatan kosong.'); tegas(/wajib diisi/i.test(dialog), 'pesan dialog: ' + dialog);
+        await p.locator('.swal2-cancel').click(); await tutupSwal(p);
+        const k = await api(p, 'POST', '/usulan/3/aksi', { json: { aksi: 'kembalikan', catatan: '' } });
+        const t = await api(p, 'POST', '/usulan/3/aksi', { json: { aksi: 'tolak', catatan: '   ' } });
+        await bukti(p, 'Server menolak catatan kosong.', { kembalikan: [k.status, pesanApi(k)], tolak: [t.status, pesanApi(t)] });
+        tegas(k.status === 422 && t.status === 422, `status ${k.status}/${t.status}`);
+        await buka(p, '/usulan/3'); const st = await badgeStatus(p); tegas(/Verifikasi/i.test(st), 'status berubah: ' + st);
+        return `Dialog: "${dialog}". Server: ${k.status}/${t.status}. Status tetap ${st}.`;
+    },
+});
+uji({
+    id: 'h-rekomendasi-lebih', akun: 'bkn', judul: 'Rekomendasi melebihi jumlah diusulkan ditolak',
+    fungsi: 'Jumlah rekomendasi BKN tidak boleh lebih besar daripada jumlah yang diusulkan instansi.',
+    langkah: ['Masuk sebagai Verifikator BKN, buka `/usulan/3` (berstatus verifikasi).', 'Pada kolom **Rekomendasi BKN** baris pertama isi `99999`.', 'Klik **Beri Pertimbangan Teknis** dan konfirmasi.'],
+    harapan: 'Tidak ada perubahan; status tetap *verifikasi BKN* dan kolom ditandai salah.',
+    run: async (p) => {
+        await buka(p, '/usulan/3'); const isi = p.locator('tbody input[type=number][max]').first();
+        tegas(await isi.count(), 'kolom rekomendasi tidak ada'); await isi.fill('99999');
+        await p.getByRole('button', { name: /Beri Pertimbangan Teknis/ }).click(); await konfirmasi(p); await tenang(p, 800);
+        await ambil(p, 'Kolom rekomendasi ditandai salah setelah ditolak server.');
+        await buka(p, '/usulan/3'); const st = await badgeStatus(p); tegas(/Verifikasi/i.test(st), 'status berubah: ' + st);
+        return 'Ditolak; status tetap ' + st + '.';
+    },
+});
+uji({
+    id: 'h-sk-bukan-pdf', akun: 'kemenpan', judul: 'Berkas SK selain PDF ditolak',
+    fungsi: 'Lampiran SK penetapan hanya boleh berupa PDF.',
+    langkah: ['Masuk sebagai Validator Kemenpan.', 'Kirim aksi **tetapkan** dengan berkas `sk.txt` (bukan PDF) langsung ke server.'],
+    harapan: 'Ditolak 422 dengan pesan berkas harus PDF; usulan tidak berubah.',
+    run: async (p) => {
+        await buka(p, '/usulan/4');
+        const r = await api(p, 'POST', '/usulan/4/aksi', { form: { aksi: 'tetapkan', nomor_sk: 'X', tanggal_sk: '2026-11-08', file_sk: { nama: 'sk.txt', isi: 'bukan pdf', tipe: 'text/plain' } } });
+        await bukti(p, 'Berkas SK .txt ditolak.', { status: r.status, pesan: pesanApi(r) });
+        tegas(r.status === 422 && /pdf/i.test(pesanApi(r)), `${r.status} ${pesanApi(r)}`);
+        return `Ditolak ${r.status}: ${pesanApi(r)}`;
+    },
+});
+uji({
+    id: 'h-ajukan-tanpa-rincian', akun: 'kab', judul: 'Usulan tanpa rincian jabatan tidak dapat diajukan',
+    fungsi: 'Usulan kosong tidak boleh masuk antrean verifikasi.',
+    langkah: ['Menu **Usulan** → **Buat Usulan**, isi Tahun 2029 dan Perihal `Usulan Kosong Uji`, simpan.', 'Tanpa mengisi rincian, klik **Ajukan Usulan** dan konfirmasi.'],
+    harapan: 'Pengajuan ditolak dan status tetap *Draft*.',
+    run: async (p) => {
+        await buka(p, '/usulan/create'); const inst = F(p, 'Instansi'); if (await inst.count()) await pilihKe(inst, 1);
+        await F(p, 'Tahun anggaran').fill('2029'); await F(p, 'Perihal').fill('Usulan Kosong Uji'); await klikSimpan(p);
+        tegas(/\/usulan\/\d+/.test(p.url()), 'tidak masuk detail');
+        await p.getByRole('button', { name: /Ajukan Usulan/ }).click(); await konfirmasi(p); await tenang(p, 800);
+        await ambil(p, 'Pengajuan ditolak; usulan masih Draft.');
+        const st = await badgeStatus(p); tegas(/Draft/i.test(st), 'status: ' + st);
+        return 'Ditolak; status tetap ' + st + '.';
+    },
+    sesudah: async (p) => { await p.locator('button:has(.fa-trash)').first().click(); await konfirmasi(p); },
+});
+uji({
+    id: 'h-usulan-terkunci', akun: 'kl', judul: 'Usulan yang sudah ditetapkan terkunci',
+    fungsi: 'Setelah diproses, usulan tidak boleh diubah atau dihapus operator.',
+    langkah: ['Masuk sebagai operator Kementerian, buka usulan yang sudah ditetapkan (`/usulan/4`).', 'Periksa tombol ubah rincian, ajukan, dan tarik dari ABK.', 'Kirim langsung permintaan hapus usulan ke server.'],
+    harapan: 'Tombol ubah tidak tampil; hapus ditolak (hanya draft yang dapat dihapus).',
+    run: async (p) => {
+        await buka(p, '/usulan/4');
+        const tombol = await p.getByRole('button', { name: /Ajukan Usulan|Simpan rincian|Tarik dari ABK/ }).count();
+        const r = await api(p, 'DELETE', '/usulan/4');
+        await bukti(p, 'Hapus usulan yang sudah ditetapkan.', { status: r.status, pesan: pesanApi(r) });
+        tegas(tombol === 0, 'tombol ubah masih tampil'); tegas([403, 422].includes(r.status), 'status hapus ' + r.status);
+        return `Tombol ubah: ${tombol}. Hapus ditolak ${r.status}.`;
+    },
+});
+uji({
+    id: 'h-impor-salah', akun: 'admin', judul: 'Impor pegawai: berkas salah tipe dan baris tidak valid',
+    fungsi: 'Impor Excel harus menolak tipe berkas yang salah dan melaporkan baris yang gagal tanpa menambah data rusak.',
+    langkah: ['Menu **Pegawai** → **Impor**, pilih instansi Kabupaten Sejahtera.', 'Unggah berkas `salah.txt` lalu klik **Impor**.', 'Unggah berkas CSV berisi dua baris dengan NIP dan kode unit yang tidak valid, lalu klik **Impor**.'],
+    harapan: 'Berkas .txt ditolak dengan pesan tipe berkas; CSV menghasilkan peringatan "baris gagal" beserta daftar alasan.',
+    run: async (p) => {
+        const { writeFileSync } = await import('node:fs'); const { tmpdir } = await import('node:os');
+        const txt = tmpdir() + '/salah.txt'; const csv = tmpdir() + '/pegawai-salah.csv';
+        writeFileSync(txt, 'bukan excel'); writeFileSync(csv, 'nip,nama,kode_unit,kode_jabatan,status_kepegawaian,golongan,pendidikan,tanggal_lahir,tmt_jabatan\n123,Salah NIP,TIDAKADA,TIDAKADA,pns,III/a,S1,1990-01-01,2020-01-01\n199001019999999999,Salah Unit,TIDAKADA,TIDAKADA,pns,III/a,S1,1990-01-01,2020-01-01\n');
+        await buka(p, '/pegawai/import'); await pilih(F(p, 'Instansi'), 'Kabupaten Sejahtera');
+        await p.locator('input[type=file]').setInputFiles(txt); await kirim(p, () => p.locator('button.btn-success', { hasText: 'Impor' }).click());
+        tegas(await adaTeks(p, 'bertipe'), 'pesan tipe berkas tidak tampil'); await ambil(p, 'Berkas .txt ditolak.');
+        await p.locator('input[type=file]').setInputFiles(csv); await kirim(p, () => p.locator('button.btn-success', { hasText: 'Impor' }).click());
+        const pesan = await popup(p); await tutupSwal(p); await tenang(p, 500);
+        tegas(await adaTeks(p, 'Baris yang gagal'), 'daftar baris gagal tidak tampil. Dialog: ' + pesan);
+        return `.txt ditolak. CSV: ${pesan || 'daftar baris gagal tampil'}.`;
+    },
+});
+uji({
+    id: 'h-validasi-form', akun: 'admin', judul: 'Isian wajib dikosongkan: pesan Bahasa Indonesia',
+    fungsi: 'Form menolak isian kosong dengan pesan yang jelas di dekat kolomnya.',
+    langkah: ['Buka form **Tambah Unit Kerja** (instansi Kabupaten sudah terisi), kosongkan nama, klik **Simpan**.', 'Buka form **Tambah Pegawai**, biarkan semua kosong, klik **Simpan**.'],
+    harapan: 'Muncul pesan "wajib diisi" (Bahasa Indonesia) dan data tidak tersimpan.',
+    run: async (p) => {
+        const id = await idKabupaten(p);
+        await buka(p, '/unit-kerja/create?instansi_id=' + id); await klikSimpan(p);
+        tegas(await adaTeks(p, 'wajib diisi'), 'pesan wajib diisi tidak tampil pada unit'); await ambil(p, 'Form unit kerja kosong ditolak.');
+        tegas(p.url().includes('/create'), 'seharusnya tetap di form');
+        await buka(p, '/pegawai/create?instansi_id=' + id); await klikSimpan(p);
+        tegas(await adaTeks(p, 'wajib diisi'), 'pesan wajib diisi tidak tampil pada pegawai'); tegas(!(await adaTeks(p, 'is required')), 'pesan masih berbahasa Inggris');
+        return 'Kedua form menolak isian kosong dengan pesan "wajib diisi".';
+    },
+});
+uji({
+    id: 'h-hapus-terlindungi', akun: 'admin', judul: 'Unit kerja yang masih berisi tidak dapat dihapus',
+    fungsi: 'Unit yang masih punya sub-unit atau pegawai dilindungi dari penghapusan.',
+    langkah: ['Menu **Organisasi & Unit Kerja**, filter instansi Kabupaten Sejahtera.', 'Klik ikon tempat sampah pada unit pertama (unit tertinggi) dan konfirmasi.'],
+    harapan: 'Penghapusan ditolak dengan pesan "masih memiliki pegawai atau sub-unit"; unit tetap ada.',
+    run: async (p) => {
+        const id = await idKabupaten(p); await buka(p, '/unit-kerja?instansi_id=' + id);
+        const baris = p.locator('tbody tr').first(); const nama = ((await baris.locator('td').first().textContent()) || '').trim().slice(0, 40);
+        await baris.locator('button:has(.fa-trash)').click(); await konfirmasi(p, null, true);
+        const pesan = await popup(p); await ambil(p, 'Penghapusan unit yang masih berisi ditolak.'); await tutupSwal(p);
+        tegas(/masih memiliki/i.test(pesan), 'pesan: ' + pesan);
+        return `Ditolak: "${pesan}"`;
+    },
+});
+uji({
+    id: 'h-hapus-diri', akun: 'admin', judul: 'Administrator tidak dapat menghapus akunnya sendiri',
+    fungsi: 'Mencegah aplikasi kehilangan seluruh administrator karena salah hapus.',
+    langkah: ['Menu **Pengguna**, cari baris `admin@simonkeb.test` (akun yang sedang dipakai).', 'Klik ikon tempat sampah pada baris itu dan konfirmasi.'],
+    harapan: 'Ditolak dengan pesan "Tidak dapat menghapus akun sendiri".',
+    run: async (p) => {
+        await buka(p, '/users'); const baris = p.locator('tr', { hasText: 'admin@simonkeb.test' }).first(); const tombol = baris.locator('button:has(.fa-trash)');
+        if (!(await tombol.count())) return 'Tombol hapus tidak ditampilkan pada akun sendiri.';
+        await tombol.click(); await konfirmasi(p, null, true); const pesan = await popup(p); await ambil(p, 'Penghapusan akun sendiri ditolak.'); await tutupSwal(p);
+        tegas(/sendiri/i.test(pesan), 'pesan: ' + pesan); return `Ditolak: "${pesan}"`;
+    },
+});
+uji({
+    id: 'h-lupa-password', akun: 'tamu', judul: 'Lupa password: email tidak dikenal dan token tidak valid',
+    fungsi: 'Alur pemulihan password harus memberi pesan jelas dan menolak token palsu.',
+    langkah: ['Buka `/forgot-password`, isi email yang tidak terdaftar, klik **Kirim tautan reset**.', 'Isi email terdaftar `admin@simonkeb.test` dan kirim.', 'Buka `/reset-password/token-palsu?email=admin@simonkeb.test`, isi password baru dan konfirmasinya, klik **Simpan password**.'],
+    harapan: 'Email tidak dikenal ditolak; email terdaftar menerima konfirmasi pengiriman; token palsu ditolak.',
+    run: async (p) => {
+        await buka(p, '/forgot-password'); await p.fill('input[type=email]', 'tidak-ada@simonkeb.test'); await kirim(p, () => p.getByRole('button', { name: /Kirim tautan/ }).click());
+        tegas(await adaTeks(p, 'tidak menemukan'), 'pesan email tidak dikenal tidak tampil'); await ambil(p, 'Email tidak terdaftar ditolak.');
+        await p.fill('input[type=email]', AKUN.admin[0]); await kirim(p, () => p.getByRole('button', { name: /Kirim tautan/ }).click());
+        tegas(await adaTeks(p, 'Tautan reset') || (await popup(p)).includes('Tautan reset'), 'konfirmasi pengiriman tidak tampil'); await tutupSwal(p);
+        await buka(p, '/reset-password/token-palsu?email=' + AKUN.admin[0]);
+        const pw = p.locator('input[type=password]'); await pw.nth(0).fill('PasswordBaru#2026'); await pw.nth(1).fill('PasswordBaru#2026');
+        await kirim(p, () => p.getByRole('button', { name: /Simpan password/ }).click());
+        tegas(await adaTeks(p, 'tidak valid'), 'pesan token tidak valid tidak tampil');
+        return 'Email tidak dikenal ditolak, email terdaftar menerima konfirmasi, token palsu ditolak.';
+    },
+});
+uji({
+    id: 'h-login-throttle', akun: 'tamu', judul: 'Percobaan login berulang dibatasi',
+    fungsi: 'Perlindungan terhadap tebak password: setelah 5 kegagalan per menit, login dikunci sementara.',
+    langkah: ['Buka `/login`.', 'Coba masuk 6 kali berturut-turut dengan email `uji-throttle@simonkeb.test` (tidak terdaftar) dan password salah.'],
+    harapan: 'Percobaan ke-6 ditolak dengan pesan "Terlalu banyak percobaan masuk".',
+    run: async (p) => {
+        let pesan = '';
+        for (let i = 1; i <= 6; i++) {
+            await buka(p, '/login'); await p.fill('input[type=email]', 'uji-throttle@simonkeb.test'); await p.fill('input[type=password]', 'salah-' + i);
+            await kirim(p, () => p.click('form button'));
+            pesan = (await p.locator('body').innerText()).replace(/\s+/g, ' ');
+        }
+        tegas(/Terlalu banyak/i.test(pesan), 'pesan pembatasan tidak tampil'); await ambil(p, 'Percobaan ke-6 dibatasi.');
+        return 'Percobaan ke-6 dibatasi.';
+    },
+});
+uji({
+    id: 'h-halaman-tidak-ada', akun: 'admin', judul: 'Alamat atau data yang tidak ada menjawab 404',
+    fungsi: 'Alamat ngawur atau ID yang tidak ada harus menjawab 404, bukan galat server atau halaman kosong.',
+    langkah: ['Masuk sebagai admin.', 'Buka `/usulan/999999` dan `/rute-yang-tidak-ada`.'],
+    harapan: 'Keduanya menjawab 404.',
+    run: async (p) => {
+        const a = await buka(p, '/usulan/999999'); await ambil(p, 'Usulan dengan ID yang tidak ada.'); const b = await buka(p, '/rute-yang-tidak-ada');
+        tegas(a === 404 && b === 404, `status ${a}/${b}`); return `/usulan/999999=${a}, /rute-yang-tidak-ada=${b}.`;
+    },
+});
+
 async function idInstansi(p) {
     await p.goto(base + '/unit-kerja'); await tenang(p, 300);
     return p.evaluate((nama) => { const o = [...document.querySelectorAll('select option')].find((x) => x.text.includes(nama)); return o ? o.value : ''; }, U.instansi);
@@ -666,7 +947,8 @@ const ALUR = {
     D: 'Berbekal kebutuhan hasil ABK dan data pegawai, tahap ini memproyeksikan lima tahun ke depan serta merencanakan redistribusi dan formasi.',
     E: 'Kebutuhan hasil ABK dan perencanaan dirangkum menjadi usulan, lalu diproses lintas peran sampai ditetapkan atau ditolak.',
     F: 'Setelah usulan berjalan, tahap ini memantau capaiannya dan menghasilkan laporan untuk pimpinan.',
-    G: 'Tahap penutup: pengelolaan pengguna dan fitur pendukung yang menopang seluruh tahap sebelumnya.',
+    G: 'Pengelolaan pengguna dan fitur pendukung yang menopang seluruh tahap sebelumnya.',
+    H: 'Tahap penutup. Setelah seluruh jalur normal (A–G) terbukti, jalur gagal sengaja dicoba: akses tanpa hak, tahapan dilompati, isian dan berkas salah, serta penghapusan yang dilindungi. Tahap ini memakai data hasil tahap E dan G.',
 };
 const SAMBUNG = ['Pertama,', 'Kemudian,', 'Selanjutnya,', 'Setelah itu,', 'Lalu,', 'Berikutnya,'];
 const kecil = (t) => (/^[A-Z][a-z]/.test(t) ? t[0].toLowerCase() + t.slice(1) : t);
@@ -702,12 +984,24 @@ const TEMUAN = [
     { tingkat: 'Rendah', status: 'Sudah diperbaiki', judul: 'Ubah unit kerja tanpa field `parent_id` menyebabkan galat 500',
         uraian: 'Gejala: `PUT /unit-kerja/{id}` tanpa `parent_id` menghasilkan "Undefined array key parent_id". Formulir di aplikasi selalu mengirim field ini sehingga hanya klien non-UI yang terdampak.',
         saran: 'Perbaikan: `$data[\'parent_id\'] ??= null` di `UnitKerjaController::update`; diuji di `FormUnitKerjaTest`.' },
+    { tingkat: 'Rendah', status: 'Sudah diperbaiki', judul: 'Login yang dibatasi menampilkan halaman 429 mentah berbahasa Inggris',
+        uraian: 'Ditemukan pada skenario 69. Setelah 5 kegagalan per menit, percobaan berikutnya hanya menampilkan "429 TOO MANY REQUESTS" di jendela galat tanpa penjelasan, karena pembatas login menjawab dengan abort 429.',
+        saran: 'Perbaikan: pembatas login kini menjawab dengan pesan di formulir ("Terlalu banyak percobaan masuk. Coba lagi dalam N detik."); diuji di `LoginThrottleTest`.' },
     { tingkat: 'Info', status: 'Catatan', judul: 'PDF laporan/ABK membutuhkan memori PHP lebih dari 128 MB',
         uraian: 'Dengan `memory_limit=128M` bawaan, PDF ABK gagal (500, memori dompdf habis). Pengujian ini memakai 768 MB dan seluruh 18 unduhan laporan serta PDF ABK berhasil.',
         saran: 'Pastikan server produksi memakai `memory_limit` ≥ 512 MB, atau optimalkan kueri/tampilan PDF.' },
     { tingkat: 'Info', status: 'Catatan', judul: 'Menghapus instansi menghapus unit dan pegawainya',
         uraian: 'Satu-satunya penjaga adalah usulan: instansi yang sudah punya usulan ditolak ("tidak dapat dihapus, nonaktifkan saja"), sedangkan instansi tanpa usulan terhapus bersama unit dan pegawai di bawahnya (terverifikasi pada skenario 53). Perilaku ini sesuai kode, namun penghapusan bersifat permanen.',
         saran: 'Pertimbangkan teks konfirmasi yang menyebut jumlah unit/pegawai yang ikut terhapus.' },
+];
+
+const BATAS = [
+    'Impor Excel pegawai: yang diuji hanya berkas salah tipe dan baris tidak valid (skenario 64). Impor berkas yang benar tidak diuji karena menambah banyak data.',
+    'Integrasi SIASN dan SSO: hanya halaman dan perlindungan aksesnya. Sinkronisasi dan login SSO sungguhan membutuhkan akun SIASN dan tidak dijalankan.',
+    'Autentikasi dua langkah (2FA): hanya tampilan pada Akun pribadi. Alur mengaktifkan dan memakai kode TOTP tidak diuji.',
+    'Pengiriman email nyata: pengirim surat diatur `log`, sehingga yang terbukti hanya aplikasi menerima dan menjawab permintaan reset password.',
+    'Beban dan kinerja: pengujian ini fungsional satu pengguna, bukan uji beban.',
+    'Tampilan ponsel/tablet dan peramban selain Chrome tidak diuji.',
 ];
 
 // ---------- laporan Markdown ----------
@@ -726,6 +1020,7 @@ md += `## Alur pengujian\n\nPengujian mengikuti alur kerja nyata aplikasi, dari 
 md += `## Temuan dan perbaikan\n\n`;
 TEMUAN.forEach((t, i) => { md += `${i + 1}. **[${t.tingkat}] ${t.judul}** — *${t.status}.* ${t.uraian} ${t.saran}\n`; });
 md += `\n`;
+md += `## Batas cakupan pengujian\n\nHal berikut sengaja tidak atau belum diuji penuh:\n\n${BATAS.map((b) => `- ${b}`).join('\n')}\n\n`;
 md += `## Daftar skenario\n\n| No | Skenario | Akun | Hasil |\n| --- | --- | --- | --- |\n`;
 for (const h of hasil) md += `| ${h.nn} | ${h.judul} | ${h.akun} | ${h.status === 'LULUS' ? '✅ Lulus' : h.status === 'TEMUAN' ? '⚠️ Temuan' : '❌ Gagal'} |\n`;
 md += `\n`;
@@ -759,6 +1054,7 @@ html += `<h2>Ringkasan</h2><table><tr><th>Item</th><th>Nilai</th></tr><tr><td>Ap
 html += `<h3>Akun demo (password semua: <code>password</code>)</h3><table><tr><th>Peran</th><th>Email</th><th>Keterangan</th></tr>${Object.entries(AKUN).map(([k, [e, ket]]) => `<tr><td>${k}</td><td><code>${e}</code></td><td>${esc(ket)}</td></tr>`).join('')}</table>`;
 html += `<h2>Alur pengujian</h2><p>Pengujian mengikuti alur kerja nyata aplikasi: <b>${bagianRingkas.map((x) => x.b[0]).join(' → ')}</b>. Tiap tahap memakai hasil tahap sebelumnya.</p><table><tr><th>Tahap</th><th>Bagian</th><th>Hubungan dengan tahap sebelumnya</th><th>Skenario</th></tr>${bagianRingkas.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.b)}</td><td>${esc(ALUR[x.b[0]])}</td><td>${x.n}</td></tr>`).join('')}</table>`;
 html += `<h2>Temuan dan perbaikan</h2>${TEMUAN.map((t, i) => `<div class="temuan"><b>${i + 1}. [${t.tingkat}] ${esc(t.judul)}</b> — <i>${t.status}</i><br>${inl(t.uraian)}<br>${inl(t.saran)}</div>`).join('')}`;
+html += `<h2>Batas cakupan pengujian</h2><p>Hal berikut sengaja tidak atau belum diuji penuh:</p><ul>${BATAS.map((b) => `<li>${inl(b)}</li>`).join('')}</ul>`;
 html += `<h2>Daftar skenario</h2><table><tr><th>No</th><th>Skenario</th><th>Akun</th><th>Hasil</th></tr>${hasil.map((h) => `<tr><td>${h.nn}</td><td>${esc(h.judul)}</td><td>${h.akun}</td><td>${lencana(h.status)}</td></tr>`).join('')}</table>`;
 for (const s of LANGKAH) {
     if (!s.run) { html += `<h2>${esc(s.bagian)}</h2><p>${inl(s.deskripsi)}</p><p><b>Hubungan dengan tahap sebelumnya:</b> ${esc(ALUR[s.bagian[0]])}</p>`; continue; }
