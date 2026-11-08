@@ -1,0 +1,1364 @@
+[
+  {
+    "nn": "01",
+    "id": "login-tampil",
+    "akun": "tamu",
+    "judul": "Halaman login tampil",
+    "fungsi": "Pintu masuk aplikasi. Tersedia login manual (email + password) karena `LOGIN_MANUAL=true`; SSO SIASN dimatikan di lingkungan uji.",
+    "langkah": [
+      "Buka `/login` tanpa masuk."
+    ],
+    "harapan": "Formulir email dan password tampil.",
+    "status": "LULUS",
+    "catatan": "Formulir login tampil.",
+    "gambar": "01-login-tampil.png",
+    "ekstra": [],
+    "bagianNama": "A. Akses & autentikasi",
+    "tahap": 1,
+    "tahapDari": 6,
+    "sebelum": null,
+    "berikut": "02. Login dengan password salah ditolak",
+    "langkahAlur": [
+      "Langkahnya: buka `/login` tanpa masuk."
+    ]
+  },
+  {
+    "nn": "02",
+    "id": "login-salah",
+    "akun": "tamu",
+    "judul": "Login dengan password salah ditolak",
+    "fungsi": "Validasi kredensial.",
+    "langkah": [
+      "Isi email `admin@simonkeb.test` dan password salah.",
+      "Klik tombol masuk."
+    ],
+    "harapan": "Tetap di halaman login dan muncul pesan kegagalan, tidak masuk ke dashboard.",
+    "status": "LULUS",
+    "catatan": "Ditolak, tetap di halaman login.",
+    "gambar": "02-login-salah.png",
+    "ekstra": [],
+    "bagianNama": "A. Akses & autentikasi",
+    "tahap": 2,
+    "tahapDari": 6,
+    "sebelum": "01. Halaman login tampil",
+    "berikut": "03. Halaman terlindung mengalihkan ke login",
+    "langkahAlur": [
+      "Pertama, isi email `admin@simonkeb.test` dan password salah.",
+      "Terakhir, klik tombol masuk."
+    ]
+  },
+  {
+    "nn": "03",
+    "id": "akses-tanpa-login",
+    "akun": "tamu",
+    "judul": "Halaman terlindung mengalihkan ke login",
+    "fungsi": "Semua halaman selain login/panduan publik wajib login.",
+    "langkah": [
+      "Tanpa masuk, buka `/dashboard`."
+    ],
+    "harapan": "Dialihkan ke `/login`.",
+    "status": "LULUS",
+    "catatan": "Dialihkan ke /login.",
+    "gambar": "03-akses-tanpa-login.png",
+    "ekstra": [],
+    "bagianNama": "A. Akses & autentikasi",
+    "tahap": 3,
+    "tahapDari": 6,
+    "sebelum": "02. Login dengan password salah ditolak",
+    "berikut": "04. Dashboard admin dan menu lengkap",
+    "langkahAlur": [
+      "Langkahnya: tanpa masuk, buka `/dashboard`."
+    ]
+  },
+  {
+    "nn": "04",
+    "id": "menu-admin",
+    "akun": "admin",
+    "judul": "Dashboard admin dan menu lengkap",
+    "fungsi": "Admin melihat seluruh menu (master data, ABK, perencanaan, usulan, monitoring, laporan, pengaturan).",
+    "langkah": [
+      "Masuk sebagai `admin@simonkeb.test`.",
+      "Perhatikan kartu ringkasan dan sidebar."
+    ],
+    "harapan": "Dashboard tampil; sidebar memuat semua kelompok menu.",
+    "status": "LULUS",
+    "catatan": "Dashboard tampil, 26 tautan menu.",
+    "gambar": "04-menu-admin.png",
+    "ekstra": [],
+    "bagianNama": "A. Akses & autentikasi",
+    "tahap": 4,
+    "tahapDari": 6,
+    "sebelum": "03. Halaman terlindung mengalihkan ke login",
+    "berikut": "05. Pimpinan hanya-baca: menu terbatas",
+    "langkahAlur": [
+      "Pertama, masuk sebagai `admin@simonkeb.test`.",
+      "Terakhir, perhatikan kartu ringkasan dan sidebar."
+    ]
+  },
+  {
+    "nn": "05",
+    "id": "menu-pimpinan",
+    "akun": "pimpinan",
+    "judul": "Pimpinan hanya-baca: menu terbatas",
+    "fungsi": "Peran pimpinan tidak boleh mengubah data.",
+    "langkah": [
+      "Masuk sebagai `pimpinan@simonkeb.test`.",
+      "Buka `/pegawai/create` (halaman tambah)."
+    ],
+    "harapan": "Halaman tambah ditolak (403); daftar pegawai tidak punya tombol Tambah.",
+    "status": "LULUS",
+    "catatan": "Tambah ditolak 403; tombol Tambah tidak tampil di daftar.",
+    "gambar": "05-menu-pimpinan.png",
+    "ekstra": [],
+    "bagianNama": "A. Akses & autentikasi",
+    "tahap": 5,
+    "tahapDari": 6,
+    "sebelum": "04. Dashboard admin dan menu lengkap",
+    "berikut": "06. Operator dibatasi ke instansinya",
+    "langkahAlur": [
+      "Pertama, masuk sebagai `pimpinan@simonkeb.test`.",
+      "Terakhir, buka `/pegawai/create` (halaman tambah)."
+    ]
+  },
+  {
+    "nn": "06",
+    "id": "scope-operator",
+    "akun": "kab",
+    "judul": "Operator dibatasi ke instansinya",
+    "fungsi": "Operator instansi tidak boleh melihat data instansi lain (`Controller::scoped()` / `authorizeInstansi()`).",
+    "langkah": [
+      "Masuk sebagai `kab-sjt@simonkeb.test` (Pemerintah Kabupaten Sejahtera).",
+      "Buka usulan milik Pemerintah Provinsi Nusantara (`/usulan/3`)."
+    ],
+    "harapan": "Ditolak 403.",
+    "status": "LULUS",
+    "catatan": "Akses lintas instansi ditolak (403).",
+    "gambar": "06-scope-operator.png",
+    "ekstra": [],
+    "bagianNama": "A. Akses & autentikasi",
+    "tahap": 6,
+    "tahapDari": 6,
+    "sebelum": "05. Pimpinan hanya-baca: menu terbatas",
+    "berikut": "07. Daftar instansi dan pencarian",
+    "langkahAlur": [
+      "Pertama, masuk sebagai `kab-sjt@simonkeb.test` (Pemerintah Kabupaten Sejahtera).",
+      "Terakhir, buka usulan milik Pemerintah Provinsi Nusantara (`/usulan/3`)."
+    ]
+  },
+  {
+    "nn": "07",
+    "id": "instansi-daftar",
+    "akun": "admin",
+    "judul": "Daftar instansi dan pencarian",
+    "fungsi": "Mengelola instansi pengguna aplikasi (kabupaten, kota, provinsi, kementerian).",
+    "langkah": [
+      "Menu **Instansi**.",
+      "Ketik `Sejahtera` pada kotak cari."
+    ],
+    "harapan": "Daftar 4 instansi demo (KL-ADM, KAB-SJT, KOT-MDN, PROV-NSN); pencarian menyaring.",
+    "status": "LULUS",
+    "catatan": "Daftar dan pencarian berfungsi.",
+    "gambar": "07-instansi-daftar.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 1,
+    "tahapDari": 14,
+    "sebelum": "06. Operator dibatasi ke instansinya",
+    "berikut": "08. Tambah instansi",
+    "langkahAlur": [
+      "Pertama, menu **Instansi**.",
+      "Terakhir, ketik `Sejahtera` pada kotak cari."
+    ]
+  },
+  {
+    "nn": "08",
+    "id": "instansi-tambah",
+    "akun": "admin",
+    "judul": "Tambah instansi",
+    "fungsi": "Membuat instansi baru.",
+    "langkah": [
+      "Di daftar instansi klik **Tambah**.",
+      "Isi Kode `UJI-01`, Nama `Instansi Uji Dokumentasi`, pilih Jenis.",
+      "Klik **Simpan**."
+    ],
+    "harapan": "Kembali ke daftar, instansi baru tampil, ada notifikasi sukses.",
+    "status": "LULUS",
+    "catatan": "Instansi UJI-01 tersimpan.",
+    "gambar": "08-instansi-tambah.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 2,
+    "tahapDari": 14,
+    "sebelum": "07. Daftar instansi dan pencarian",
+    "berikut": "09. Validasi: kode instansi tidak boleh kembar",
+    "langkahAlur": [
+      "Pertama, di daftar instansi klik **Tambah**.",
+      "Kemudian, isi Kode `UJI-01`, Nama `Instansi Uji Dokumentasi`, pilih Jenis.",
+      "Terakhir, klik **Simpan**."
+    ]
+  },
+  {
+    "nn": "09",
+    "id": "instansi-validasi",
+    "akun": "admin",
+    "judul": "Validasi: kode instansi tidak boleh kembar",
+    "fungsi": "Mencegah duplikasi kode.",
+    "langkah": [
+      "Tambah instansi dengan Kode `UJI-01` lagi.",
+      "Simpan."
+    ],
+    "harapan": "Muncul pesan kesalahan pada kolom Kode, data tidak tersimpan.",
+    "status": "LULUS",
+    "catatan": "Ditolak dengan pesan galat di kolom Kode.",
+    "gambar": "09-instansi-validasi.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 3,
+    "tahapDari": 14,
+    "sebelum": "08. Tambah instansi",
+    "berikut": "10. Ubah instansi",
+    "langkahAlur": [
+      "Pertama, tambah instansi dengan Kode `UJI-01` lagi.",
+      "Terakhir, simpan."
+    ]
+  },
+  {
+    "nn": "10",
+    "id": "instansi-ubah",
+    "akun": "admin",
+    "judul": "Ubah instansi",
+    "fungsi": "Mengubah data instansi.",
+    "langkah": [
+      "Pada baris instansi uji klik ikon pensil.",
+      "Isi Provinsi `Provinsi Uji`.",
+      "Simpan."
+    ],
+    "harapan": "Perubahan tersimpan.",
+    "status": "LULUS",
+    "catatan": "Provinsi diubah.",
+    "gambar": "10-instansi-ubah.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 4,
+    "tahapDari": 14,
+    "sebelum": "09. Validasi: kode instansi tidak boleh kembar",
+    "berikut": "11. Verifikasi perbaikan: pilihan instansi tetap terpilih pada form Unit, Pegawai, dan ABK",
+    "langkahAlur": [
+      "Pertama, pada baris instansi uji klik ikon pensil.",
+      "Kemudian, isi Provinsi `Provinsi Uji`.",
+      "Terakhir, simpan."
+    ]
+  },
+  {
+    "nn": "11",
+    "id": "form-instansi-reset",
+    "akun": "admin",
+    "judul": "Verifikasi perbaikan: pilihan instansi tetap terpilih pada form Unit, Pegawai, dan ABK",
+    "fungsi": "Form Tambah Unit/Pegawai/ABK dapat dibuka tanpa instansi terpilih (admin dengan filter \"Semua instansi\"), lalu instansi dipilih dari dropdown. Memilih instansi memuat ulang daftar unit/jabatan.",
+    "langkah": [
+      "Buka langsung `/unit-kerja/create`, `/pegawai/create`, dan `/anjab/create` (tanpa parameter `instansi_id`).",
+      "Pada tiap form pilih **Kementerian Administrasi Contoh** di dropdown **Instansi**.",
+      "Tunggu daftar turunan (unit induk / unit kerja) dimuat ulang, lalu perhatikan dropdown Instansi."
+    ],
+    "harapan": "Pilihan instansi tetap terpilih sampai form disimpan.",
+    "status": "LULUS",
+    "catatan": "Pilihan instansi tetap terpilih.",
+    "gambar": "11-form-instansi-reset.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 5,
+    "tahapDari": 14,
+    "sebelum": "10. Ubah instansi",
+    "berikut": "12. Tambah unit kerja (hierarki)",
+    "langkahAlur": [
+      "Pertama, buka langsung `/unit-kerja/create`, `/pegawai/create`, dan `/anjab/create` (tanpa parameter `instansi_id`).",
+      "Kemudian, pada tiap form pilih **Kementerian Administrasi Contoh** di dropdown **Instansi**.",
+      "Terakhir, tunggu daftar turunan (unit induk / unit kerja) dimuat ulang, lalu perhatikan dropdown Instansi."
+    ]
+  },
+  {
+    "nn": "12",
+    "id": "unit-tambah",
+    "akun": "admin",
+    "judul": "Tambah unit kerja (hierarki)",
+    "fungsi": "Menyusun struktur organisasi bertingkat per instansi.",
+    "langkah": [
+      "Menu **Organisasi & Unit Kerja** → pilih instansi uji pada filter.",
+      "Klik **Tambah Unit** (instansi sudah terisi otomatis).",
+      "Isi Kode `UJI-SEK`, Nama `Sekretariat Uji`, Urutan 1.",
+      "Simpan."
+    ],
+    "harapan": "Unit tampil pada daftar/peta instansi uji.",
+    "status": "LULUS",
+    "catatan": "Unit tersimpan.",
+    "gambar": "12-unit-tambah.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 6,
+    "tahapDari": 14,
+    "sebelum": "11. Verifikasi perbaikan: pilihan instansi tetap terpilih pada form Unit, Pegawai, dan ABK",
+    "berikut": "13. Nonaktifkan / aktifkan unit",
+    "langkahAlur": [
+      "Pertama, menu **Organisasi & Unit Kerja** → pilih instansi uji pada filter.",
+      "Kemudian, klik **Tambah Unit** (instansi sudah terisi otomatis).",
+      "Selanjutnya, isi Kode `UJI-SEK`, Nama `Sekretariat Uji`, Urutan 1.",
+      "Terakhir, simpan."
+    ]
+  },
+  {
+    "nn": "13",
+    "id": "unit-toggle",
+    "akun": "admin",
+    "judul": "Nonaktifkan / aktifkan unit",
+    "fungsi": "Unit yang tidak aktif tidak dihitung dalam monitoring.",
+    "langkah": [
+      "Pada baris unit uji klik tombol aktif/nonaktif."
+    ],
+    "harapan": "Status berganti.",
+    "status": "LULUS",
+    "catatan": "Tombol status diklik tanpa galat.",
+    "gambar": "13-unit-toggle.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 7,
+    "tahapDari": 14,
+    "sebelum": "12. Tambah unit kerja (hierarki)",
+    "berikut": "14. Peta jabatan",
+    "langkahAlur": [
+      "Langkahnya: pada baris unit uji klik tombol aktif/nonaktif."
+    ]
+  },
+  {
+    "nn": "14",
+    "id": "peta-jabatan",
+    "akun": "admin",
+    "judul": "Peta jabatan",
+    "fungsi": "Tampilan hierarki unit beserta jabatan dan jumlah pegawai.",
+    "langkah": [
+      "Di halaman Unit Kerja klik **Peta Jabatan**."
+    ],
+    "harapan": "Peta tampil.",
+    "status": "LULUS",
+    "catatan": "Peta jabatan tampil.",
+    "gambar": "14-peta-jabatan.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 8,
+    "tahapDari": 14,
+    "sebelum": "13. Nonaktifkan / aktifkan unit",
+    "berikut": "15. Tambah jabatan referensi",
+    "langkahAlur": [
+      "Langkahnya: di halaman Unit Kerja klik **Peta Jabatan**."
+    ]
+  },
+  {
+    "nn": "15",
+    "id": "jabatan-tambah",
+    "akun": "admin",
+    "judul": "Tambah jabatan referensi",
+    "fungsi": "Katalog jabatan (struktural/JF/JPT) beserta kelas jabatan, BUP, dan estimasi belanja.",
+    "langkah": [
+      "Menu **Jabatan** → **Tambah**.",
+      "Isi Kode `UJI-JAB`, Nama `Analis Uji Kebijakan`, pilih Jenis jabatan, Kelas 9, BUP 58, belanja 120000000.",
+      "Simpan."
+    ],
+    "harapan": "Jabatan baru tampil di daftar.",
+    "status": "LULUS",
+    "catatan": "Jabatan tersimpan.",
+    "gambar": "15-jabatan-tambah.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 9,
+    "tahapDari": 14,
+    "sebelum": "14. Peta jabatan",
+    "berikut": "16. Tambah pegawai (existing)",
+    "langkahAlur": [
+      "Pertama, menu **Jabatan** → **Tambah**.",
+      "Kemudian, isi Kode `UJI-JAB`, Nama `Analis Uji Kebijakan`, pilih Jenis jabatan, Kelas 9, BUP 58, belanja 120000000.",
+      "Terakhir, simpan."
+    ]
+  },
+  {
+    "nn": "16",
+    "id": "pegawai-tambah",
+    "akun": "admin",
+    "judul": "Tambah pegawai (existing)",
+    "fungsi": "Data existing yang dibandingkan dengan kebutuhan hasil ABK. Menyimpan tanggal lahir untuk menghitung TMT pensiun.",
+    "langkah": [
+      "Menu **Pegawai** → **Tambah**.",
+      "Instansi terisi otomatis; pilih unit dan jabatan uji.",
+      "Isi NIP `199001012015011001`, Nama `Pegawai Uji Dokumentasi`, Tanggal lahir 1990-01-01.",
+      "Simpan."
+    ],
+    "harapan": "Pegawai tersimpan dan tampil di daftar.",
+    "status": "LULUS",
+    "catatan": "Pegawai tersimpan.",
+    "gambar": "16-pegawai-tambah.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 10,
+    "tahapDari": 14,
+    "sebelum": "15. Tambah jabatan referensi",
+    "berikut": "17. Validasi NIP pegawai",
+    "langkahAlur": [
+      "Pertama, menu **Pegawai** → **Tambah**.",
+      "Kemudian, instansi terisi otomatis; pilih unit dan jabatan uji.",
+      "Selanjutnya, isi NIP `199001012015011001`, Nama `Pegawai Uji Dokumentasi`, Tanggal lahir 1990-01-01.",
+      "Terakhir, simpan."
+    ]
+  },
+  {
+    "nn": "17",
+    "id": "pegawai-validasi",
+    "akun": "admin",
+    "judul": "Validasi NIP pegawai",
+    "fungsi": "NIP harus 18 digit dan unik.",
+    "langkah": [
+      "Tambah pegawai dengan NIP `123`.",
+      "Simpan."
+    ],
+    "harapan": "Ditolak dengan pesan galat.",
+    "status": "LULUS",
+    "catatan": "Ditolak dengan pesan galat.",
+    "gambar": "17-pegawai-validasi.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 11,
+    "tahapDari": 14,
+    "sebelum": "16. Tambah pegawai (existing)",
+    "berikut": "18. Ubah pegawai dan riwayat mutasi",
+    "langkahAlur": [
+      "Pertama, tambah pegawai dengan NIP `123`.",
+      "Terakhir, simpan."
+    ]
+  },
+  {
+    "nn": "18",
+    "id": "pegawai-mutasi",
+    "akun": "admin",
+    "judul": "Ubah pegawai dan riwayat mutasi",
+    "fungsi": "Perubahan unit/jabatan/status dicatat otomatis sebagai riwayat; dasar analisis pergerakan data (histori).",
+    "langkah": [
+      "Buka pegawai uji (ikon pensil).",
+      "Ubah Golongan menjadi `III/b`, isi keterangan `SK Uji 1/2026`.",
+      "Simpan lalu buka lagi."
+    ],
+    "harapan": "Perubahan tersimpan; panel **Riwayat jabatan & mutasi** menampilkan catatan.",
+    "status": "LULUS",
+    "catatan": "Perubahan tersimpan; panel riwayat tampil.",
+    "gambar": "18-pegawai-mutasi.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 12,
+    "tahapDari": 14,
+    "sebelum": "17. Validasi NIP pegawai",
+    "berikut": "19. Halaman impor Excel dan unduh templat",
+    "langkahAlur": [
+      "Pertama, buka pegawai uji (ikon pensil).",
+      "Kemudian, ubah Golongan menjadi `III/b`, isi keterangan `SK Uji 1/2026`.",
+      "Terakhir, simpan lalu buka lagi."
+    ]
+  },
+  {
+    "nn": "19",
+    "id": "impor-form",
+    "akun": "admin",
+    "judul": "Halaman impor Excel dan unduh templat",
+    "fungsi": "Memasukkan banyak pegawai/unit/ABK sekaligus dari Excel.",
+    "langkah": [
+      "Menu **Pegawai** → **Impor Excel**.",
+      "Unduh templat."
+    ],
+    "harapan": "Halaman tampil; templat terunduh sebagai .xlsx.",
+    "status": "LULUS",
+    "catatan": "Halaman tampil. Templat: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 6.602 byte",
+    "gambar": "19-impor-form.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 13,
+    "tahapDari": 14,
+    "sebelum": "18. Ubah pegawai dan riwayat mutasi",
+    "berikut": "20. Halaman integrasi SIASN",
+    "langkahAlur": [
+      "Pertama, menu **Pegawai** → **Impor Excel**.",
+      "Terakhir, unduh templat."
+    ]
+  },
+  {
+    "nn": "20",
+    "id": "siasn",
+    "akun": "admin",
+    "judul": "Halaman integrasi SIASN",
+    "fungsi": "Sinkronisasi data pegawai dari SIASN BKN. Dinonaktifkan di lingkungan uji (`SIASN_ENABLED=false`).",
+    "langkah": [
+      "Menu **SIASN**.",
+      "Klik **Sinkronkan**."
+    ],
+    "harapan": "Halaman tampil; sinkronisasi memberi pesan bahwa integrasi tidak aktif/kredensial belum diatur (bukan galat 500).",
+    "status": "LULUS",
+    "catatan": "Tombol Sinkronkan nonaktif karena integrasi SIASN dimatikan (SIASN_ENABLED=false), sesuai harapan.",
+    "gambar": "20-siasn.png",
+    "ekstra": [],
+    "bagianNama": "B. Master data organisasi",
+    "tahap": 14,
+    "tahapDari": 14,
+    "sebelum": "19. Halaman impor Excel dan unduh templat",
+    "berikut": "21. Daftar ABK dan filter",
+    "langkahAlur": [
+      "Pertama, menu **SIASN**.",
+      "Terakhir, klik **Sinkronkan**."
+    ]
+  },
+  {
+    "nn": "21",
+    "id": "abk-daftar",
+    "akun": "admin",
+    "judul": "Daftar ABK dan filter",
+    "fungsi": "Daftar analisis jabatan & beban kerja per jabatan/unit/tahun.",
+    "langkah": [
+      "Menu **ABK**.",
+      "Cari `Analis`."
+    ],
+    "harapan": "Daftar ABK demo tampil dan tersaring.",
+    "status": "LULUS",
+    "catatan": "Daftar dan filter berfungsi.",
+    "gambar": "21-abk-daftar.png",
+    "ekstra": [],
+    "bagianNama": "C. Analisis Beban Kerja (ABK)",
+    "tahap": 1,
+    "tahapDari": 6,
+    "sebelum": "20. Halaman integrasi SIASN",
+    "berikut": "22. Tambah ABK dan verifikasi rumus",
+    "langkahAlur": [
+      "Pertama, menu **ABK**.",
+      "Terakhir, cari `Analis`."
+    ]
+  },
+  {
+    "nn": "22",
+    "id": "abk-tambah",
+    "akun": "admin",
+    "judul": "Tambah ABK dan verifikasi rumus",
+    "fungsi": "Menghitung kebutuhan pegawai otomatis dari uraian tugas.",
+    "langkah": [
+      "Menu **ABK** → **Tambah ABK**.",
+      "Pilih instansi, unit, jabatan uji; Tahun ABK 2026.",
+      "Baris 1: tugas `Menyusun laporan bulanan`, volume 10, periode **per bulan**, norma 500 menit → 10×12×500 = 60.000.",
+      "Klik **+ Baris**; baris 2: `Rapat koordinasi`, volume 110, **per tahun**, norma 500 → 55.000.",
+      "Periksa total 115.000 ÷ 75.000 = 1,53 → dibulatkan **2**.",
+      "Simpan."
+    ],
+    "harapan": "Kebutuhan terhitung 2 (1,53 dibulatkan ke atas); ABK tersimpan.",
+    "status": "LULUS",
+    "catatan": "Total 115.000 mnt ÷ 75.000 = 1,53 → kebutuhan 2 (benar).",
+    "gambar": "22-abk-tambah.png",
+    "ekstra": [],
+    "bagianNama": "C. Analisis Beban Kerja (ABK)",
+    "tahap": 2,
+    "tahapDari": 6,
+    "sebelum": "21. Daftar ABK dan filter",
+    "berikut": "23. Detail ABK, ubah status dan PDF",
+    "langkahAlur": [
+      "Pertama, menu **ABK** → **Tambah ABK**.",
+      "Kemudian, pilih instansi, unit, jabatan uji; Tahun ABK 2026.",
+      "Selanjutnya, baris 1: tugas `Menyusun laporan bulanan`, volume 10, periode **per bulan**, norma 500 menit → 10×12×500 = 60.000.",
+      "Setelah itu, klik **+ Baris**; baris 2: `Rapat koordinasi`, volume 110, **per tahun**, norma 500 → 55.000.",
+      "Lalu, periksa total 115.000 ÷ 75.000 = 1,53 → dibulatkan **2**.",
+      "Terakhir, simpan."
+    ]
+  },
+  {
+    "nn": "23",
+    "id": "abk-detail",
+    "akun": "admin",
+    "judul": "Detail ABK, ubah status dan PDF",
+    "fungsi": "Menampilkan hasil ABK; status draft/final; cetak PDF.",
+    "langkah": [
+      "Buka ABK yang baru dibuat dari daftar.",
+      "Klik **PDF**."
+    ],
+    "harapan": "Detail tampil; PDF terunduh (application/pdf).",
+    "status": "LULUS",
+    "catatan": "Detail tampil. PDF: HTTP 200, application/pdf, 879.434 byte",
+    "gambar": "23-abk-detail.png",
+    "ekstra": [],
+    "bagianNama": "C. Analisis Beban Kerja (ABK)",
+    "tahap": 3,
+    "tahapDari": 6,
+    "sebelum": "22. Tambah ABK dan verifikasi rumus",
+    "berikut": "24. Salin ABK ke tahun lain",
+    "langkahAlur": [
+      "Pertama, buka ABK yang baru dibuat dari daftar.",
+      "Terakhir, klik **PDF**."
+    ]
+  },
+  {
+    "nn": "24",
+    "id": "abk-duplikat",
+    "akun": "admin",
+    "judul": "Salin ABK ke tahun lain",
+    "fungsi": "Menyalin ABK tahun berjalan ke tahun berikutnya sebagai bahan revisi.",
+    "langkah": [
+      "Di detail ABK klik **Salin ke tahun…**.",
+      "Isi tahun 2027 dan konfirmasi."
+    ],
+    "harapan": "ABK tahun 2027 terbentuk.",
+    "status": "LULUS",
+    "catatan": "Salin dijalankan: \"ABK disalin ke tahun 2027 sebagai draft. Sesuaikan volume beban kerjanya.\"",
+    "gambar": "24-abk-duplikat.png",
+    "ekstra": [],
+    "bagianNama": "C. Analisis Beban Kerja (ABK)",
+    "tahap": 4,
+    "tahapDari": 6,
+    "sebelum": "23. Detail ABK, ubah status dan PDF",
+    "berikut": "25. Ekspor ABK, templat impor, rekap unit",
+    "langkahAlur": [
+      "Pertama, di detail ABK klik **Salin ke tahun…**.",
+      "Terakhir, isi tahun 2027 dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "25",
+    "id": "abk-ekspor",
+    "akun": "admin",
+    "judul": "Ekspor ABK, templat impor, rekap unit",
+    "fungsi": "Ekspor Excel, templat untuk impor massal, dan rekap efektivitas per unit.",
+    "langkah": [
+      "Di daftar ABK klik **Export**.",
+      "Unduh templat impor.",
+      "Buka **Efektivitas Unit**."
+    ],
+    "harapan": "Berkas Excel terunduh; rekap unit tampil.",
+    "status": "LULUS",
+    "catatan": "Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 28.172 byte. Templat: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 6.622 byte. Rekap unit tampil.",
+    "gambar": "25-abk-ekspor.png",
+    "ekstra": [],
+    "bagianNama": "C. Analisis Beban Kerja (ABK)",
+    "tahap": 5,
+    "tahapDari": 6,
+    "sebelum": "24. Salin ABK ke tahun lain",
+    "berikut": "26. Validasi: ABK tanpa jabatan ditolak",
+    "langkahAlur": [
+      "Pertama, di daftar ABK klik **Export**.",
+      "Kemudian, unduh templat impor.",
+      "Terakhir, buka **Efektivitas Unit**."
+    ]
+  },
+  {
+    "nn": "26",
+    "id": "abk-validasi",
+    "akun": "admin",
+    "judul": "Validasi: ABK tanpa jabatan ditolak",
+    "fungsi": "Formulir ABK memaksa jabatan dan uraian tugas terisi.",
+    "langkah": [
+      "Buka **Tambah ABK**, tanpa memilih apa pun klik **Simpan**."
+    ],
+    "harapan": "Tetap di form, pesan galat tampil.",
+    "status": "LULUS",
+    "catatan": "Ditolak dengan pesan galat.",
+    "gambar": "26-abk-validasi.png",
+    "ekstra": [],
+    "bagianNama": "C. Analisis Beban Kerja (ABK)",
+    "tahap": 6,
+    "tahapDari": 6,
+    "sebelum": "25. Ekspor ABK, templat impor, rekap unit",
+    "berikut": "27. Proyeksi 5 tahun dan ekspor",
+    "langkahAlur": [
+      "Langkahnya: buka **Tambah ABK**, tanpa memilih apa pun klik **Simpan**."
+    ]
+  },
+  {
+    "nn": "27",
+    "id": "proyeksi",
+    "akun": "admin",
+    "judul": "Proyeksi 5 tahun dan ekspor",
+    "fungsi": "Memproyeksikan kebutuhan vs pegawai (pensiun, pertumbuhan beban kerja) lima tahun ke depan.",
+    "langkah": [
+      "Menu **Proyeksi 5 Th** → pilih instansi.",
+      "Klik **Export Excel**."
+    ],
+    "harapan": "Tabel/grafik proyeksi tampil; ekspor sukses.",
+    "status": "LULUS",
+    "catatan": "Proyeksi tampil. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 13.138 byte",
+    "gambar": "27-proyeksi.png",
+    "ekstra": [],
+    "bagianNama": "D. Perencanaan",
+    "tahap": 1,
+    "tahapDari": 3,
+    "sebelum": "26. Validasi: ABK tanpa jabatan ditolak",
+    "berikut": "28. Saran redistribusi pegawai",
+    "langkahAlur": [
+      "Pertama, menu **Proyeksi 5 Th** → pilih instansi.",
+      "Terakhir, klik **Export Excel**."
+    ]
+  },
+  {
+    "nn": "28",
+    "id": "redistribusi",
+    "akun": "admin",
+    "judul": "Saran redistribusi pegawai",
+    "fungsi": "Menyarankan pemindahan dari jabatan gemuk ke jabatan kurang pada instansi yang sama.",
+    "langkah": [
+      "Menu **Redistribusi** → pilih instansi."
+    ],
+    "harapan": "Halaman tampil dengan saran (atau pesan kosong).",
+    "status": "LULUS",
+    "catatan": "Halaman redistribusi tampil.",
+    "gambar": "28-redistribusi.png",
+    "ekstra": [],
+    "bagianNama": "D. Perencanaan",
+    "tahap": 2,
+    "tahapDari": 3,
+    "sebelum": "27. Proyeksi 5 tahun dan ekspor",
+    "berikut": "29. Formasi / pengisian formasi",
+    "langkahAlur": [
+      "Langkahnya: menu **Redistribusi** → pilih instansi."
+    ]
+  },
+  {
+    "nn": "29",
+    "id": "formasi",
+    "akun": "admin",
+    "judul": "Formasi / pengisian formasi",
+    "fungsi": "Mencatat formasi yang sudah terisi per jabatan sebagai pengurang kebutuhan.",
+    "langkah": [
+      "Menu **Formasi** → pilih instansi dan tahun."
+    ],
+    "harapan": "Tabel formasi tampil.",
+    "status": "LULUS",
+    "catatan": "Halaman formasi tampil.",
+    "gambar": "29-formasi.png",
+    "ekstra": [],
+    "bagianNama": "D. Perencanaan",
+    "tahap": 3,
+    "tahapDari": 3,
+    "sebelum": "28. Saran redistribusi pegawai",
+    "berikut": "30. Daftar usulan operator",
+    "langkahAlur": [
+      "Langkahnya: menu **Formasi** → pilih instansi dan tahun."
+    ]
+  },
+  {
+    "nn": "30",
+    "id": "usulan-daftar",
+    "akun": "kab",
+    "judul": "Daftar usulan operator",
+    "fungsi": "Operator hanya melihat usulan instansinya.",
+    "langkah": [
+      "Masuk sebagai operator Kabupaten.",
+      "Menu **Usulan**."
+    ],
+    "harapan": "Hanya usulan Kabupaten Sejahtera tampil.",
+    "status": "LULUS",
+    "catatan": "1 baris usulan (hanya instansi sendiri).",
+    "gambar": "30-usulan-daftar.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 1,
+    "tahapDari": 11,
+    "sebelum": "29. Formasi / pengisian formasi",
+    "berikut": "31. Buat usulan baru (draft) lalu hapus",
+    "langkahAlur": [
+      "Pertama, masuk sebagai operator Kabupaten.",
+      "Terakhir, menu **Usulan**."
+    ]
+  },
+  {
+    "nn": "31",
+    "id": "usulan-buat",
+    "akun": "kab",
+    "judul": "Buat usulan baru (draft) lalu hapus",
+    "fungsi": "Operator membuat usulan; hanya draft yang dapat dihapus.",
+    "langkah": [
+      "Menu **Usulan** → **Buat Usulan**.",
+      "Isi Tahun 2028, Perihal `Usulan Uji Dokumentasi`.",
+      "Simpan → halaman detail berstatus Draft.",
+      "Klik ikon tempat sampah dan konfirmasi."
+    ],
+    "harapan": "Usulan draft terbentuk lalu terhapus.",
+    "status": "LULUS",
+    "catatan": "Draft terbentuk di /usulan/5",
+    "gambar": "31-usulan-buat.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 2,
+    "tahapDari": 11,
+    "sebelum": "30. Daftar usulan operator",
+    "berikut": "32. Isi rincian jabatan (tarik dari ABK) dan ajukan",
+    "langkahAlur": [
+      "Pertama, menu **Usulan** → **Buat Usulan**.",
+      "Kemudian, isi Tahun 2028, Perihal `Usulan Uji Dokumentasi`.",
+      "Selanjutnya, simpan → halaman detail berstatus Draft.",
+      "Terakhir, klik ikon tempat sampah dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "32",
+    "id": "usulan-rincian",
+    "akun": "kl",
+    "judul": "Isi rincian jabatan (tarik dari ABK) dan ajukan",
+    "fungsi": "Rincian jabatan diusulkan dapat ditarik otomatis dari hasil ABK, diubah, lalu diajukan.",
+    "langkah": [
+      "Masuk sebagai operator Kementerian, buka usulan draft (`/usulan/4`).",
+      "Klik **Tarik dari ABK** dan konfirmasi dialog.",
+      "Klik **Simpan rincian** bila aktif.",
+      "Klik **Ajukan Usulan** pada panel Tindakan dan konfirmasi."
+    ],
+    "harapan": "Rincian terisi dari ABK; status berubah menjadi *diajukan*.",
+    "status": "LULUS",
+    "catatan": "61 baris rincian; status sekarang: Diajukan Instansi.",
+    "gambar": "32-usulan-rincian.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 3,
+    "tahapDari": 11,
+    "sebelum": "31. Buat usulan baru (draft) lalu hapus",
+    "berikut": "33. Verifikator BKN: mulai verifikasi",
+    "langkahAlur": [
+      "Pertama, masuk sebagai operator Kementerian, buka usulan draft (`/usulan/4`).",
+      "Kemudian, klik **Tarik dari ABK** dan konfirmasi dialog.",
+      "Selanjutnya, klik **Simpan rincian** bila aktif.",
+      "Terakhir, klik **Ajukan Usulan** pada panel Tindakan dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "33",
+    "id": "wf-verifikasi",
+    "akun": "bkn",
+    "judul": "Verifikator BKN: mulai verifikasi",
+    "fungsi": "BKN memeriksa kelengkapan dan mulai memverifikasi usulan yang diajukan.",
+    "langkah": [
+      "Masuk sebagai Verifikator BKN, buka `/usulan/4`.",
+      "Klik **Mulai Verifikasi** dan konfirmasi (dialog \"Ya, lanjutkan\")."
+    ],
+    "harapan": "Status menjadi *verifikasi BKN*.",
+    "status": "LULUS",
+    "catatan": "Status: Verifikasi BKN",
+    "gambar": "33-wf-verifikasi.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 4,
+    "tahapDari": 11,
+    "sebelum": "32. Isi rincian jabatan (tarik dari ABK) dan ajukan",
+    "berikut": "34. Verifikator BKN: beri rekomendasi (pertimbangan teknis)",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Verifikator BKN, buka `/usulan/4`.",
+      "Terakhir, klik **Mulai Verifikasi** dan konfirmasi (dialog \"Ya, lanjutkan\")."
+    ]
+  },
+  {
+    "nn": "34",
+    "id": "wf-rekomendasi",
+    "akun": "bkn",
+    "judul": "Verifikator BKN: beri rekomendasi (pertimbangan teknis)",
+    "fungsi": "BKN mengisi jumlah rekomendasi per jabatan (tidak boleh melebihi jumlah diusulkan).",
+    "langkah": [
+      "Pada usulan yang sama klik **Beri Pertimbangan Teknis**.",
+      "Pastikan kolom *Rekomendasi BKN* terisi, konfirmasi."
+    ],
+    "harapan": "Status menjadi *pertimbangan teknis*.",
+    "status": "LULUS",
+    "catatan": "Status: Pertimbangan Teknis BKN",
+    "gambar": "34-wf-rekomendasi.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 5,
+    "tahapDari": 11,
+    "sebelum": "33. Verifikator BKN: mulai verifikasi",
+    "berikut": "35. Validator Kemenpan: mulai validasi",
+    "langkahAlur": [
+      "Pertama, pada usulan yang sama klik **Beri Pertimbangan Teknis**.",
+      "Terakhir, pastikan kolom *Rekomendasi BKN* terisi, konfirmasi."
+    ]
+  },
+  {
+    "nn": "35",
+    "id": "wf-validasi",
+    "akun": "kemenpan",
+    "judul": "Validator Kemenpan: mulai validasi",
+    "fungsi": "Kemenpan memvalidasi hasil pertimbangan teknis.",
+    "langkah": [
+      "Masuk sebagai Validator Kemenpan, buka `/usulan/4`.",
+      "Klik **Mulai Validasi** dan konfirmasi."
+    ],
+    "harapan": "Status menjadi *validasi Kemenpan*.",
+    "status": "LULUS",
+    "catatan": "Status: Validasi KemenPANRB",
+    "gambar": "35-wf-validasi.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 6,
+    "tahapDari": 11,
+    "sebelum": "34. Verifikator BKN: beri rekomendasi (pertimbangan teknis)",
+    "berikut": "36. Penetapan kebutuhan dengan nomor SK",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Validator Kemenpan, buka `/usulan/4`.",
+      "Terakhir, klik **Mulai Validasi** dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "36",
+    "id": "wf-tetapkan",
+    "akun": "kemenpan",
+    "judul": "Penetapan kebutuhan dengan nomor SK",
+    "fungsi": "Penetapan akhir: mengisi jumlah ditetapkan serta data SK, lalu membuat lampiran penetapan.",
+    "langkah": [
+      "Pada usulan yang sama isi **Nomor SK** `SK-UJI/2026/001` dan **Tanggal SK**.",
+      "Klik **Tetapkan Kebutuhan** dan konfirmasi.",
+      "Buka **Lampiran penetapan**."
+    ],
+    "harapan": "Status *ditetapkan*; lampiran penetapan tersedia dan PDF dapat diunduh.",
+    "status": "LULUS",
+    "catatan": "Ditetapkan. Lampiran: HTTP 200, application/pdf, 886.962 byte",
+    "gambar": "36-wf-tetapkan.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 7,
+    "tahapDari": 11,
+    "sebelum": "35. Validator Kemenpan: mulai validasi",
+    "berikut": "37. Cabang: usulan dikembalikan untuk perbaikan",
+    "langkahAlur": [
+      "Pertama, pada usulan yang sama isi **Nomor SK** `SK-UJI/2026/001` dan **Tanggal SK**.",
+      "Kemudian, klik **Tetapkan Kebutuhan** dan konfirmasi.",
+      "Terakhir, buka **Lampiran penetapan**."
+    ]
+  },
+  {
+    "nn": "37",
+    "id": "wf-kembalikan",
+    "akun": "bkn",
+    "judul": "Cabang: usulan dikembalikan untuk perbaikan",
+    "fungsi": "BKN mengembalikan usulan dengan catatan; operator memperbaiki lalu mengajukan ulang.",
+    "langkah": [
+      "Masuk sebagai Verifikator BKN, buka usulan berstatus *diajukan* (`/usulan/3`).",
+      "Klik **Mulai Verifikasi**, lalu **Kembalikan untuk Perbaikan**.",
+      "Isi catatan `Lengkapi lampiran ABK` dan konfirmasi."
+    ],
+    "harapan": "Status *dikembalikan* dengan catatan terlihat.",
+    "status": "LULUS",
+    "catatan": "Status: Dikembalikan (Perbaikan), catatan tampil.",
+    "gambar": "37-wf-kembalikan.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 8,
+    "tahapDari": 11,
+    "sebelum": "36. Penetapan kebutuhan dengan nomor SK",
+    "berikut": "38. Operator melihat catatan pengembalian dan mengajukan ulang",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Verifikator BKN, buka usulan berstatus *diajukan* (`/usulan/3`).",
+      "Kemudian, klik **Mulai Verifikasi**, lalu **Kembalikan untuk Perbaikan**.",
+      "Terakhir, isi catatan `Lengkapi lampiran ABK` dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "38",
+    "id": "wf-perbaikan",
+    "akun": "prov",
+    "judul": "Operator melihat catatan pengembalian dan mengajukan ulang",
+    "fungsi": "Siklus perbaikan oleh operator.",
+    "langkah": [
+      "Masuk sebagai operator Provinsi, buka `/usulan/3`.",
+      "Baca banner kuning, klik **Ajukan Usulan** lagi."
+    ],
+    "harapan": "Banner pengembalian tampil; status kembali *diajukan*.",
+    "status": "LULUS",
+    "catatan": "Diajukan ulang; status: Diajukan Instansi",
+    "gambar": "38-wf-perbaikan.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 9,
+    "tahapDari": 11,
+    "sebelum": "37. Cabang: usulan dikembalikan untuk perbaikan",
+    "berikut": "39. Cabang: usulan ditolak",
+    "langkahAlur": [
+      "Pertama, masuk sebagai operator Provinsi, buka `/usulan/3`.",
+      "Terakhir, baca banner kuning, klik **Ajukan Usulan** lagi."
+    ]
+  },
+  {
+    "nn": "39",
+    "id": "wf-tolak",
+    "akun": "kemenpan",
+    "judul": "Cabang: usulan ditolak",
+    "fungsi": "Kemenpan dapat menolak usulan pada tahap validasi dengan alasan wajib.",
+    "langkah": [
+      "Masuk sebagai Validator Kemenpan, buka usulan berstatus pertimbangan teknis (`/usulan/2`).",
+      "Klik **Mulai Validasi**, lalu **Tolak Usulan**.",
+      "Isi alasan `Tidak sesuai peta jabatan` dan konfirmasi."
+    ],
+    "harapan": "Status *ditolak* dengan alasan terlihat.",
+    "status": "LULUS",
+    "catatan": "Status: Ditolak, alasan tampil.",
+    "gambar": "39-wf-tolak.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 10,
+    "tahapDari": 11,
+    "sebelum": "38. Operator melihat catatan pengembalian dan mengajukan ulang",
+    "berikut": "40. Daftar penetapan",
+    "langkahAlur": [
+      "Pertama, masuk sebagai Validator Kemenpan, buka usulan berstatus pertimbangan teknis (`/usulan/2`).",
+      "Kemudian, klik **Mulai Validasi**, lalu **Tolak Usulan**.",
+      "Terakhir, isi alasan `Tidak sesuai peta jabatan` dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "40",
+    "id": "penetapan-daftar",
+    "akun": "admin",
+    "judul": "Daftar penetapan",
+    "fungsi": "Arsip SK penetapan kebutuhan.",
+    "langkah": [
+      "Menu **Penetapan**.",
+      "Cari nomor `SK-UJI`."
+    ],
+    "harapan": "SK hasil alur di atas tampil.",
+    "status": "LULUS",
+    "catatan": "2 penetapan terdaftar.",
+    "gambar": "40-penetapan-daftar.png",
+    "ekstra": [],
+    "bagianNama": "E. Usulan kebutuhan & alur persetujuan",
+    "tahap": 11,
+    "tahapDari": 11,
+    "sebelum": "39. Cabang: usulan ditolak",
+    "berikut": "41. Monitoring kebutuhan vs existing",
+    "langkahAlur": [
+      "Pertama, menu **Penetapan**.",
+      "Terakhir, cari nomor `SK-UJI`."
+    ]
+  },
+  {
+    "nn": "41",
+    "id": "monitoring",
+    "akun": "admin",
+    "judul": "Monitoring kebutuhan vs existing",
+    "fungsi": "Selisih kebutuhan dan pegawai per instansi → unit → jabatan, dengan status kurang/lebih/kosong.",
+    "langkah": [
+      "Menu **Monitoring**.",
+      "Klik salah satu instansi untuk drill-down.",
+      "Klik **Export Excel**."
+    ],
+    "harapan": "Tabel tampil; drill-down berfungsi; ekspor sukses.",
+    "status": "LULUS",
+    "catatan": "Drill-down OK. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 23.157 byte",
+    "gambar": "41-monitoring.png",
+    "ekstra": [],
+    "bagianNama": "F. Monitoring, analitik, histori, peringatan, laporan",
+    "tahap": 1,
+    "tahapDari": 5,
+    "sebelum": "40. Daftar penetapan",
+    "berikut": "42. Analitik",
+    "langkahAlur": [
+      "Pertama, menu **Monitoring**.",
+      "Kemudian, klik salah satu instansi untuk drill-down.",
+      "Terakhir, klik **Export Excel**."
+    ]
+  },
+  {
+    "nn": "42",
+    "id": "analitik",
+    "akun": "admin",
+    "judul": "Analitik",
+    "fungsi": "Grafik perbandingan dan sebaran.",
+    "langkah": [
+      "Menu **Analitik**."
+    ],
+    "harapan": "Grafik tampil tanpa galat.",
+    "status": "LULUS",
+    "catatan": "Halaman analitik tampil.",
+    "gambar": "42-analitik.png",
+    "ekstra": [],
+    "bagianNama": "F. Monitoring, analitik, histori, peringatan, laporan",
+    "tahap": 2,
+    "tahapDari": 5,
+    "sebelum": "41. Monitoring kebutuhan vs existing",
+    "berikut": "43. Histori existing dan unit tanpa pergerakan",
+    "langkahAlur": [
+      "Langkahnya: menu **Analitik**."
+    ]
+  },
+  {
+    "nn": "43",
+    "id": "histori",
+    "akun": "admin",
+    "judul": "Histori existing dan unit tanpa pergerakan",
+    "fungsi": "Tren existing 12 bulan dan deteksi unit yang datanya tidak bergerak (potensi tidak diperbarui).",
+    "langkah": [
+      "Menu **Histori**.",
+      "Pilih rentang **6 bln**, filter **Hanya yang diam**.",
+      "Klik **Export analisis**."
+    ],
+    "harapan": "Tren tampil; ekspor sukses.",
+    "status": "LULUS",
+    "catatan": "Histori tampil. Ekspor: HTTP 200, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 6.970 byte",
+    "gambar": "43-histori.png",
+    "ekstra": [],
+    "bagianNama": "F. Monitoring, analitik, histori, peringatan, laporan",
+    "tahap": 3,
+    "tahapDari": 5,
+    "sebelum": "42. Analitik",
+    "berikut": "44. Peringatan dini: deteksi dan tindak lanjut",
+    "langkahAlur": [
+      "Pertama, menu **Histori**.",
+      "Kemudian, pilih rentang **6 bln**, filter **Hanya yang diam**.",
+      "Terakhir, klik **Export analisis**."
+    ]
+  },
+  {
+    "nn": "44",
+    "id": "peringatan",
+    "akun": "admin",
+    "judul": "Peringatan dini: deteksi dan tindak lanjut",
+    "fungsi": "Mendeteksi anomali (jabatan kosong, pensiun mendekat, data diam, dll.) dan mencatat tindak lanjut.",
+    "langkah": [
+      "Menu **Peringatan**.",
+      "Klik **Deteksi sekarang**.",
+      "Pada satu peringatan klik **Tindak lanjut**, isi catatan, konfirmasi."
+    ],
+    "harapan": "Deteksi berjalan; tindak lanjut tersimpan.",
+    "status": "LULUS",
+    "catatan": "Deteksi dijalankan dan tindak lanjut tersimpan.",
+    "gambar": "44-peringatan.png",
+    "ekstra": [],
+    "bagianNama": "F. Monitoring, analitik, histori, peringatan, laporan",
+    "tahap": 4,
+    "tahapDari": 5,
+    "sebelum": "43. Histori existing dan unit tanpa pergerakan",
+    "berikut": "45. Laporan: seluruh jenis (Excel + PDF)",
+    "langkahAlur": [
+      "Pertama, menu **Peringatan**.",
+      "Kemudian, klik **Deteksi sekarang**.",
+      "Terakhir, pada satu peringatan klik **Tindak lanjut**, isi catatan, konfirmasi."
+    ]
+  },
+  {
+    "nn": "45",
+    "id": "laporan-semua",
+    "akun": "admin",
+    "judul": "Laporan: seluruh jenis (Excel + PDF)",
+    "fungsi": "Sembilan jenis laporan, masing-masing dapat diunduh Excel dan PDF.",
+    "langkah": [
+      "Menu **Laporan**, pilih jenis di panel kiri.",
+      "Klik **Excel** dan **PDF** untuk tiap jenis."
+    ],
+    "harapan": "Semua unduhan HTTP 200 dengan tipe berkas benar.",
+    "status": "LULUS",
+    "catatan": "9 jenis × 2 format berhasil. rekap_instansi: xlsx 6.954 byte, pdf 880.516 byte | rekap_unit: xlsx 6.541 byte, pdf 879.080 byte | rekap_jabatan: xlsx 7.751 byte, pdf 883.779 byte | posisi_bermasalah: xlsx 16.223 byte, pdf 954.221 byte | usulan_penetapan: xlsx 6.873 byte, pdf 880.034 byte | pensiun: xlsx 17.584 byte, pdf 932.305 byte | abk: xlsx 21.952 byte, pdf 986.026 byte | tidak_bergerak: xlsx 6.455 byte, pdf 878.524 byte | peringatan: xlsx 11.933 byte, pdf 917.682 byte",
+    "gambar": "45-laporan-semua.png",
+    "ekstra": [],
+    "bagianNama": "F. Monitoring, analitik, histori, peringatan, laporan",
+    "tahap": 5,
+    "tahapDari": 5,
+    "sebelum": "44. Peringatan dini: deteksi dan tindak lanjut",
+    "berikut": "46. Tambah pengguna",
+    "langkahAlur": [
+      "Pertama, menu **Laporan**, pilih jenis di panel kiri.",
+      "Terakhir, klik **Excel** dan **PDF** untuk tiap jenis."
+    ]
+  },
+  {
+    "nn": "46",
+    "id": "user-tambah",
+    "akun": "admin",
+    "judul": "Tambah pengguna",
+    "fungsi": "Admin membuat akun dengan peran dan (untuk operator) instansi.",
+    "langkah": [
+      "Menu **Pengguna** → **Tambah**.",
+      "Isi Nama `Operator Uji`, Email `operator-uji@simonkeb.test`, Password, Peran *Operator Instansi*, pilih Instansi uji.",
+      "Simpan."
+    ],
+    "harapan": "Pengguna baru tampil di daftar.",
+    "status": "LULUS",
+    "catatan": "Pengguna tersimpan.",
+    "gambar": "46-user-tambah.png",
+    "ekstra": [],
+    "bagianNama": "G. Administrasi & pendukung",
+    "tahap": 1,
+    "tahapDari": 8,
+    "sebelum": "45. Laporan: seluruh jenis (Excel + PDF)",
+    "berikut": "47. Hapus pengguna (dialog konfirmasi)",
+    "langkahAlur": [
+      "Pertama, menu **Pengguna** → **Tambah**.",
+      "Kemudian, isi Nama `Operator Uji`, Email `operator-uji@simonkeb.test`, Password, Peran *Operator Instansi*, pilih Instansi uji.",
+      "Terakhir, simpan."
+    ]
+  },
+  {
+    "nn": "47",
+    "id": "user-hapus",
+    "akun": "admin",
+    "judul": "Hapus pengguna (dialog konfirmasi)",
+    "fungsi": "Penghapusan selalu lewat dialog konfirmasi SweetAlert.",
+    "langkah": [
+      "Cari `operator-uji`.",
+      "Klik ikon tempat sampah dan konfirmasi."
+    ],
+    "harapan": "Pengguna hilang dari daftar.",
+    "status": "LULUS",
+    "catatan": "Pengguna terhapus.",
+    "gambar": "47-user-hapus.png",
+    "ekstra": [],
+    "bagianNama": "G. Administrasi & pendukung",
+    "tahap": 2,
+    "tahapDari": 8,
+    "sebelum": "46. Tambah pengguna",
+    "berikut": "48. Akun pribadi: ganti password & 2FA",
+    "langkahAlur": [
+      "Pertama, cari `operator-uji`.",
+      "Terakhir, klik ikon tempat sampah dan konfirmasi."
+    ]
+  },
+  {
+    "nn": "48",
+    "id": "akun",
+    "akun": "admin",
+    "judul": "Akun pribadi: ganti password & 2FA",
+    "fungsi": "Pengguna mengganti password sendiri dan mengaktifkan autentikasi dua langkah.",
+    "langkah": [
+      "Klik nama pengguna → **Akun**.",
+      "Coba ganti password dengan password lama salah."
+    ],
+    "harapan": "Halaman tampil; password lama salah ditolak.",
+    "status": "LULUS",
+    "catatan": "Password lama salah ditolak.",
+    "gambar": "48-akun.png",
+    "ekstra": [],
+    "bagianNama": "G. Administrasi & pendukung",
+    "tahap": 3,
+    "tahapDari": 8,
+    "sebelum": "47. Hapus pengguna (dialog konfirmasi)",
+    "berikut": "49. Notifikasi",
+    "langkahAlur": [
+      "Pertama, klik nama pengguna → **Akun**.",
+      "Terakhir, coba ganti password dengan password lama salah."
+    ]
+  },
+  {
+    "nn": "49",
+    "id": "notifikasi",
+    "akun": "bkn",
+    "judul": "Notifikasi",
+    "fungsi": "Pemberitahuan perubahan status usulan untuk peran terkait.",
+    "langkah": [
+      "Menu/ikon **Notifikasi**.",
+      "Klik **Tandai semua dibaca**."
+    ],
+    "harapan": "Daftar tampil; semua tertandai dibaca.",
+    "status": "LULUS",
+    "catatan": "Notifikasi tampil.",
+    "gambar": "49-notifikasi.png",
+    "ekstra": [],
+    "bagianNama": "G. Administrasi & pendukung",
+    "tahap": 4,
+    "tahapDari": 8,
+    "sebelum": "48. Akun pribadi: ganti password & 2FA",
+    "berikut": "50. Log audit",
+    "langkahAlur": [
+      "Pertama, menu/ikon **Notifikasi**.",
+      "Terakhir, klik **Tandai semua dibaca**."
+    ]
+  },
+  {
+    "nn": "50",
+    "id": "audit",
+    "akun": "admin",
+    "judul": "Log audit",
+    "fungsi": "Jejak semua perubahan data (spatie/activitylog) — siapa, kapan, apa yang berubah.",
+    "langkah": [
+      "Menu **Audit**."
+    ],
+    "harapan": "Memuat aktivitas pengujian di atas (tambah instansi, penetapan, dll.).",
+    "status": "LULUS",
+    "catatan": "12 entri pada halaman pertama.",
+    "gambar": "50-audit.png",
+    "ekstra": [],
+    "bagianNama": "G. Administrasi & pendukung",
+    "tahap": 5,
+    "tahapDari": 8,
+    "sebelum": "49. Notifikasi",
+    "berikut": "51. Panduan pengguna dan unduh PDF",
+    "langkahAlur": [
+      "Langkahnya: menu **Audit**."
+    ]
+  },
+  {
+    "nn": "51",
+    "id": "panduan",
+    "akun": "admin",
+    "judul": "Panduan pengguna dan unduh PDF",
+    "fungsi": "Panduan terintegrasi dalam aplikasi, dapat dicari dan diunduh PDF.",
+    "langkah": [
+      "Klik **Bantuan** → **Panduan**.",
+      "Cari kata `usulan`.",
+      "Unduh PDF."
+    ],
+    "harapan": "Panduan tampil; PDF terunduh.",
+    "status": "LULUS",
+    "catatan": "Panduan tampil. PDF: HTTP 200, application/pdf, 1.330.493 byte",
+    "gambar": "51-panduan.png",
+    "ekstra": [],
+    "bagianNama": "G. Administrasi & pendukung",
+    "tahap": 6,
+    "tahapDari": 8,
+    "sebelum": "50. Log audit",
+    "berikut": "52. Pedoman rumus ABK",
+    "langkahAlur": [
+      "Pertama, klik **Bantuan** → **Panduan**.",
+      "Kemudian, cari kata `usulan`.",
+      "Terakhir, unduh PDF."
+    ]
+  },
+  {
+    "nn": "52",
+    "id": "pedoman",
+    "akun": "admin",
+    "judul": "Pedoman rumus ABK",
+    "fungsi": "Penjelasan konstanta dan rumus ABK.",
+    "langkah": [
+      "Buka halaman **Pedoman**."
+    ],
+    "harapan": "Halaman tampil.",
+    "status": "LULUS",
+    "catatan": "Pedoman tampil.",
+    "gambar": "52-pedoman.png",
+    "ekstra": [],
+    "bagianNama": "G. Administrasi & pendukung",
+    "tahap": 7,
+    "tahapDari": 8,
+    "sebelum": "51. Panduan pengguna dan unduh PDF",
+    "berikut": "53. Hapus instansi: penjaga usulan dan pembersihan data uji",
+    "langkahAlur": [
+      "Langkahnya: buka halaman **Pedoman**."
+    ]
+  },
+  {
+    "nn": "53",
+    "id": "hapus-bersih",
+    "akun": "admin",
+    "judul": "Hapus instansi: penjaga usulan dan pembersihan data uji",
+    "fungsi": "Instansi yang sudah punya usulan tidak boleh dihapus (hanya dinonaktifkan). Instansi tanpa usulan dapat dihapus, dan unit/pegawai di bawahnya ikut terhapus (cascade).",
+    "langkah": [
+      "Buka **Instansi**, cari `KL-ADM` (sudah punya usulan) → klik ikon tempat sampah → konfirmasi.",
+      "Cari `UJI-01` (data uji, tanpa usulan) → hapus → konfirmasi."
+    ],
+    "harapan": "KL-ADM ditolak dengan pesan \"tidak dapat dihapus, nonaktifkan saja\". UJI-01 terhapus bersama unit dan pegawai ujinya.",
+    "status": "LULUS",
+    "catatan": "KL-ADM ditolak: \"Instansi yang sudah memiliki usulan tidak dapat dihapus. Nonaktifkan saja.\". UJI-01 terhapus: \"Instansi berhasil dihapus.\".",
+    "gambar": "53-hapus-bersih.png",
+    "ekstra": [
+      {
+        "f": "53-hapus-bersih-1.png",
+        "ket": "Penolakan: instansi yang sudah punya usulan tidak dapat dihapus."
+      }
+    ],
+    "bagianNama": "G. Administrasi & pendukung",
+    "tahap": 8,
+    "tahapDari": 8,
+    "sebelum": "52. Pedoman rumus ABK",
+    "berikut": null,
+    "langkahAlur": [
+      "Pertama, buka **Instansi**, cari `KL-ADM` (sudah punya usulan) → klik ikon tempat sampah → konfirmasi.",
+      "Terakhir, cari `UJI-01` (data uji, tanpa usulan) → hapus → konfirmasi."
+    ]
+  }
+]
