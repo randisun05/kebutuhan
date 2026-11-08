@@ -38,6 +38,6 @@ const form = useForm({
     kode: props.data?.kode ?? '', nama: props.data?.nama ?? '', eselon: props.data?.eselon ?? null, urutan: props.data?.urutan ?? 0,
     siasn_unor_id: props.data?.siasn_unor_id ?? '', nama_jabatan_pimpinan: props.data?.nama_jabatan_pimpinan ?? '', is_active: props.data?.is_active ?? true,
 });
-const reloadParents = () => router.reload({ data: { instansi_id: form.instansi_id }, only: ['parentOptions'] });
+const reloadParents = () => router.reload({ data: { instansi_id: form.instansi_id }, only: ['parentOptions', 'instansiId'] });
 const submit = () => (props.data ? form.put(`/unit-kerja/${props.data.id}`) : form.post('/unit-kerja'));
 </script>

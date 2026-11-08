@@ -63,6 +63,8 @@ class UnitKerjaController extends Controller
         $this->authorizeInstansi($unitKerja->instansi_id);
         $data = $this->validated($request, $unitKerja);
 
+        $data['parent_id'] ??= null;
+
         if ($data['parent_id'] && in_array((int) $data['parent_id'], UnitKerja::descendantIds($unitKerja->id), true)) {
             return back()->withErrors(['parent_id' => 'Unit induk tidak boleh unit itu sendiri atau sub-unitnya.']);
         }

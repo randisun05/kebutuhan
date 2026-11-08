@@ -190,7 +190,7 @@ const isiKelas = () => {
 };
 const gantiInstansi = () => {
     form.unit_kerja_id = '';
-    router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions'] });
+    router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions', 'instansiId'] });
 };
 const submit = () => {
     const opts = { onError: (e) => { if (Object.keys(e).some((k) => k.startsWith('uraian'))) tab.value = 'abk'; } };

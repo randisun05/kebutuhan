@@ -9,6 +9,12 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.3.2 — 2026-11-08
+
+- **Perbaikan:** pada form **Tambah Unit Kerja**, **Tambah Pegawai**, dan **Tambah ABK** yang dibuka tanpa instansi terpilih, pilihan **Instansi** tidak lagi hilang setelah daftar unit/jabatan dimuat ulang.
+- **Pesan kesalahan isian** (misalnya "Nama wajib diisi", "Kode sudah digunakan") kini tampil dalam Bahasa Indonesia.
+- Mengubah unit kerja lewat integrasi tanpa mengirim unit induk tidak lagi menimbulkan galat.
+
 ## v1.3.1 — 2026-09-28
 
 - **Keamanan:** login SSO SIASN kini hanya mencocokkan akun berdasarkan **NIP** (email tidak lagi dipakai). Pastikan NIP semua pengguna SSO sudah terisi.

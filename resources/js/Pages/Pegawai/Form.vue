@@ -64,7 +64,7 @@ const form = useForm({
 });
 const gantiInstansi = () => {
     form.unit_kerja_id = '';
-    router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions'] });
+    router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions', 'instansiId'] });
 };
 const submit = () => (props.data ? form.put(`/pegawai/${props.data.id}`) : form.post('/pegawai'));
 </script>
