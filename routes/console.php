@@ -17,3 +17,8 @@ Schedule::command('kebutuhan:snapshot')->dailyAt('23:30')->withoutOverlapping();
 
 // Sistem peringatan dini, dijalankan setiap pagi
 Schedule::command('peringatan:deteksi')->dailyAt('06:00')->withoutOverlapping();
+
+// Sinkronisasi data JF dari API instansi pembina BKN, mingguan (aktifkan dengan JFPEMBINA_SYNC_TERJADWAL=true).
+// Putaran yang macet dilanjutkan otomatis oleh command-nya.
+Schedule::command('jf:sync')->weeklyOn(0, '01:30')->withoutOverlapping()
+    ->when(fn () => config('jfpembina.enabled') && config('jfpembina.scheduled'));
