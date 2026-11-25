@@ -21,3 +21,8 @@ Schedule::command('peringatan:deteksi')->dailyAt('06:00')->withoutOverlapping();
 
 // Detak scheduler untuk /health: bila berhenti berarti cron `schedule:run` tidak berjalan
 Schedule::call(fn () => Cache::put('scheduler:detak', now(), now()->addHour()))->everyMinute()->name('detak-scheduler');
+
+// Sinkronisasi data JF dari API instansi pembina BKN, mingguan (aktifkan dengan JFPEMBINA_SYNC_TERJADWAL=true).
+// Putaran yang macet dilanjutkan otomatis oleh command-nya.
+Schedule::command('jf:sync')->weeklyOn(0, '01:30')->withoutOverlapping()
+    ->when(fn () => config('jfpembina.enabled') && config('jfpembina.scheduled'));

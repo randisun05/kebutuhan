@@ -78,7 +78,7 @@ const formasiPilihan = computed(() => props.formasiOptions.filter((f) => f.jabat
 const gantiInstansi = () => {
     form.unit_kerja_id = '';
     form.usulan_detail_id = null;
-    router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions', 'formasiOptions'] });
+    router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions', 'formasiOptions', 'instansiId'] });
 };
 const submit = () => (props.data ? form.put(`/pegawai/${props.data.id}`) : form.post('/pegawai'));
 </script>

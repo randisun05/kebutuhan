@@ -206,7 +206,7 @@ const isiKelas = () => {
 };
 const gantiInstansi = () => {
     form.unit_kerja_id = '';
-    router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions'] });
+    router.reload({ data: { instansi_id: form.instansi_id }, only: ['unitOptions', 'instansiId'] });
 };
 // draf AI: uraian tugas ditambahkan (baris kosong dibuang), informasi jabatan hanya mengisi yang masih kosong
 const aiCatatan = ref('');

@@ -9,6 +9,13 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.7.1 — 2026-11-08
+
+- **Perbaikan:** pada form **Tambah Unit Kerja**, **Tambah Pegawai**, dan **Tambah ABK** yang dibuka tanpa instansi terpilih, pilihan **Instansi** tidak lagi hilang setelah daftar unit/jabatan dimuat ulang.
+- **Pesan kesalahan isian** (misalnya "Nama wajib diisi", "Kode sudah digunakan") kini tampil dalam Bahasa Indonesia.
+- Bila login gagal terlalu sering, layar kini menampilkan pesan "Terlalu banyak percobaan masuk" beserta lama menunggu (sebelumnya hanya halaman galat 429).
+- Mengubah unit kerja lewat integrasi tanpa mengirim unit induk tidak lagi menimbulkan galat.
+
 ## v1.7.0 — 2026-11-07
 
 - **Isi massal lebih aman**: ada **pratinjau** sebelum menulis dan tombol **Batalkan pengisian terakhir**.
