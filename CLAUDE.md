@@ -2,6 +2,13 @@
 
 Aplikasi monitoring penyusunan kebutuhan ASN (Laravel 12, PHP 8.3, Inertia v2, Vue 3). Gambaran fitur ada di `README.md`.
 
+## Konteks ekosistem
+
+Aplikasi ini bagian dari ekosistem layanan digital Dit. JF Manajemen ASN (BKN). Baca `docs/KONTEKS-EKOSISTEM.md`
+(tujuan T1–T5, arsitektur tujuh lapis, prinsip data, rambu keamanan dan AI) sebelum merancang fitur baru.
+Asumsi (perlu diverifikasi tim): SIMONKEB berperan sebagai komponen **Penataan Kebutuhan** (tujuan T2: eksisting vs formasi vs ABK).
+Prinsip yang berlaku di sini: NIP kunci tunggal, SIASN sumber kebenaran data kepegawaian, AI memberi rekomendasi dan manusia memutuskan.
+
 ## Aturan wajib: panduan pengguna ikut diperbarui
 
 Setiap perubahan yang terlihat oleh pengguna (menu, halaman, alur, rumus, aturan, laporan, peran) **harus**
