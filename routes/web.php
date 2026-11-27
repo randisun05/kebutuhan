@@ -22,6 +22,7 @@ use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PenetapanController;
 use App\Http\Controllers\PerencanaanController;
 use App\Http\Controllers\PeringatanController;
+use App\Http\Controllers\RekomendasiJfController;
 use App\Http\Controllers\SiasnController;
 use App\Http\Controllers\SsoSiasnController;
 use App\Http\Controllers\UnitKerjaController;
@@ -104,6 +105,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/usulan/{usulan}', [UsulanController::class, 'update'])->name('usulan.update.multipart');
     Route::resource('usulan', UsulanController::class);
 
+    Route::get('/rekomendasi-jf', [RekomendasiJfController::class, 'index'])->name('rekomendasi-jf.index');
+    Route::get('/rekomendasi-jf/{rekomendasi}', [RekomendasiJfController::class, 'show'])->whereNumber('rekomendasi')->name('rekomendasi-jf.show');
+
     Route::get('/penetapan', [PenetapanController::class, 'index'])->name('penetapan.index');
     Route::get('/penetapan/{penetapan}', [PenetapanController::class, 'show'])->name('penetapan.show');
     Route::get('/penetapan/{penetapan}/pdf', [PenetapanController::class, 'pdf'])->name('penetapan.pdf');
@@ -141,6 +145,9 @@ Route::middleware('auth')->group(function () {
 
     // Referensi nasional, pengguna, dan audit: admin
     Route::middleware('role:admin')->group(function () {
+        Route::post('/rekomendasi-jf/pratinjau', [RekomendasiJfController::class, 'pratinjau'])->name('rekomendasi-jf.pratinjau');
+        Route::post('/rekomendasi-jf/impor', [RekomendasiJfController::class, 'impor'])->name('rekomendasi-jf.impor');
+        Route::post('/rekomendasi-jf/petakan-instansi', [RekomendasiJfController::class, 'petakanInstansi'])->name('rekomendasi-jf.petakan-instansi');
         Route::post('/kebutuhan-sementara/persetujuan', [KebutuhanSementaraController::class, 'persetujuan'])->name('kebutuhan-sementara.persetujuan');
         Route::resource('instansi', InstansiController::class)->except('show');
         Route::resource('jabatan', JabatanController::class)->except('show');

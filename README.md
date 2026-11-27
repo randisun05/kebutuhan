@@ -52,6 +52,13 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 - Login Laravel Fortify: lupa/reset password, ganti password, 2FA (aplikasi autentikator + kode pemulihan), 2FA wajib per peran (`WAJIB_2FA_PERAN`).
 - Log audit perubahan data master, organisasi, pegawai, ABK, dan pengguna.
 
+## Rekomendasi JF MASN
+
+Menu **Rekomendasi JF MASN** mengimpor Excel rekap kebutuhan dari tim data (sheet `Input Data (Instansi Baru)`) menjadi rekomendasi BKN
+dan penetapan KemenPANRB per instansi × jabatan pokok × jenjang, dengan pratinjau, perhitungan ulang lowongan, dan pemetaan instansi ke
+referensi BKN. Ketiga sumber (ABK, rekomendasi BKN, penetapan KemenPANRB) dirancang sebagai referensi berdampingan; rekom BKN per unit,
+adapter bezetting dari API Dashboard, dan halaman perbandingan empat sumber menyusul.
+
 ## Operasional
 
 Panduan deploy produksi (server, antrean, scheduler, cadangan, keamanan) ada di `docs/DEPLOY.md`. Endpoint `GET /health`

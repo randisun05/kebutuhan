@@ -26,6 +26,7 @@ const GAMBAR = {
     monitoring: ['/monitoring', 'admin'],
     'monitoring-instansi': ['/monitoring/instansi/1', 'admin'],
     'kualitas-data': ['/kualitas-data?instansi_id=1', 'admin'],
+    'rekomendasi-jf': ['/rekomendasi-jf', 'admin'],
     analitik: ['/analitik', 'admin'],
     histori: ['/histori?instansi_id=1&level=unit&bulan=6', 'admin'],
     peringatan: ['/peringatan', 'admin'],

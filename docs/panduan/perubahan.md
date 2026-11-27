@@ -9,6 +9,10 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.8.0 — 2026-11-27
+
+- **Rekomendasi JF MASN** (menu baru): rekomendasi BKN dan penetapan KemenPANRB per instansi × jabatan pokok × jenjang, diimpor dari Excel rekap tim data dengan **pratinjau**, perhitungan ulang lowongan, penguraian banyak surat per sel, dan **pemetaan instansi** yang dipertahankan antar impor.
+
 ## v1.7.1 — 2026-11-08
 
 - **Perbaikan:** pada form **Tambah Unit Kerja**, **Tambah Pegawai**, dan **Tambah ABK** yang dibuka tanpa instansi terpilih, pilihan **Instansi** tidak lagi hilang setelah daftar unit/jabatan dimuat ulang.

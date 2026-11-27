@@ -39,6 +39,19 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 Simpan `.env` di luar repository dan jangan membagikannya. Kredensial tidak boleh masuk Git.
 
+### Batas unggah dan memori (impor Excel)
+
+Impor **Rekomendasi JF MASN** mengunggah berkas Excel rekap sekitar **6 MB** (maksimum yang diterima aplikasi 30 MB). Nilai bawaan PHP (`upload_max_filesize=2M`) **terlalu kecil**; aplikasi akan menolak dengan pesan yang jelas. Atur:
+
+```ini
+; php.ini (FPM dan CLI)
+upload_max_filesize = 32M
+post_max_size = 40M
+memory_limit = 512M   ; membaca berkas rekap 6 MB memakai sekitar 130 MB pada pengukuran kami
+```
+
+Nginx: `client_max_body_size 40M;`. Apache: `LimitRequestBody` sesuai. Setelah mengubah, muat ulang PHP-FPM dan web server.
+
 ## 4. Proses latar (wajib)
 
 **Scheduler** (cron, setiap menit):
