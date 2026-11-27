@@ -7,6 +7,9 @@
         <div class="col-lg-8"><div class="card"><div class="card-header">Umum</div><div class="card-body row g-2">
             <Field class="col-md-4" label="Kode" :error="e('kode')" help="huruf kecil, angka, - atau _"><input v-model="form.kode" class="form-control" :class="{ 'is-invalid': e('kode') }"></Field>
             <Field class="col-md-8" label="Nama" :error="e('nama')"><input v-model="form.nama" class="form-control" :class="{ 'is-invalid': e('nama') }"></Field>
+            <Field v-if="pembinaOptions.length > 1 || !data" class="col-md-12" label="Instansi pembina" :error="e('pembina_id')" help="Profil ini hanya dapat memakai sumber angka milik instansi pembina yang sama.">
+                <select v-model="form.pembina_id" class="form-select" :disabled="!!data"><option :value="null">- pilih -</option><option v-for="p in pembinaOptions" :key="p.id" :value="p.id">{{ p.nama }}</option></select>
+            </Field>
             <Field class="col-md-8" label="Nama sheet" :error="e('sheet')"><input v-model="form.sheet" class="form-control" :class="{ 'is-invalid': e('sheet') }"></Field>
             <div class="col-md-4 d-flex align-items-end"><div class="form-check form-switch"><input id="aktif" v-model="form.is_active" type="checkbox" class="form-check-input"><label for="aktif" class="form-check-label">Aktif</label></div></div>
         </div></div></div>
@@ -27,7 +30,7 @@
             <div class="table-responsive"><table class="table table-sm mb-0 align-middle">
                 <thead><tr><th>Sumber angka</th><th style="width: 120px">Kolom awal</th><th style="width: 100px">Lebar</th><th style="width: 160px">Kolom awal cadangan</th><th></th></tr></thead>
                 <tbody><tr v-for="(b, i) in form.pemetaan.blok" :key="i">
-                    <td><select v-model="b.sumber" class="form-select form-select-sm" :class="{ 'is-invalid': e(`pemetaan.blok.${i}.sumber`) }"><option value="">- pilih -</option><option v-for="s in sumberOptions" :key="s.kode" :value="s.kode">{{ s.nama }} ({{ s.kode }})</option></select></td>
+                    <td><select v-model="b.sumber" class="form-select form-select-sm" :class="{ 'is-invalid': e(`pemetaan.blok.${i}.sumber`) }"><option value="">- pilih -</option><option v-for="s in sumberPembina" :key="s.kode" :value="s.kode">{{ s.nama }} ({{ s.kode }})</option></select></td>
                     <td><input v-model="b.kolom_awal" class="form-control form-control-sm text-uppercase" maxlength="3" :class="{ 'is-invalid': e(`pemetaan.blok.${i}.kolom_awal`) }"></td>
                     <td><input v-model="b.lebar" type="number" min="1" max="12" class="form-control form-control-sm"></td>
                     <td><input v-model="b.cadangan_kolom_awal" class="form-control form-control-sm text-uppercase" maxlength="3" placeholder="opsional"></td>
@@ -51,10 +54,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import Field from '../../Components/Field.vue';
 
-const props = defineProps({ data: Object, sumberOptions: Array });
+const props = defineProps({ data: Object, pembinaOptions: { type: Array, default: () => [] }, sumberOptions: Array });
 
 const kolomUtama = [
     { key: 'instansi', label: 'Nama instansi', wajib: true }, { key: 'jabatan', label: 'Jabatan', wajib: true }, { key: 'jenis_instansi', label: 'Jenis instansi' },
@@ -64,6 +68,7 @@ const kolomUtama = [
 
 const p = props.data?.pemetaan;
 const form = useForm({
+    pembina_id: props.data?.pembina_id ?? (props.pembinaOptions.length === 1 ? props.pembinaOptions[0].id : null),
     kode: props.data?.kode ?? '', nama: props.data?.nama ?? '', sheet: props.data?.sheet ?? '', is_active: props.data?.is_active ?? true,
     pemetaan: {
         kolom: { instansi: '', jabatan: '', jenis_instansi: '', pokja: '', status_rekom: '', jenis_rekom: '', wilayah_kerja: '', sesuai_bezetting: '', ...(p?.kolom ?? {}), catatan: [...(p?.kolom?.catatan ?? [])] },
@@ -72,6 +77,7 @@ const form = useForm({
     },
 });
 const e = (k) => form.errors[k];
+const sumberPembina = computed(() => props.sumberOptions.filter((s) => s.pembina_id === form.pembina_id));
 // huruf kolom Excel dinormalkan ke huruf besar; kode sumber/jenis hanya dirapikan spasinya
 const huruf = (v) => (typeof v === 'string' ? v.trim().toUpperCase() : v);
 const rapikan = (d) => ({

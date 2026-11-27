@@ -19,12 +19,12 @@ class User extends Authenticatable
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults()->logOnly(['name', 'nip', 'email', 'role', 'instansi_id', 'is_active'])
+        return LogOptions::defaults()->logOnly(['name', 'nip', 'email', 'role', 'instansi_id', 'pembina_id', 'is_active'])
             ->logOnlyDirty()->dontSubmitEmptyLogs()->useLogName('pengguna');
     }
 
     protected $fillable = [
-        'name', 'nip', 'email', 'password', 'role', 'instansi_id', 'is_active',
+        'name', 'nip', 'email', 'password', 'role', 'instansi_id', 'pembina_id', 'is_active',
     ];
 
     protected $hidden = [
@@ -72,6 +72,27 @@ class User extends Authenticatable
     public function isScopedToInstansi(): bool
     {
         return $this->role === Role::OperatorInstansi;
+    }
+
+    public function isPembina(): bool
+    {
+        return $this->role === Role::Pembina;
+    }
+
+    /** Pengguna pembina hanya boleh mengakses data instansi pembinanya sendiri; peran lain tidak dibatasi per pembina. */
+    public function isScopedToPembina(): bool
+    {
+        return $this->isPembina();
+    }
+
+    public function canAccessPembina(?int $pembinaId): bool
+    {
+        return ! $this->isScopedToPembina() || ($pembinaId !== null && (int) $this->pembina_id === (int) $pembinaId);
+    }
+
+    public function pembina(): BelongsTo
+    {
+        return $this->belongsTo(InstansiPembina::class, 'pembina_id');
     }
 
     public function canAccessInstansi(?int $instansiId): bool

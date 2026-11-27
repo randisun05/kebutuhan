@@ -146,30 +146,37 @@ Route::middleware('auth')->group(function () {
         Route::put('/siasn/peta-jabatan/{peta}', [SiasnController::class, 'petakanJabatan'])->name('siasn.peta-jabatan');
     });
 
-    // Referensi nasional, pengguna, dan audit: admin
-    Route::middleware('role:admin')->group(function () {
+    // Instansi pembina JF: administrator dan pengguna pembina (data dibatasi per pembina di controller)
+    Route::middleware('role:admin,pembina')->group(function () {
         Route::post('/rekomendasi-jf/pratinjau', [RekomendasiJfController::class, 'pratinjau'])->name('rekomendasi-jf.pratinjau');
         Route::post('/rekomendasi-jf/impor', [RekomendasiJfController::class, 'impor'])->name('rekomendasi-jf.impor');
 
-        // Manajemen master JF, sumber angka, alias instansi, dan profil impor (data, bukan kode)
         Route::get('/jf-master', [JfMasterController::class, 'index'])->name('jf-master.index');
         Route::post('/jf-master/jabatan-pokok', [JfMasterController::class, 'simpanJabatan'])->name('jf-master.jabatan.store');
         Route::put('/jf-master/jabatan-pokok/{jabatanPokok}', [JfMasterController::class, 'simpanJabatan'])->name('jf-master.jabatan.update');
         Route::delete('/jf-master/jabatan-pokok/{jabatanPokok}', [JfMasterController::class, 'hapusJabatan'])->name('jf-master.jabatan.destroy');
         Route::put('/jf-master/jabatan-pokok/{jabatanPokok}/jenjang', [JfMasterController::class, 'syncJenjang'])->name('jf-master.jabatan.jenjang');
-        Route::post('/jf-master/jenjang', [JfMasterController::class, 'simpanJenjang'])->name('jf-master.jenjang.store');
-        Route::put('/jf-master/jenjang/{jenjang}', [JfMasterController::class, 'simpanJenjang'])->name('jf-master.jenjang.update');
-        Route::delete('/jf-master/jenjang/{jenjang}', [JfMasterController::class, 'hapusJenjang'])->name('jf-master.jenjang.destroy');
         Route::post('/jf-master/sumber', [JfMasterController::class, 'simpanSumber'])->name('jf-master.sumber.store');
         Route::put('/jf-master/sumber/{sumber}', [JfMasterController::class, 'simpanSumber'])->name('jf-master.sumber.update');
         Route::delete('/jf-master/sumber/{sumber}', [JfMasterController::class, 'hapusSumber'])->name('jf-master.sumber.destroy');
 
+        Route::resource('impor-profil', ImporProfilController::class)->except('show')->parameters(['impor-profil' => 'profil']);
+    });
+
+    // Referensi nasional, pengguna, dan audit: admin
+    Route::middleware('role:admin')->group(function () {
+
+        // Alias instansi, jenjang bersama, dan instansi pembina: khusus administrator
         Route::get('/alias-instansi', [AliasInstansiController::class, 'index'])->name('alias-instansi.index');
         Route::post('/alias-instansi', [AliasInstansiController::class, 'simpan'])->name('alias-instansi.store');
         Route::put('/alias-instansi/{alias}', [AliasInstansiController::class, 'simpan'])->name('alias-instansi.update');
         Route::delete('/alias-instansi/{alias}', [AliasInstansiController::class, 'hapus'])->name('alias-instansi.destroy');
-
-        Route::resource('impor-profil', ImporProfilController::class)->except('show')->parameters(['impor-profil' => 'profil']);
+        Route::post('/jf-master/jenjang', [JfMasterController::class, 'simpanJenjang'])->name('jf-master.jenjang.store');
+        Route::put('/jf-master/jenjang/{jenjang}', [JfMasterController::class, 'simpanJenjang'])->name('jf-master.jenjang.update');
+        Route::delete('/jf-master/jenjang/{jenjang}', [JfMasterController::class, 'hapusJenjang'])->name('jf-master.jenjang.destroy');
+        Route::post('/jf-master/pembina', [JfMasterController::class, 'simpanPembina'])->name('jf-master.pembina.store');
+        Route::put('/jf-master/pembina/{pembina}', [JfMasterController::class, 'simpanPembina'])->name('jf-master.pembina.update');
+        Route::delete('/jf-master/pembina/{pembina}', [JfMasterController::class, 'hapusPembina'])->name('jf-master.pembina.destroy');
         Route::post('/kebutuhan-sementara/persetujuan', [KebutuhanSementaraController::class, 'persetujuan'])->name('kebutuhan-sementara.persetujuan');
         Route::resource('instansi', InstansiController::class)->except('show');
         Route::resource('jabatan', JabatanController::class)->except('show');

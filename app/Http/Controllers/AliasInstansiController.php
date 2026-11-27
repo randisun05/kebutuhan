@@ -33,8 +33,6 @@ class AliasInstansiController extends Controller
         $data = $request->validate([
             'nama' => 'required|string|max:255',
             'ref_instansi_id' => 'nullable|exists:ref_instansi_bkn,id',
-            'pokja' => 'nullable|string|max:16',
-            'wilayah_kerja' => 'nullable|string|max:255',
             'jenis_instansi' => 'nullable|string|max:16',
         ]);
         $normal = InstansiAlias::normalisasi($data['nama']);

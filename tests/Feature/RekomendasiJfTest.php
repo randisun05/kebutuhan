@@ -15,51 +15,14 @@ use App\Services\RekomendasiJfImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\Feature\Concerns\BuildsKebutuhanData;
+use Tests\Feature\Concerns\BuildsRekomendasiExcel;
 use Tests\TestCase;
 
 /** Impor Excel rekap kebutuhan JF MASN (rekomendasi BKN dan penetapan KemenPANRB). */
 class RekomendasiJfTest extends TestCase
 {
-    use BuildsKebutuhanData, RefreshDatabase;
-
-    /** Buat berkas xlsx dengan tata letak seperti sheet "Input Data (Instansi Baru)". */
-    private function buatExcel(array $baris, ?string $sheet = null): string
-    {
-        $sheet ??= ImporProfil::firstOrFail()->sheet; // nama sheet berasal dari profil impor, bukan konstanta kode
-        $wb = new Spreadsheet;
-        $ws = $wb->getActiveSheet()->setTitle($sheet);
-        $ws->fromArray(['NO', 'x', 'x', 'NAMA INSTANSI', 'JABATAN'], null, 'A2'); // baris judul
-        $ws->fromArray([null, null, 1.0, 2.0, 3.0], null, 'A3');                    // baris nomor kolom
-        $r = 4;
-        foreach ($baris as $b) {
-            $row = array_fill(0, 61, null);
-            foreach ($b as $kolom => $nilai) {
-                $row[$kolom] = $nilai;
-            }
-            $ws->fromArray($row, null, 'A'.$r++);
-        }
-        $path = sys_get_temp_dir().'/rekom-'.uniqid().'.xlsx';
-        (new Xlsx($wb))->save($path);
-
-        return $path;
-    }
-
-    /** Nilai terbaru satu sumber × jenjang untuk satu baris rekomendasi. */
-    private function fakta(RekomendasiJf $r, string $sumber, string $jenjang): ?int
-    {
-        return KebutuhanFakta::where('rekomendasi_jf_id', $r->id)->where('is_terbaru', true)
-            ->whereHas('sumber', fn ($q) => $q->where('kode', $sumber))->whereHas('jenjang', fn ($q) => $q->where('kode', $jenjang))->value('nilai');
-    }
-
-    private function baris(string $instansi, string $jabatan, array $lebih = []): array
-    {
-        return $lebih + [3 => $instansi, 4 => $jabatan, 5 => 'KAB', 6 => 'POKJA 2', 7 => 'DONE', 14 => 'Rekom baru',
-            17 => 2, 18 => 3, 19 => 1, 20 => 0, 22 => 16, 23 => 12, 24 => 9, 25 => 1, 37 => 16, 38 => 10, 39 => 9, 40 => null,
-            41 => 'B/3800/M.SM.01.00/2025', 42 => 45900, 43 => 'Sekretaris Kementerian', 49 => 'BKN Pusat', 50 => 'Instansi baru'];
-    }
+    use BuildsKebutuhanData, BuildsRekomendasiExcel, RefreshDatabase;
 
     public function test_baca_memetakan_jenjang_sumber_surat_dan_instansi(): void
     {
@@ -186,17 +149,18 @@ class RekomendasiJfTest extends TestCase
         $file = fn () => new UploadedFile($path, 'rekap.xlsx', null, null, true);
 
         $instansi = $this->instansi();
-        $this->actingAs($this->user(Role::OperatorInstansi, $instansi))->postJson('/rekomendasi-jf/pratinjau', ['file' => $file()])->assertForbidden();
-        $this->post('/rekomendasi-jf/impor', ['token' => str_repeat('a', 32)])->assertForbidden();
+        $profilId = ImporProfil::value('id');
+        $this->actingAs($this->user(Role::OperatorInstansi, $instansi))->postJson('/rekomendasi-jf/pratinjau', ['file' => $file(), 'profil_id' => $profilId])->assertForbidden();
+        $this->post('/rekomendasi-jf/impor', ['token' => str_repeat('a', 32), 'profil_id' => $profilId])->assertForbidden();
 
         $admin = $this->user(Role::Admin);
-        $res = $this->actingAs($admin)->postJson('/rekomendasi-jf/pratinjau', ['file' => $file()])->assertOk()
+        $res = $this->actingAs($admin)->postJson('/rekomendasi-jf/pratinjau', ['file' => $file(), 'profil_id' => $profilId])->assertOk()
             ->assertJsonPath('ringkas.baris', 2)->assertJsonPath('ringkas.baru', 2);
         $this->assertSame(0, RekomendasiJf::count()); // pratinjau tidak menyimpan
 
         // token asal-asalan atau path traversal ditolak
-        $this->post('/rekomendasi-jf/impor', ['token' => '../../etc/passwd'])->assertSessionHasErrors('token');
-        $this->post('/rekomendasi-jf/impor', ['token' => str_repeat('b', 32)])->assertStatus(422);
+        $this->post('/rekomendasi-jf/impor', ['token' => '../../etc/passwd', 'profil_id' => $profilId])->assertSessionHasErrors('token');
+        $this->post('/rekomendasi-jf/impor', ['token' => str_repeat('b', 32), 'profil_id' => $profilId])->assertStatus(422);
 
         $this->post('/rekomendasi-jf/impor', ['token' => $res->json('token'), 'nama_berkas' => 'rekap.xlsx', 'profil_id' => $res->json('profil_id')])->assertSessionHas('success');
         $this->assertSame(2, RekomendasiJf::count());
@@ -208,8 +172,8 @@ class RekomendasiJfTest extends TestCase
     {
         Storage::fake('local');
         $admin = $this->user(Role::Admin);
-        $this->actingAs($admin)->postJson('/rekomendasi-jf/pratinjau', ['file' => UploadedFile::fake()->create('a.pdf', 10, 'application/pdf')])->assertStatus(422);
-        $this->postJson('/rekomendasi-jf/pratinjau', ['file' => UploadedFile::fake()->createWithContent('rusak.xlsx', 'bukan excel')])
+        $this->actingAs($admin)->postJson('/rekomendasi-jf/pratinjau', ['file' => UploadedFile::fake()->create('a.pdf', 10, 'application/pdf'), 'profil_id' => ImporProfil::value('id')])->assertStatus(422);
+        $this->postJson('/rekomendasi-jf/pratinjau', ['file' => UploadedFile::fake()->createWithContent('rusak.xlsx', 'bukan excel'), 'profil_id' => ImporProfil::value('id')])
             ->assertStatus(422)->assertJsonStructure(['message']);
         $this->assertSame([], Storage::disk('local')->files('rekomendasi-jf-tmp'));
     }
@@ -247,12 +211,12 @@ class RekomendasiJfTest extends TestCase
         // JF baru dengan dua jenjang, sumber baru, dan blok baru di profil impor
         $this->post('/jf-master/jenjang', ['kode' => 'ahli-a', 'nama' => 'Ahli A', 'rumpun' => 'keahlian', 'is_active' => true])->assertSessionHasNoErrors();
         $this->post('/jf-master/jenjang', ['kode' => 'ahli-b', 'nama' => 'Ahli B', 'rumpun' => 'keahlian', 'is_active' => true])->assertSessionHasNoErrors();
-        $this->post('/jf-master/jabatan-pokok', ['kode' => 'jf-baru', 'nama' => 'Jabatan Fungsional Baru', 'rumpun' => 'keahlian', 'is_active' => true])->assertSessionHasNoErrors();
+        $this->post('/jf-master/jabatan-pokok', ['pembina_id' => $this->pembinaBkn()->id, 'kode' => 'jf-baru', 'nama' => 'Jabatan Fungsional Baru', 'rumpun' => 'keahlian', 'is_active' => true])->assertSessionHasNoErrors();
         $jab = JfJabatanPokok::where('kode', 'jf-baru')->firstOrFail();
         $this->put("/jf-master/jabatan-pokok/{$jab->id}/jenjang", ['jenjang' => [
             ['jenjang_id' => JfJenjang::where('kode', 'ahli-a')->value('id'), 'urutan_kolom' => 1], ['jenjang_id' => JfJenjang::where('kode', 'ahli-b')->value('id'), 'urutan_kolom' => 2],
         ]])->assertSessionHas('success');
-        $this->post('/jf-master/sumber', ['kode' => 'rekom_x', 'nama' => 'Rekomendasi X', 'jenis' => 'kebutuhan', 'tingkat' => 'instansi', 'sifat' => 'foto', 'adapter' => 'fakta', 'is_active' => true])->assertSessionHasNoErrors();
+        $this->post('/jf-master/sumber', ['pembina_id' => $this->pembinaBkn()->id, 'kode' => 'rekom_x', 'nama' => 'Rekomendasi X', 'jenis' => 'kebutuhan', 'tingkat' => 'instansi', 'sifat' => 'foto', 'adapter' => 'fakta', 'is_active' => true])->assertSessionHasNoErrors();
 
         $profil = ImporProfil::firstOrFail();
         $pemetaan = $profil->pemetaan;
@@ -309,17 +273,17 @@ class RekomendasiJfTest extends TestCase
         $jenjang = JfJenjang::where('kode', 'pertama')->firstOrFail();
         $this->delete("/jf-master/jenjang/{$jenjang->id}")->assertSessionHas('error');
         // kode sumber yang sudah punya data tidak boleh diganti (memutus acuan profil impor)
-        $this->put("/jf-master/sumber/{$sumber->id}", ['kode' => 'rekom_baru', 'nama' => $sumber->nama, 'jenis' => 'kebutuhan', 'tingkat' => 'instansi', 'sifat' => 'foto', 'adapter' => 'fakta'])->assertSessionHasErrors('kode');
+        $this->put("/jf-master/sumber/{$sumber->id}", ['pembina_id' => $sumber->pembina_id, 'kode' => 'rekom_baru', 'nama' => $sumber->nama, 'jenis' => 'kebutuhan', 'tingkat' => 'instansi', 'sifat' => 'foto', 'adapter' => 'fakta'])->assertSessionHasErrors('kode');
         // jenjang yang sudah punya angka tidak boleh dilepas dari jabatannya
         $this->put("/jf-master/jabatan-pokok/{$analis->id}/jenjang", ['jenjang' => [['jenjang_id' => JfJenjang::where('kode', 'muda')->value('id'), 'urutan_kolom' => 2]]])->assertSessionHas('error');
 
         // yang belum dipakai boleh dihapus; kode unik dan format dijaga
-        $this->post('/jf-master/sumber', ['kode' => 'sementara', 'nama' => 'Sementara', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasNoErrors();
+        $this->post('/jf-master/sumber', ['pembina_id' => $this->pembinaBkn()->id, 'kode' => 'sementara', 'nama' => 'Sementara', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasNoErrors();
         $this->delete('/jf-master/sumber/'.SumberData::where('kode', 'sementara')->value('id'))->assertSessionHas('success');
-        $this->post('/jf-master/sumber', ['kode' => 'asal_gaib', 'nama' => 'X', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'abk'])->assertSessionHasErrors('adapter'); // asal yang belum berfungsi ditolak
-        $this->post('/jf-master/sumber', ['kode' => 'rekom_bkn', 'nama' => 'Ganda', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasErrors('kode');
-        $this->post('/jf-master/sumber', ['kode' => 'Kode Salah!', 'nama' => 'X', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasErrors('kode');
-        $this->post('/jf-master/jabatan-pokok', ['kode' => 'x', 'nama' => 'X', 'rumpun' => 'lain'])->assertSessionHasErrors('rumpun');
+        $this->post('/jf-master/sumber', ['pembina_id' => $this->pembinaBkn()->id, 'kode' => 'asal_gaib', 'nama' => 'X', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'abk'])->assertSessionHasErrors('adapter'); // asal yang belum berfungsi ditolak
+        $this->post('/jf-master/sumber', ['pembina_id' => $this->pembinaBkn()->id, 'kode' => 'rekom_bkn', 'nama' => 'Ganda', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasErrors('kode');
+        $this->post('/jf-master/sumber', ['pembina_id' => $this->pembinaBkn()->id, 'kode' => 'Kode Salah!', 'nama' => 'X', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasErrors('kode');
+        $this->post('/jf-master/jabatan-pokok', ['pembina_id' => $this->pembinaBkn()->id, 'kode' => 'x', 'nama' => 'X', 'rumpun' => 'lain'])->assertSessionHasErrors('rumpun');
     }
 
     public function test_urutan_kolom_jenjang_dapat_ditukar_dan_harus_unik(): void
@@ -347,7 +311,7 @@ class RekomendasiJfTest extends TestCase
         $this->get('/alias-instansi?belum_cocok=1')->assertOk()->assertInertia(fn ($p) => $p->where('ringkasan.belum_cocok', 1)->where('datas.data.0.nama', 'Nama Salah Ketik'));
 
         // petakan alias; pemetaan bertahan pada impor berikutnya (tidak ditimpa)
-        $this->put("/alias-instansi/{$alias->id}", ['nama' => 'Nama Salah Ketik', 'ref_instansi_id' => $ref->id, 'pokja' => 'POKJA 9'])->assertSessionHas('success');
+        $this->put("/alias-instansi/{$alias->id}", ['nama' => 'Nama Salah Ketik', 'ref_instansi_id' => $ref->id])->assertSessionHas('success');
         $svc->simpan($svc->baca($path), null, 'ulang.xlsx');
         $this->assertSame($ref->id, $alias->fresh()->ref_instansi_id);
         $this->assertSame($ref->id, $svc->baca($path)['baris'][0]['ref_instansi_id']);
@@ -367,7 +331,7 @@ class RekomendasiJfTest extends TestCase
     {
         $this->actingAs($this->user(Role::Admin));
         $dasar = ImporProfil::firstOrFail()->pemetaan;
-        $kirim = fn (array $pemetaan, string $kode = 'profil-baru') => $this->post('/impor-profil', ['kode' => $kode, 'nama' => 'Profil Baru', 'sheet' => 'Sheet1', 'is_active' => true, 'pemetaan' => $pemetaan]);
+        $kirim = fn (array $pemetaan, string $kode = 'profil-baru') => $this->post('/impor-profil', ['pembina_id' => $this->pembinaBkn()->id, 'kode' => $kode, 'nama' => 'Profil Baru', 'sheet' => 'Sheet1', 'is_active' => true, 'pemetaan' => $pemetaan]);
 
         $kirim($dasar)->assertSessionHasNoErrors();
         $this->assertSame(2, ImporProfil::count());

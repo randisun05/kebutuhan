@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
@@ -36,5 +37,10 @@ class JfJabatanPokok extends Model
     public function rekomendasis(): HasMany
     {
         return $this->hasMany(RekomendasiJf::class, 'jabatan_pokok_id');
+    }
+
+    public function pembina(): BelongsTo
+    {
+        return $this->belongsTo(InstansiPembina::class, 'pembina_id');
     }
 }

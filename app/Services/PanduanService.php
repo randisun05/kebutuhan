@@ -158,7 +158,8 @@ class PanduanService
     public function menuSidebar(): array
     {
         $src = File::get(resource_path('js/Components/Sidebar.vue'));
-        $semua = array_map(fn (Role $r) => $r->value, Role::cases());
+        // 'ALL' di Sidebar.vue = peran operasional umum; peran pembina hanya dengan daftar eksplisit
+        $semua = array_map(fn (Role $r) => $r->value, array_values(array_filter(Role::cases(), fn (Role $r) => $r !== Role::Pembina)));
         preg_match_all("/\{\s*label: '([^']+)', href: '([^']+)',[^}]*roles: (ALL|\[[^\]]*\])/", $src, $m, PREG_SET_ORDER);
 
         return array_map(fn ($x) => [

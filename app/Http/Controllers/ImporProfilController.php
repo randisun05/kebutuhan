@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ImporProfil;
+use App\Models\InstansiPembina;
 use App\Models\SumberData;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -17,41 +18,48 @@ class ImporProfilController extends Controller
 
     public function index()
     {
-        return inertia('ImporProfil/Index', ['datas' => ImporProfil::orderBy('nama')->get()]);
+        $user = request()->user();
+
+        return inertia('ImporProfil/Index', ['datas' => ImporProfil::with('pembina:id,nama')->when($user->isScopedToPembina(), fn ($q) => $q->where('pembina_id', $user->pembina_id))->orderBy('nama')->get()]);
     }
 
     public function create()
     {
-        return inertia('ImporProfil/Form', ['data' => null, 'sumberOptions' => $this->sumberOptions()]);
+        return inertia('ImporProfil/Form', ['data' => null] + $this->formProps());
     }
 
     public function edit(ImporProfil $profil)
     {
-        return inertia('ImporProfil/Form', ['data' => $profil, 'sumberOptions' => $this->sumberOptions()]);
+        $this->pastikanAkses($profil);
+
+        return inertia('ImporProfil/Form', ['data' => $profil] + $this->formProps());
     }
 
     public function store(Request $request)
     {
-        ImporProfil::create($this->valid($request));
+        $pembinaId = $this->pembinaUntukSimpan($request, null);
+        ImporProfil::create($this->valid($request, null, $pembinaId) + ['pembina_id' => $pembinaId]);
 
         return redirect()->route('impor-profil.index')->with('success', 'Profil impor ditambahkan.');
     }
 
     public function update(Request $request, ImporProfil $profil)
     {
-        $profil->update($this->valid($request, $profil));
+        $this->pastikanAkses($profil);
+        $profil->update($this->valid($request, $profil, $profil->pembina_id));
 
         return redirect()->route('impor-profil.index')->with('success', 'Profil impor diperbarui.');
     }
 
     public function destroy(ImporProfil $profil)
     {
+        $this->pastikanAkses($profil);
         $profil->delete();
 
         return back()->with('success', 'Profil impor dihapus. Catatan impor lama tetap tersimpan.');
     }
 
-    private function valid(Request $request, ?ImporProfil $profil = null): array
+    private function valid(Request $request, ?ImporProfil $profil, int $pembinaId): array
     {
         $huruf = ['required', 'regex:'.self::HURUF];
         $opsi = ['nullable', 'regex:'.self::HURUF];
@@ -73,7 +81,8 @@ class ImporProfilController extends Controller
             'pemetaan.surat.*.nomor' => $huruf,
             'pemetaan.surat.*.tanggal' => $opsi, 'pemetaan.surat.*.tautan' => $opsi, 'pemetaan.surat.*.ttd_jabatan' => $opsi, 'pemetaan.surat.*.ttd_nama' => $opsi,
             'pemetaan.blok' => 'required|array|min:1|max:12',
-            'pemetaan.blok.*.sumber' => ['required', Rule::exists('sumber_data', 'kode')->where('adapter', 'fakta')],
+            // sumber harus milik pembina profil ini (profil satu pembina tidak dapat memakai sumber pembina lain)
+            'pemetaan.blok.*.sumber' => ['required', Rule::exists('sumber_data', 'kode')->where('adapter', 'fakta')->where('pembina_id', $pembinaId)],
             'pemetaan.blok.*.kolom_awal' => $huruf,
             'pemetaan.blok.*.lebar' => 'nullable|integer|min:1|max:12',
             'pemetaan.blok.*.cadangan_kolom_awal' => $opsi,
@@ -87,8 +96,32 @@ class ImporProfilController extends Controller
         return $data;
     }
 
-    private function sumberOptions()
+    private function formProps(): array
     {
-        return SumberData::where('adapter', 'fakta')->where('is_active', true)->orderBy('urutan')->get(['kode', 'nama']);
+        $user = request()->user();
+        $pembinaOptions = InstansiPembina::where('is_active', true)->when($user->isScopedToPembina(), fn ($q) => $q->where('id', $user->pembina_id))->orderBy('nama')->get(['id', 'nama']);
+
+        return [
+            'pembinaOptions' => $pembinaOptions,
+            'sumberOptions' => SumberData::where('adapter', 'fakta')->where('is_active', true)->whereIn('pembina_id', $pembinaOptions->pluck('id'))
+                ->orderBy('urutan')->get(['pembina_id', 'kode', 'nama']),
+        ];
+    }
+
+    private function pastikanAkses(ImporProfil $profil): void
+    {
+        abort_unless(request()->user()->canAccessPembina($profil->pembina_id), 403, 'Profil impor ini bukan hak instansi pembina Anda.');
+    }
+
+    /** Pengguna pembina dipaksa ke pembinanya sendiri; administrator memilih lewat pembina_id. */
+    private function pembinaUntukSimpan(Request $request, ?int $pemilikLama): int
+    {
+        $user = $request->user();
+        if ($user->isPembina()) {
+            return (int) $user->pembina_id;
+        }
+        $request->validate(['pembina_id' => 'required|exists:instansi_pembina,id']);
+
+        return $request->integer('pembina_id');
     }
 }

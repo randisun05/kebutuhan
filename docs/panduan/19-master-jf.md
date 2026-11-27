@@ -3,15 +3,25 @@ judul: Master JF, sumber, alias instansi, dan profil impor
 ringkas: Mengelola jabatan pokok, jenjang, sumber angka, alias instansi, dan tata letak Excel sebagai data.
 bagian: Referensi
 urutan: 95
-peran: [admin]
+peran: [admin, pembina]
 menu: [/jf-master, /alias-instansi, /impor-profil]
 ---
 
 Modul [Rekomendasi JF MASN](/panduan/18-rekomendasi-jf) tidak menulis jabatan, jenjang, sumber angka, atau tata letak Excel di dalam kode. Semuanya **data** yang dikelola administrator lewat menu **Referensi**, sehingga JF baru, jenjang baru, sumber baru, atau perubahan susunan kolom Excel tidak memerlukan perubahan aplikasi.
 
+## Instansi pembina dan hak akses
+
+Setiap jabatan pokok, sumber angka, dan profil impor **dimiliki satu instansi pembina**. Administrator mengelola daftar pembina di tab **Instansi pembina** (kode, nama, status) dan membuat pengguna berperan **Operator Instansi Pembina** di menu Pengguna dengan memilih instansi pembinanya (wajib). Pengguna pembina hanya dapat:
+
+- melihat dan mengubah jabatan pokok, sumber angka, dan profil impor **milik pembinanya** (data pembina lain ditolak di server, walau alamatnya diketik langsung);
+- mengimpor Excel dengan profil milik pembinanya;
+- membuka modul rekomendasi, master, profil impor, panduan, dan akunnya. **Modul operasional lain tertutup** untuk peran ini.
+
+**Jenjang** (milik bersama), **Alias Instansi**, dan **Instansi pembina** hanya dapat dikelola administrator, karena memengaruhi semua pembina. Kode sumber boleh sama di pembina berbeda; profil impor hanya dapat memakai sumber milik pembinanya.
+
 ## Master JF & Sumber
 
-Menu **Master JF & Sumber** punya tiga tab.
+Menu **Master JF & Sumber** (pilih instansi pembina di atas halaman bila ada lebih dari satu) punya tab berikut.
 
 - **Jabatan pokok** — kode, nama, rumpun (keahlian atau keterampilan), urutan, dan status. Ikon **atur jenjang** menetapkan jenjang yang berlaku untuk jabatan itu beserta **posisi kolom** pada blok angka di Excel (1 = kolom pertama blok, dst.). Posisi harus unik per jabatan.
 - **Jenjang** — kode, nama, rumpun, urutan, dan status.

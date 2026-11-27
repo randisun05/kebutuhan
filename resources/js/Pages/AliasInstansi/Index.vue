@@ -21,16 +21,16 @@
 
     <div class="card">
         <div class="table-responsive"><table class="table table-hover mb-0">
-            <thead><tr><th>Nama di sumber</th><th>Referensi instansi BKN</th><th>Pokja</th><th>Wilayah kerja</th><th class="num">Dipakai</th><th>Asal</th><th></th></tr></thead>
+            <thead><tr><th>Nama di sumber</th><th>Referensi instansi BKN</th><th class="num">Dipakai</th><th>Asal</th><th></th></tr></thead>
             <tbody>
                 <tr v-for="a in datas.data" :key="a.id">
                     <td>{{ a.nama }}</td>
                     <td><span v-if="a.ref_instansi">{{ a.ref_instansi.nama }}</span><span v-else class="badge bg-warning text-dark">belum dipetakan</span></td>
-                    <td>{{ a.pokja || '-' }}</td><td class="small">{{ a.wilayah_kerja || '-' }}</td><td class="num">{{ a.rekomendasis_count }}</td><td class="small text-capitalize">{{ a.asal }}</td>
+                    <td class="num">{{ a.rekomendasis_count }}</td><td class="small text-capitalize">{{ a.asal }}</td>
                     <td class="text-nowrap"><button class="btn btn-sm btn-light" @click="buka(a)"><i class="fa fa-pencil"></i></button>
                         <button class="btn btn-sm btn-light text-danger" :disabled="a.rekomendasis_count > 0" :title="a.rekomendasis_count ? 'Sudah dipakai' : 'Hapus'" @click="destroy(`/alias-instansi/${a.id}`, 'Hapus alias ini?')"><i class="fa fa-trash"></i></button></td>
                 </tr>
-                <tr v-if="!datas.data.length"><td colspan="7" class="text-center text-muted py-4">Tidak ada alias.</td></tr>
+                <tr v-if="!datas.data.length"><td colspan="5" class="text-center text-muted py-4">Tidak ada alias.</td></tr>
             </tbody>
         </table></div>
         <div class="card-body pt-2"><Pagination :links="datas.links" /></div>
@@ -43,8 +43,6 @@
                 <input v-model="refNama" class="form-control" list="ref-opsi" placeholder="Ketik nama instansi..." :class="{ 'is-invalid': err.ref_instansi_id }">
                 <datalist id="ref-opsi"><option v-for="r in refOptions" :key="r.id" :value="r.nama"></option></datalist>
             </Field>
-            <Field class="col-md-4" label="Pokja (opsional)" :error="err.pokja"><input v-model="form.pokja" class="form-control"></Field>
-            <Field class="col-md-8" label="Wilayah kerja (opsional)" :error="err.wilayah_kerja"><input v-model="form.wilayah_kerja" class="form-control"></Field>
         </form>
         <template #footer><button class="btn btn-light" @click="dlg = null">Batal</button><button class="btn btn-primary" form="form-alias" :disabled="proses">Simpan</button></template>
     </Modal>
@@ -64,14 +62,14 @@ const f = reactive({ q: '', belum_cocok: false, ...props.filters });
 const go = () => router.get('/alias-instansi', Object.fromEntries(Object.entries(f).filter(([, v]) => v)), { preserveState: true, replace: true });
 
 const dlg = ref(null);
-const form = reactive({ nama: '', pokja: '', wilayah_kerja: '' });
+const form = reactive({ nama: '' });
 const refNama = ref('');
 const err = ref({});
 const proses = ref(false);
 const refId = computed(() => props.refOptions.find((r) => r.nama === refNama.value)?.id ?? null);
 
 const buka = (a = null) => {
-    Object.assign(form, { nama: a?.nama ?? '', pokja: a?.pokja ?? '', wilayah_kerja: a?.wilayah_kerja ?? '' });
+    Object.assign(form, { nama: a?.nama ?? '' });
     refNama.value = a?.ref_instansi?.nama ?? '';
     err.value = {};
     dlg.value = { id: a?.id ?? null };

@@ -18,6 +18,7 @@ Setiap pengguna memiliki satu peran. Peran menentukan menu yang terlihat dan tin
 - **Verifikator BKN** memverifikasi usulan dan memberi pertimbangan teknis.
 - **Validator KemenPANRB** memvalidasi dan menetapkan kebutuhan.
 - **Pimpinan** memantau (dashboard, monitoring, laporan) tanpa mengubah data.
+- **Operator Instansi Pembina** mengelola data **instansi pembinanya sendiri** (mis. BKN sebagai pembina JF SDM Aparatur): rekomendasi JF, master JF dan sumber angka, serta profil impor miliknya. Pengguna ini **tidak** dapat membuka modul operasional lain (monitoring, ABK, usulan, pegawai, dan seterusnya) dan tidak melihat data pembina lain. Banyak pengguna boleh berbagi satu instansi pembina.
 
 ## Akses menu per peran
 

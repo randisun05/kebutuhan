@@ -64,7 +64,8 @@ class RekomendasiJfImportService
             throw new \RuntimeException('Sheet "'.$profil->sheet.'" tidak ditemukan pada berkas.');
         }
 
-        $master = $this->muatMaster();
+        // jabatan dan sumber dibatasi pada instansi pembina pemilik profil: berkas satu pembina tidak dapat menulis data pembina lain
+        $master = $this->muatMaster($profil->pembina_id);
         $col = fn (?string $huruf): ?int => $huruf ? Coordinate::columnIndexFromString(strtoupper($huruf)) - 1 : null;
         $K = $p['kolom'] ?? [];
         $cInstansi = $col($K['instansi'] ?? null);
@@ -176,13 +177,13 @@ class RekomendasiJfImportService
             $peringatan[] = "{$rumusTanpaNilai} sel rumus tidak memiliki nilai tersimpan (berkas belum dihitung ulang di Excel) dan dianggap kosong. Buka dan simpan ulang berkas di Excel, lalu impor lagi.";
         }
 
-        return ['baris' => $baris, 'peringatan' => $peringatan, 'ringkas' => $this->ringkas($baris, $peringatan, $master), 'profil_id' => $profil->id];
+        return ['baris' => $baris, 'peringatan' => $peringatan, 'ringkas' => $this->ringkas($baris, $peringatan, $master), 'profil_id' => $profil->id, 'pembina_id' => $profil->pembina_id];
     }
 
     /** Simpan hasil baca ke database. Baris yang sudah ada diperbarui; angka disimpan berversi (riwayat tetap ada). */
     public function simpan(array $hasil, ?User $user, string $namaBerkas): RekomendasiJfImpor
     {
-        $sumberId = SumberData::pluck('id', 'kode');
+        $sumberId = SumberData::where('pembina_id', $hasil['pembina_id'])->pluck('id', 'kode');
         $jenjangId = JfJenjang::pluck('id', 'kode');
 
         return DB::transaction(function () use ($hasil, $user, $namaBerkas, $sumberId, $jenjangId) {
@@ -197,17 +198,16 @@ class RekomendasiJfImportService
                 if (! $alias->exists) {
                     $alias->fill(['nama' => $b['nama_instansi'], 'ref_instansi_id' => $b['ref_instansi_id'], 'asal' => 'impor']);
                 }
-                // atribut opsional diperbarui bila sumber mengisinya; pemetaan ke referensi (mungkin manual) tidak ditimpa
-                foreach (['jenis_instansi', 'pokja', 'wilayah_kerja'] as $f) {
-                    if ($b[$f] !== null) {
-                        $alias->{$f} = $b[$f];
-                    }
+                // jenis instansi diperbarui bila sumber mengisinya; pemetaan ke referensi (mungkin manual) tidak ditimpa.
+                // Pokja dan wilayah kerja milik pembina, jadi disimpan pada rekomendasi (bukan pada alias yang dipakai bersama).
+                if ($b['jenis_instansi'] !== null) {
+                    $alias->jenis_instansi = $b['jenis_instansi'];
                 }
                 $alias->save();
 
                 $rekom = RekomendasiJf::firstOrNew(['alias_id' => $alias->id, 'jabatan_pokok_id' => $b['jabatan_pokok_id']]);
                 $baru = ! $rekom->exists;
-                $rekom->fill(collect($b)->only(['status_rekom', 'jenis_rekom', 'status_menpan', 'ditetapkan_sesuai_bezetting', 'catatan'])->all() + ['impor_id' => $impor->id])->save();
+                $rekom->fill(collect($b)->only(['pokja', 'wilayah_kerja', 'status_rekom', 'jenis_rekom', 'status_menpan', 'ditetapkan_sesuai_bezetting', 'catatan'])->all() + ['impor_id' => $impor->id])->save();
                 $baru ? $dibuat++ : $diperbarui++;
 
                 foreach ($b['fakta'] as $f) {
@@ -241,16 +241,16 @@ class RekomendasiJfImportService
     }
 
     /** Master yang dipakai impor: jabatan (beserta jenjang per posisi kolom) dan sumber aktif. */
-    private function muatMaster(): array
+    private function muatMaster(int $pembinaId): array
     {
         $jabatan = [];
-        foreach (JfJabatanPokok::where('is_active', true)->with('jenjangs')->get() as $j) {
+        foreach (JfJabatanPokok::where('pembina_id', $pembinaId)->where('is_active', true)->with('jenjangs')->get() as $j) {
             $jabatan[mb_strtolower($j->nama)] = [
                 'id' => $j->id, 'nama' => $j->nama,
                 'jenjang_per_slot' => $j->jenjangs->where('is_active', true)->mapWithKeys(fn ($jj) => [(int) $jj->pivot->urutan_kolom => $jj->kode])->all(),
             ];
         }
-        $sumber = SumberData::where('is_active', true)->get()->mapWithKeys(fn ($s) => [$s->kode => ['kode' => $s->kode, 'nama' => $s->nama, 'adapter' => $s->adapter]])->all();
+        $sumber = SumberData::where('pembina_id', $pembinaId)->where('is_active', true)->get()->mapWithKeys(fn ($s) => [$s->kode => ['kode' => $s->kode, 'nama' => $s->nama, 'adapter' => $s->adapter]])->all();
 
         return ['jabatan' => $jabatan, 'sumber' => $sumber];
     }

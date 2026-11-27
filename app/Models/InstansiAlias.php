@@ -22,7 +22,7 @@ class InstansiAlias extends Model
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults()->logOnly(['nama', 'ref_instansi_id', 'pokja', 'wilayah_kerja'])->logOnlyDirty()->dontSubmitEmptyLogs()->useLogName('master');
+        return LogOptions::defaults()->logOnly(['nama', 'ref_instansi_id', 'jenis_instansi'])->logOnlyDirty()->dontSubmitEmptyLogs()->useLogName('master');
     }
 
     public static function normalisasi(?string $nama): string

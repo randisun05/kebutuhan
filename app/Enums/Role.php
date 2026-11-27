@@ -9,6 +9,7 @@ enum Role: string
     case ValidatorKemenpan = 'validator_kemenpan';
     case OperatorInstansi = 'operator_instansi';
     case Pimpinan = 'pimpinan';
+    case Pembina = 'pembina';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum Role: string
             self::ValidatorKemenpan => 'Validator KemenPANRB',
             self::OperatorInstansi => 'Operator Instansi',
             self::Pimpinan => 'Pimpinan (Monitoring)',
+            self::Pembina => 'Operator Instansi Pembina',
         };
     }
 

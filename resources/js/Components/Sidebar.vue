@@ -27,6 +27,7 @@
 <script>
 import { Link } from '@inertiajs/vue3';
 
+// ALL = peran operasional umum. Peran 'pembina' sengaja tidak termasuk: ia hanya melihat modul instansi pembina (ditulis eksplisit)
 const ALL = ['admin', 'verifikator_bkn', 'validator_kemenpan', 'operator_instansi', 'pimpinan'];
 
 export default {
@@ -59,20 +60,20 @@ export default {
                 ] },
                 { label: 'Hilir: Usulan s.d. Penetapan', items: [
                     { label: 'Usulan Kebutuhan', href: '/usulan', icon: 'fa-inbox', roles: ALL, badge: true },
-                    { label: 'Rekomendasi JF MASN', href: '/rekomendasi-jf', icon: 'fa-balance-scale', roles: ALL },
+                    { label: 'Rekomendasi JF MASN', href: '/rekomendasi-jf', icon: 'fa-balance-scale', roles: ['admin', 'verifikator_bkn', 'validator_kemenpan', 'operator_instansi', 'pimpinan', 'pembina'] },
                     { label: 'Penetapan Kebutuhan', href: '/penetapan', icon: 'fa-gavel', roles: ALL },
                     { label: 'Pengisian Formasi', href: '/formasi', icon: 'fa-user-plus', roles: ALL },
                 ] },
                 { label: 'Referensi', items: [
                     { label: 'Instansi', href: '/instansi', icon: 'fa-building', roles: ['admin'] },
                     { label: 'Jabatan', href: '/jabatan', icon: 'fa-briefcase', roles: ['admin'] },
-                    { label: 'Master JF & Sumber', href: '/jf-master', icon: 'fa-cubes', roles: ['admin'] },
+                    { label: 'Master JF & Sumber', href: '/jf-master', icon: 'fa-cubes', roles: ['admin', 'pembina'] },
                     { label: 'Alias Instansi', href: '/alias-instansi', icon: 'fa-random', roles: ['admin'] },
-                    { label: 'Profil Impor', href: '/impor-profil', icon: 'fa-columns', roles: ['admin'] },
+                    { label: 'Profil Impor', href: '/impor-profil', icon: 'fa-columns', roles: ['admin', 'pembina'] },
                     { label: 'Pengguna', href: '/users', icon: 'fa-user-secret', roles: ['admin'] },
                     { label: 'Log Audit', href: '/audit', icon: 'fa-shield', roles: ['admin'] },
                     { label: 'Pedoman & Regulasi', href: '/pedoman', icon: 'fa-book', roles: ALL },
-                    { label: 'Panduan Pengguna', href: '/panduan', icon: 'fa-life-ring', roles: ALL },
+                    { label: 'Panduan Pengguna', href: '/panduan', icon: 'fa-life-ring', roles: ['admin', 'verifikator_bkn', 'validator_kemenpan', 'operator_instansi', 'pimpinan', 'pembina'] },
                 ] },
             ],
         };

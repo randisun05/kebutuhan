@@ -3,7 +3,7 @@ judul: Rekomendasi JF MASN
 ringkas: Rekomendasi BKN dan penetapan KemenPANRB per instansi, jabatan, dan jenjang dari Excel rekap tim data.
 bagian: Hilir — usulan s.d. penetapan
 urutan: 32
-peran: [admin, operator_instansi, verifikator_bkn, validator_kemenpan, pimpinan]
+peran: [admin, operator_instansi, verifikator_bkn, validator_kemenpan, pimpinan, pembina]
 menu: [/rekomendasi-jf]
 ---
 
@@ -18,6 +18,17 @@ Angka dari beberapa sumber ditampilkan **berdampingan sebagai referensi**, tanpa
 | **Penetapan KemenPANRB** | Jumlah yang ditetapkan KemenPANRB. |
 
 **Lowongan** = bezetting − rekomendasi BKN (negatif berarti masih kurang) dan **selalu dihitung ulang** oleh aplikasi; kolom lowongan dan total di Excel tidak dipakai. Sel yang kosong berarti **tidak ada data**, bukan nol.
+
+## Instansi pembina
+
+Data dikelompokkan menurut **instansi pembina JF**. Saat ini yang tersedia adalah BKN sebagai pembina JF SDM Aparatur; pembina lain dapat ditambahkan administrator dengan metode yang sama (jabatan pokok, sumber angka, dan profil impor sendiri). Setiap pembina hanya melihat dan mengelola datanya sendiri:
+
+| Pengguna | Yang dapat dilihat dan dilakukan |
+| --- | --- |
+| **Operator Instansi Pembina** | Hanya data pembinanya; dapat mengimpor Excel dan mengelola jabatan, sumber, dan profil impor miliknya. Tidak dapat membuka modul lain. |
+| **Administrator** | Semua pembina; memilih pembina lewat pilihan *Instansi pembina*. |
+| **Operator instansi** | Rekomendasi untuk instansinya dari semua pembina (pilih pembina di atas tabel), hanya lihat. |
+| **Peran lain** | Semua pembina, hanya lihat. |
 
 ## Jabatan dan jenjang
 

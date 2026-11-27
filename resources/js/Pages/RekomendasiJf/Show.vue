@@ -3,7 +3,7 @@
     <Link href="/rekomendasi-jf" class="small"><i class="fa fa-angle-left"></i> Semua rekomendasi</Link>
     <div class="page-title">{{ data.alias.nama }}</div>
     <div class="page-subtitle">{{ data.jabatan_pokok.nama }} · {{ data.jabatan_pokok.rumpun }}
-        <span v-if="data.alias.pokja"> · {{ data.alias.pokja }}</span><span v-if="data.alias.wilayah_kerja"> · {{ data.alias.wilayah_kerja }}</span></div>
+        <span v-if="data.pokja"> · {{ data.pokja }}</span><span v-if="data.wilayah_kerja"> · {{ data.wilayah_kerja }}</span></div>
 
     <div class="d-flex flex-wrap gap-2 mb-3 small">
         <span class="badge" :class="data.status_rekom === 'DONE' ? 'bg-success' : 'bg-secondary'">Rekomendasi: {{ data.status_rekom || '-' }}</span>

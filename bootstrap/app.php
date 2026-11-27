@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\BatasiPembina;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureTwoFactorForRole;
 use App\Http\Middleware\EnsureUserIsActive;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             EnsureUserIsActive::class,
             EnsureTwoFactorForRole::class,
+            BatasiPembina::class,
         ]);
 
         $middleware->alias([

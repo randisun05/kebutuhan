@@ -43,4 +43,10 @@ class RekomendasiJf extends Model
     {
         return $this->hasMany(RekomendasiJfSurat::class)->orderBy('jenis')->orderBy('urutan');
     }
+
+    /** Hanya rekomendasi untuk JF milik pembina tertentu. */
+    public function scopeUntukPembina($query, ?int $pembinaId)
+    {
+        return $pembinaId === null ? $query : $query->whereHas('jabatanPokok', fn ($q) => $q->where('pembina_id', $pembinaId));
+    }
 }

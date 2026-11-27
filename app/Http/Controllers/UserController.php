@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Models\InstansiPembina;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,7 +13,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $datas = User::with('instansi:id,nama')
+        $datas = User::with('instansi:id,nama', 'pembina:id,nama')
             ->when(request('q'), fn ($q, $s) => $q->where(fn ($w) => $w->where('name', 'like', "%{$s}%")->orWhere('email', 'like', "%{$s}%")->orWhere('nip', 'like', "%{$s}%")))
             ->when(request('role'), fn ($q, $r) => $q->where('role', $r))
             ->orderBy('name')
@@ -75,19 +76,28 @@ class UserController extends Controller
             'data' => $user,
             'roleOptions' => Role::options(),
             'instansiOptions' => $this->instansiOptions(),
+            'pembinaOptions' => InstansiPembina::where('is_active', true)->orderBy('nama')->get(['id', 'nama']),
         ];
     }
 
     private function validated(Request $request, ?User $user = null): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
             'nip' => ['nullable', 'digits:18', Rule::unique('users')->ignore($user)],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user)],
             'password' => [$user ? 'nullable' : 'required', Password::min(8)],
             'role' => ['required', Rule::enum(Role::class)],
             'instansi_id' => ['nullable', 'required_if:role,operator_instansi', 'exists:instansis,id'],
+            'pembina_id' => ['nullable', 'required_if:role,pembina', 'exists:instansi_pembina,id'],
             'is_active' => 'boolean',
         ]);
+
+        // cakupan pembina hanya berlaku untuk peran pembina
+        if (($data['role'] ?? null) !== Role::Pembina->value) {
+            $data['pembina_id'] = null;
+        }
+
+        return $data;
     }
 }

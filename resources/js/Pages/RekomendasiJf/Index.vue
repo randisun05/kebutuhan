@@ -3,6 +3,12 @@
     <div class="page-title">Rekomendasi JF MASN</div>
     <div class="page-subtitle">Rekomendasi BKN dan penetapan KemenPANRB per instansi × jabatan pokok × jenjang, diimpor dari Excel rekap tim data. Angka bezetting di sini adalah <b>foto saat rekomendasi</b>, bukan kondisi sekarang.</div>
 
+    <div v-if="pembinaOptions.length > 1" class="mb-2 d-flex align-items-center gap-2">
+        <span class="small text-muted">Instansi pembina:</span>
+        <select v-model="f.pembina_id" class="form-select form-select-sm w-auto" @change="gantiPembina"><option v-for="p in pembinaOptions" :key="p.id" :value="p.id">{{ p.nama }}</option></select>
+    </div>
+    <div v-else-if="pembinaOptions.length === 1" class="mb-2 small text-muted">Instansi pembina: <b>{{ pembinaOptions[0].nama }}</b></div>
+
     <div class="row g-3 mb-3">
         <div class="col-6 col-lg"><StatCard label="Instansi" :value="ringkasan.instansi" icon="fa-building" color="#2a78d6" /></div>
         <div class="col-6 col-lg"><StatCard label="Baris (instansi × jabatan)" :value="ringkasan.baris" icon="fa-th-list" color="#6b7280" /></div>
@@ -64,11 +70,13 @@ import { escapeHtml } from '../../ai';
 import { num, waktu } from '../../utils';
 
 const props = defineProps({
-    datas: Object, sumber: Array, filters: Object, jabatanOptions: Array, statusOptions: Array, ringkasan: Object,
+    datas: Object, sumber: Array, pembinaOptions: { type: Array, default: () => [] }, pembinaId: Number, filters: Object, jabatanOptions: Array, statusOptions: Array, ringkasan: Object,
     profilOptions: { type: Array, default: () => [] }, imporTerakhir: Object, bolehImpor: Boolean, batasUnggahMb: Number,
 });
 
-const f = reactive({ q: '', jabatan_pokok_id: '', status_rekom: '', status_menpan: '', ...props.filters });
+const f = reactive({ q: '', jabatan_pokok_id: '', status_rekom: '', status_menpan: '', ...props.filters, pembina_id: props.pembinaId });
+// ganti pembina: filter lain tidak berlaku lagi (jabatan, status, dan sumbernya berbeda)
+const gantiPembina = () => router.get('/rekomendasi-jf', { pembina_id: f.pembina_id }, { replace: true });
 const go = () => router.get('/rekomendasi-jf', Object.fromEntries(Object.entries(f).filter(([, v]) => v)), { preserveState: true, replace: true });
 const nilai = (v) => (v === null || v === undefined ? '-' : num(v));
 // selisih antara dua sumber kebutuhan pertama (bila ada), mis. penetapan Menpan − rekomendasi BKN

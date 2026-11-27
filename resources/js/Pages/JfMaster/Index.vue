@@ -3,8 +3,14 @@
     <div class="page-title">Master JF & Sumber</div>
     <div class="page-subtitle">Jabatan pokok, jenjang, dan sumber angka kebutuhan dikelola sebagai data. Menambah JF, jenjang, atau sumber baru cukup lewat halaman ini, tanpa mengubah kode.</div>
 
+    <div v-if="pembinaOptions.length > 1" class="mb-3 d-flex align-items-center gap-2">
+        <span class="small text-muted">Instansi pembina:</span>
+        <select class="form-select form-select-sm w-auto" :value="pembinaId" @change="router.get('/jf-master', { pembina_id: $event.target.value })"><option v-for="p in pembinaOptions" :key="p.id" :value="p.id">{{ p.nama }}</option></select>
+    </div>
+    <div v-else-if="pembinaOptions.length === 1" class="mb-3 small text-muted">Instansi pembina: <b>{{ pembinaOptions[0].nama }}</b> — Anda hanya dapat mengelola data milik instansi ini.</div>
+
     <ul class="nav nav-tabs mb-3">
-        <li v-for="t in tabs" :key="t.key" class="nav-item"><a href="#" class="nav-link" :class="{ active: tab === t.key }" @click.prevent="tab = t.key">{{ t.label }}</a></li>
+        <li v-for="t in tabs.filter((x) => !x.admin || bolehAdmin)" :key="t.key" class="nav-item"><a href="#" class="nav-link" :class="{ active: tab === t.key }" @click.prevent="tab = t.key">{{ t.label }}</a></li>
     </ul>
 
     <!-- Jabatan pokok -->
@@ -30,14 +36,14 @@
 
     <!-- Jenjang -->
     <div v-show="tab === 'jenjang'" class="card">
-        <div class="card-header d-flex justify-content-between align-items-center"><span>Jenjang</span><button class="btn btn-sm btn-primary" @click="buka('jenjang')"><i class="fa fa-plus-circle me-1"></i> Tambah</button></div>
+        <div class="card-header d-flex justify-content-between align-items-center"><span>Jenjang <span v-if="!bolehAdmin" class="small text-muted ms-1">(milik bersama; penambahan jenjang oleh administrator)</span></span><button v-if="bolehAdmin" class="btn btn-sm btn-primary" @click="buka('jenjang')"><i class="fa fa-plus-circle me-1"></i> Tambah</button></div>
         <div class="table-responsive"><table class="table table-hover mb-0">
-            <thead><tr><th>Rumpun</th><th class="num">Urut</th><th>Kode</th><th>Nama</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Rumpun</th><th class="num">Urut</th><th>Kode</th><th>Nama</th><th>Status</th><th v-if="bolehAdmin"></th></tr></thead>
             <tbody>
                 <tr v-for="j in jenjang" :key="j.id">
                     <td class="text-capitalize">{{ j.rumpun }}</td><td class="num">{{ j.urutan }}</td><td class="small">{{ j.kode }}</td><td>{{ j.nama }}</td>
                     <td><span class="badge" :class="j.is_active ? 'bg-success' : 'bg-secondary'">{{ j.is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
-                    <td class="text-nowrap"><button class="btn btn-sm btn-light" @click="buka('jenjang', j)"><i class="fa fa-pencil"></i></button>
+                    <td v-if="bolehAdmin" class="text-nowrap"><button class="btn btn-sm btn-light" @click="buka('jenjang', j)"><i class="fa fa-pencil"></i></button>
                         <button class="btn btn-sm btn-light text-danger" :disabled="j.dipakai" :title="j.dipakai ? 'Masih dipakai' : 'Hapus'" @click="destroy(`/jf-master/jenjang/${j.id}`, 'Hapus jenjang ini?')"><i class="fa fa-trash"></i></button></td>
                 </tr>
             </tbody>
@@ -63,19 +69,37 @@
         <div class="card-body small text-muted">Sumber aktif mendapat kolomnya di daftar rekomendasi dan dapat dipakai pada profil impor. Saat ini semua sumber berasal dari impor Excel; asal lain (ABK, pegawai, API Dashboard) akan ditambahkan bersama halaman perbandingan.</div>
     </div>
 
+    <!-- Instansi pembina (administrator) -->
+    <div v-if="bolehAdmin" v-show="tab === 'pembina'" class="card">
+        <div class="card-header d-flex justify-content-between align-items-center"><span>Instansi pembina</span><button class="btn btn-sm btn-primary" @click="buka('pembina')"><i class="fa fa-plus-circle me-1"></i> Tambah</button></div>
+        <div class="table-responsive"><table class="table table-hover mb-0">
+            <thead><tr><th>Kode</th><th>Nama</th><th class="num">JF</th><th class="num">Sumber</th><th class="num">Profil impor</th><th class="num">Pengguna</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                <tr v-for="p in pembina" :key="p.id">
+                    <td class="small">{{ p.kode }}</td><td>{{ p.nama }}<div class="small text-muted">{{ p.keterangan }}</div></td>
+                    <td class="num">{{ p.jabatan_pokok_count }}</td><td class="num">{{ p.sumber_count }}</td><td class="num">{{ p.profil_count }}</td><td class="num">{{ p.users_count }}</td>
+                    <td><span class="badge" :class="p.is_active ? 'bg-success' : 'bg-secondary'">{{ p.is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
+                    <td class="text-nowrap"><button class="btn btn-sm btn-light" @click="buka('pembina', p)"><i class="fa fa-pencil"></i></button>
+                        <button class="btn btn-sm btn-light text-danger" @click="destroy(`/jf-master/pembina/${p.id}`, 'Hapus instansi pembina ini?')"><i class="fa fa-trash"></i></button></td>
+                </tr>
+            </tbody>
+        </table></div>
+        <div class="card-body small text-muted">Tiap instansi pembina memiliki jabatan pokok, sumber angka, dan profil impor sendiri. Penggunanya (peran <b>Operator Instansi Pembina</b>, dibuat di menu Pengguna) hanya dapat mengakses data instansi pembina itu. Pembina baru memakai metode yang sama.</div>
+    </div>
+
     <!-- Form tambah/ubah -->
     <Modal :show="!!dlg" :title="dlg ? (dlg.id ? 'Ubah ' : 'Tambah ') + dlg.nama : ''" @close="dlg = null">
         <form v-if="dlg" id="form-master" class="row g-2" @submit.prevent="simpan">
             <Field class="col-md-4" label="Kode" :error="err.kode" help="huruf kecil, angka, - atau _"><input v-model="f.kode" class="form-control" :class="{ 'is-invalid': err.kode }" :readonly="dlg.kunciKode"></Field>
             <Field class="col-md-8" label="Nama" :error="err.nama"><input v-model="f.nama" class="form-control" :class="{ 'is-invalid': err.nama }"></Field>
-            <Field v-if="dlg.tipe !== 'sumber'" class="col-md-6" label="Rumpun" :error="err.rumpun"><select v-model="f.rumpun" class="form-select"><option v-for="o in opsi.rumpun" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
+            <Field v-if="['jabatan', 'jenjang'].includes(dlg.tipe)" class="col-md-6" label="Rumpun" :error="err.rumpun"><select v-model="f.rumpun" class="form-select"><option v-for="o in opsi.rumpun" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
             <template v-if="dlg.tipe === 'sumber'">
                 <Field class="col-md-6" label="Jenis" :error="err.jenis"><select v-model="f.jenis" class="form-select"><option v-for="o in opsi.jenis" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
                 <Field class="col-md-6" label="Tingkat rinci" :error="err.tingkat"><select v-model="f.tingkat" class="form-select"><option v-for="o in opsi.tingkat" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
                 <Field class="col-md-6" label="Sifat" :error="err.sifat"><select v-model="f.sifat" class="form-select"><option v-for="o in opsi.sifat" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
                 <Field v-if="opsi.adapter.length > 1" class="col-md-12" label="Asal nilai" :error="err.adapter"><select v-model="f.adapter" class="form-select"><option v-for="o in opsi.adapter" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
             </template>
-            <Field class="col-md-6" label="Urutan tampil" :error="err.urutan"><input v-model="f.urutan" type="number" min="0" class="form-control"></Field>
+            <Field v-if="dlg.tipe !== 'pembina'" class="col-md-6" label="Urutan tampil" :error="err.urutan"><input v-model="f.urutan" type="number" min="0" class="form-control"></Field>
             <Field v-if="dlg.tipe !== 'jenjang'" class="col-12" label="Keterangan" :error="err.keterangan"><input v-model="f.keterangan" class="form-control"></Field>
             <div class="col-12 form-check form-switch ms-2"><input id="aktif-master" v-model="f.is_active" type="checkbox" class="form-check-input"><label for="aktif-master" class="form-check-label">Aktif</label></div>
         </form>
@@ -101,15 +125,16 @@ import Modal from '../../Components/Modal.vue';
 import Field from '../../Components/Field.vue';
 import { destroy } from '../../confirm';
 
-const props = defineProps({ jabatan: Array, jenjang: Array, sumber: Array, opsi: Object });
+const props = defineProps({ pembinaOptions: Array, pembinaId: Number, bolehAdmin: Boolean, pembina: { type: Array, default: () => [] }, jabatan: Array, jenjang: Array, sumber: Array, opsi: Object });
 
-const tabs = [{ key: 'jabatan', label: 'Jabatan pokok' }, { key: 'jenjang', label: 'Jenjang' }, { key: 'sumber', label: 'Sumber angka' }];
+const tabs = [{ key: 'jabatan', label: 'Jabatan pokok' }, { key: 'jenjang', label: 'Jenjang' }, { key: 'sumber', label: 'Sumber angka' }, { key: 'pembina', label: 'Instansi pembina', admin: true }];
 const tab = ref('jabatan');
 const label = (grup, v) => props.opsi[grup].find((o) => o.value === v)?.label || v;
 
 const KONFIG = {
     jabatan: { nama: 'jabatan pokok', url: '/jf-master/jabatan-pokok', awal: () => ({ kode: '', nama: '', rumpun: 'keahlian', urutan: 0, keterangan: '', is_active: true }) },
     jenjang: { nama: 'jenjang', url: '/jf-master/jenjang', awal: () => ({ kode: '', nama: '', rumpun: 'keahlian', urutan: 0, is_active: true }) },
+    pembina: { nama: 'instansi pembina', url: '/jf-master/pembina', awal: () => ({ kode: '', nama: '', keterangan: '', is_active: true }) },
     sumber: { nama: 'sumber angka', url: '/jf-master/sumber', awal: () => ({ kode: '', nama: '', jenis: 'kebutuhan', tingkat: 'instansi', sifat: 'foto', adapter: 'fakta', urutan: 0, keterangan: '', is_active: true }) },
 };
 
@@ -135,7 +160,9 @@ const kirim = (aksi, url, data, selesai) => {
 
 const simpan = () => {
     const d = dlg.value;
-    kirim(d.id ? 'put' : 'post', d.id ? `${d.url}/${d.id}` : d.url, { ...f }, () => (dlg.value = null));
+    // jabatan dan sumber baru dimiliki pembina yang sedang dipilih (pengguna pembina dipaksa ke pembinanya oleh server)
+    const milik = ['jabatan', 'sumber'].includes(d.tipe) ? { pembina_id: props.pembinaId } : {};
+    kirim(d.id ? 'put' : 'post', d.id ? `${d.url}/${d.id}` : d.url, { ...f, ...milik }, () => (dlg.value = null));
 };
 
 const dj = ref(null);

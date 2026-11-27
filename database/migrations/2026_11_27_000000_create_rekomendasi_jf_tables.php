@@ -15,8 +15,20 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Instansi pembina JF (mis. BKN untuk JF SDM Aparatur). Setiap pembina memiliki JF, sumber angka, dan profil impor
+        // sendiri, dan penggunanya hanya dapat mengakses data haknya. Pembina baru = baris baru dengan metode yang sama.
+        Schema::create('instansi_pembina', function (Blueprint $table) {
+            $table->id();
+            $table->string('kode', 32)->unique();
+            $table->string('nama')->unique();
+            $table->boolean('is_active')->default(true);
+            $table->string('keterangan')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('jf_jabatan_pokok', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('pembina_id')->constrained('instansi_pembina')->restrictOnDelete();
             $table->string('kode', 32)->unique();
             $table->string('nama')->unique();
             $table->string('rumpun', 16);            // keahlian | keterampilan
@@ -51,7 +63,8 @@ return new class extends Migration
         // Daftar sumber angka. Sumber baru = baris baru, bukan migrasi.
         Schema::create('sumber_data', function (Blueprint $table) {
             $table->id();
-            $table->string('kode', 32)->unique();
+            $table->foreignId('pembina_id')->constrained('instansi_pembina')->restrictOnDelete();
+            $table->string('kode', 32);
             $table->string('nama');
             $table->string('jenis', 12);              // kebutuhan | bezetting
             $table->string('tingkat', 8);             // instansi | unit
@@ -61,6 +74,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->string('keterangan')->nullable();
             $table->timestamps();
+
+            $table->unique(['pembina_id', 'kode']);
         });
 
         // Nama instansi sebagaimana tertulis di sumber, dipetakan ke referensi instansi BKN.
@@ -70,8 +85,6 @@ return new class extends Migration
             $table->string('nama');
             $table->foreignId('ref_instansi_id')->nullable()->constrained('ref_instansi_bkn')->nullOnDelete();
             $table->string('jenis_instansi', 16)->nullable();
-            $table->string('pokja', 16)->nullable();       // opsional
-            $table->string('wilayah_kerja')->nullable();   // opsional
             $table->string('asal', 8)->default('impor');   // impor | manual
             $table->timestamps();
         });
@@ -79,6 +92,7 @@ return new class extends Migration
         // Tata letak berkas Excel sumber (sheet, kolom, blok angka) sebagai data yang dapat diubah.
         Schema::create('impor_profil', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('pembina_id')->constrained('instansi_pembina')->restrictOnDelete();
             $table->string('kode', 32)->unique();
             $table->string('nama');
             $table->string('sheet');
@@ -105,6 +119,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('alias_id')->constrained('instansi_alias')->cascadeOnDelete();
             $table->foreignId('jabatan_pokok_id')->constrained('jf_jabatan_pokok')->restrictOnDelete();
+            $table->string('pokja', 16)->nullable();         // opsional; pengelompokan internal pembina
+            $table->string('wilayah_kerja')->nullable();     // opsional
             $table->string('status_rekom', 40)->nullable();
             $table->string('jenis_rekom', 24)->nullable();
             $table->string('status_menpan', 24)->nullable();
@@ -152,10 +168,13 @@ return new class extends Migration
     private function isiBawaan(): void
     {
         $now = now();
+        $pembinaId = DB::table('instansi_pembina')->insertGetId([
+            'kode' => 'bkn', 'nama' => 'Badan Kepegawaian Negara', 'is_active' => true, 'keterangan' => 'Pembina JF SDM Aparatur', 'created_at' => $now, 'updated_at' => $now,
+        ]);
         $jab = [['analis', 'Analis SDM Aparatur', 'keahlian', 1], ['pranata', 'Pranata SDM Aparatur', 'keterampilan', 2],
             ['asesor', 'Asesor SDM Aparatur', 'keahlian', 3], ['auditor', 'Auditor Manajemen ASN', 'keahlian', 4]];
         foreach ($jab as [$kode, $nama, $rumpun, $urutan]) {
-            DB::table('jf_jabatan_pokok')->insert(compact('kode', 'nama', 'rumpun', 'urutan') + ['is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
+            DB::table('jf_jabatan_pokok')->insert(compact('kode', 'nama', 'rumpun', 'urutan') + ['pembina_id' => $pembinaId, 'is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
         }
 
         $jenjang = [['pertama', 'Pertama', 'keahlian', 1], ['muda', 'Muda', 'keahlian', 2], ['madya', 'Madya', 'keahlian', 3], ['utama', 'Utama', 'keahlian', 4],
@@ -181,12 +200,12 @@ return new class extends Migration
             ['penetapan_menpan', 'Penetapan KemenPANRB', 'kebutuhan', 'instansi', 'foto', 'fakta', 3, null],
         ];
         foreach ($sumber as [$kode, $nama, $jenis, $tingkat, $sifat, $adapter, $urutan, $ket]) {
-            DB::table('sumber_data')->insert(compact('kode', 'nama', 'jenis', 'tingkat', 'sifat', 'adapter', 'urutan') + ['is_active' => true, 'keterangan' => $ket, 'created_at' => $now, 'updated_at' => $now]);
+            DB::table('sumber_data')->insert(compact('kode', 'nama', 'jenis', 'tingkat', 'sifat', 'adapter', 'urutan') + ['pembina_id' => $pembinaId, 'is_active' => true, 'keterangan' => $ket, 'created_at' => $now, 'updated_at' => $now]);
         }
 
         // Profil impor bawaan = tata letak sheet "Input Data (Instansi Baru)" pada Excel rekap tim data.
         DB::table('impor_profil')->insert([
-            'kode' => 'rekap-jfmasn', 'nama' => 'Rekap Kebutuhan JFMASN (tim data)', 'sheet' => 'Input Data (Instansi Baru)', 'is_active' => true,
+            'pembina_id' => $pembinaId, 'kode' => 'rekap-jfmasn', 'nama' => 'Rekap Kebutuhan JFMASN (tim data)', 'sheet' => 'Input Data (Instansi Baru)', 'is_active' => true,
             'pemetaan' => json_encode([
                 'kolom' => ['instansi' => 'D', 'jabatan' => 'E', 'jenis_instansi' => 'F', 'pokja' => 'G', 'status_rekom' => 'H', 'jenis_rekom' => 'O',
                     'wilayah_kerja' => 'AX', 'sesuai_bezetting' => 'AF', 'catatan' => ['AG', 'AY']],
@@ -207,7 +226,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        foreach (['rekomendasi_jf_surat', 'kebutuhan_fakta', 'rekomendasi_jf', 'rekomendasi_jf_impor', 'impor_profil', 'instansi_alias', 'sumber_data', 'jf_jabatan_jenjang', 'jf_jenjang', 'jf_jabatan_pokok'] as $t) {
+        foreach (['rekomendasi_jf_surat', 'kebutuhan_fakta', 'rekomendasi_jf', 'rekomendasi_jf_impor', 'impor_profil', 'instansi_alias', 'sumber_data', 'jf_jabatan_jenjang', 'jf_jenjang', 'jf_jabatan_pokok', 'instansi_pembina'] as $t) {
             Schema::dropIfExists($t);
         }
     }

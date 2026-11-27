@@ -37,6 +37,13 @@ class AccessTest extends TestCase
         foreach (Role::cases() as $role) {
             $user = $this->user($role, $role === Role::OperatorInstansi ? $instansi : null);
             $this->actingAs($user);
+            if ($role === Role::Pembina) {
+                // pengguna instansi pembina hanya memakai modul pembina; modul operasional ditolak (lihat PembinaJfTest)
+                $this->get('/dashboard')->assertRedirect('/rekomendasi-jf');
+                $this->get('/usulan')->assertForbidden();
+
+                continue;
+            }
             $this->get('/dashboard')->assertOk();
             $this->get('/usulan')->assertOk();
             $this->get('/anjab')->assertOk();

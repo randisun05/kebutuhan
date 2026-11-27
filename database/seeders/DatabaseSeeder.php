@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Enums\UsulanStatus;
 use App\Models\AnjabAbk;
 use App\Models\Instansi;
+use App\Models\InstansiPembina;
 use App\Models\Jabatan;
 use App\Models\KebutuhanSementara;
 use App\Models\Pegawai;
@@ -42,6 +43,8 @@ class DatabaseSeeder extends Seeder
         $bkn = User::create(['name' => 'Verifikator BKN', 'email' => 'bkn@simonkeb.test', 'password' => 'password', 'role' => Role::VerifikatorBkn]);
         $kemenpan = User::create(['name' => 'Validator KemenPANRB', 'email' => 'kemenpan@simonkeb.test', 'password' => 'password', 'role' => Role::ValidatorKemenpan]);
         User::create(['name' => 'Pimpinan', 'email' => 'pimpinan@simonkeb.test', 'password' => 'password', 'role' => Role::Pimpinan]);
+        // pengguna instansi pembina (BKN, pembina JF SDM Aparatur): hanya mengakses modul rekomendasi JF miliknya
+        User::create(['name' => 'Pembina BKN', 'email' => 'pembina@simonkeb.test', 'password' => 'password', 'role' => Role::Pembina, 'pembina_id' => InstansiPembina::where('kode', 'bkn')->value('id')]);
 
         $instansis = [
             ['kode' => 'KAB-SJT', 'nama' => 'Pemerintah Kabupaten Sejahtera', 'jenis' => 'kabupaten', 'provinsi' => 'Jawa Barat'],

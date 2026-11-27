@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ImporProfil;
 use App\Models\InstansiAlias;
+use App\Models\InstansiPembina;
 use App\Models\JfJabatanPokok;
 use App\Models\KebutuhanFakta;
 use App\Models\RekomendasiJf;
@@ -28,8 +29,11 @@ class RekomendasiJfController extends Controller
     public function index()
     {
         $user = request()->user();
-        $dasar = fn () => RekomendasiJf::query()->when($user->isScopedToInstansi(), fn (Builder $q) => $q->whereHas('alias.refInstansi', fn ($w) => $w->where('instansi_id', $user->instansi_id)));
-        $sumber = $this->sumberImpor();
+        $pembinaOptions = $this->pembinaDapatDiakses($user);
+        $pembinaId = $this->pembinaTerpilih($pembinaOptions);
+        $dasar = fn () => RekomendasiJf::query()->untukPembina($pembinaId)
+            ->when($user->isScopedToInstansi(), fn (Builder $q) => $q->whereHas('alias.refInstansi', fn ($w) => $w->where('instansi_id', $user->instansi_id)));
+        $sumber = $this->sumberImpor($pembinaId);
 
         $query = $dasar()->with('alias:id,nama,ref_instansi_id', 'jabatanPokok:id,nama');
         foreach ($sumber as $s) {
@@ -51,13 +55,16 @@ class RekomendasiJfController extends Controller
             ->paginate(25)->withQueryString();
 
         $admin = $user->isAdmin();
+        $bolehImpor = $admin || $user->isPembina();
 
         return inertia('RekomendasiJf/Index', [
             'datas' => $datas,
             'sumber' => $sumber->map(fn ($s) => ['kode' => $s->kode, 'nama' => $s->nama, 'jenis' => $s->jenis]),
-            'filters' => request()->only('q', 'jabatan_pokok_id', 'status_rekom', 'status_menpan', 'belum_cocok'),
-            'jabatanOptions' => JfJabatanPokok::where('is_active', true)->orderBy('urutan')->get(['id', 'nama']),
-            'statusOptions' => RekomendasiJf::query()->whereNotNull('status_rekom')->distinct()->orderBy('status_rekom')->pluck('status_rekom'),
+            'pembinaOptions' => $pembinaOptions->map(fn ($p) => ['id' => $p->id, 'nama' => $p->nama])->values(),
+            'pembinaId' => $pembinaId,
+            'filters' => request()->only('q', 'jabatan_pokok_id', 'status_rekom', 'status_menpan', 'belum_cocok', 'pembina_id'),
+            'jabatanOptions' => JfJabatanPokok::where('pembina_id', $pembinaId)->where('is_active', true)->orderBy('urutan')->get(['id', 'nama']),
+            'statusOptions' => RekomendasiJf::query()->untukPembina($pembinaId)->whereNotNull('status_rekom')->distinct()->orderBy('status_rekom')->pluck('status_rekom'),
             'ringkasan' => [
                 'baris' => $dasar()->count(),
                 'instansi' => $dasar()->distinct()->count('alias_id'),
@@ -65,10 +72,10 @@ class RekomendasiJfController extends Controller
                 'ditetapkan' => $dasar()->where('status_menpan', 'ditetapkan')->count(),
                 'alias_belum_cocok' => $admin ? InstansiAlias::whereNull('ref_instansi_id')->count() : 0,
             ],
-            'profilOptions' => $admin ? ImporProfil::where('is_active', true)->orderBy('nama')->get(['id', 'nama']) : [],
-            'imporTerakhir' => RekomendasiJfImpor::with('user:id,name')->latest('id')->first(),
-            'bolehImpor' => $admin,
-            'batasUnggahMb' => $admin ? $this->batasUnggahMb() : null,
+            'profilOptions' => $bolehImpor ? ImporProfil::where('pembina_id', $pembinaId)->where('is_active', true)->orderBy('nama')->get(['id', 'nama']) : [],
+            'imporTerakhir' => RekomendasiJfImpor::with('user:id,name')->whereHas('profil', fn ($q) => $q->where('pembina_id', $pembinaId))->latest('id')->first(),
+            'bolehImpor' => $bolehImpor,
+            'batasUnggahMb' => $bolehImpor ? $this->batasUnggahMb() : null,
         ]);
     }
 
@@ -76,11 +83,12 @@ class RekomendasiJfController extends Controller
     {
         $user = request()->user();
         $rekomendasi->load('alias.refInstansi:id,nama,instansi_id', 'jabatanPokok.jenjangs', 'surats');
+        abort_unless($user->canAccessPembina($rekomendasi->jabatanPokok->pembina_id), 403, 'Data ini bukan hak instansi pembina Anda.');
         if ($user->isScopedToInstansi()) {
             abort_unless($rekomendasi->alias->refInstansi?->instansi_id === $user->instansi_id, 403, 'Data ini bukan milik instansi Anda.');
         }
 
-        $sumber = $this->sumberImpor();
+        $sumber = $this->sumberImpor($rekomendasi->jabatanPokok->pembina_id);
         $terbaru = $rekomendasi->faktaTerbaru()->get()->groupBy('jenjang_id');
         $jenjang = $rekomendasi->jabatanPokok->jenjangs->where('is_active', true)->map(function ($j) use ($sumber, $terbaru) {
             $nilai = $terbaru->get($j->id, collect());
@@ -101,15 +109,17 @@ class RekomendasiJfController extends Controller
     /** Baca dan validasi berkas Excel tanpa menyimpan data; berkas ditahan sementara untuk konfirmasi. */
     public function pratinjau(Request $request, RekomendasiJfImportService $service)
     {
-        abort_unless($request->user()->isAdmin(), 403);
-        $request->validate(['file' => 'required|file|mimes:xlsx|max:30720', 'profil_id' => 'nullable|exists:impor_profil,id']);
+        $user = $request->user();
+        abort_unless($user->isAdmin() || $user->isPembina(), 403);
+        $request->validate(['file' => 'required|file|mimes:xlsx|max:30720', 'profil_id' => 'required|exists:impor_profil,id']);
+        $profil = $this->profilBolehDipakai($user, $request->integer('profil_id'));
         $this->bersihkanSementara();
 
         $token = Str::random(32);
         $path = $request->file('file')->storeAs(self::FOLDER, $token.'.xlsx', 'local');
 
         try {
-            $hasil = $service->baca(Storage::disk('local')->path($path), $request->filled('profil_id') ? ImporProfil::find($request->integer('profil_id')) : null);
+            $hasil = $service->baca(Storage::disk('local')->path($path), $profil);
         } catch (Throwable $e) {
             Storage::disk('local')->delete($path);
 
@@ -125,15 +135,17 @@ class RekomendasiJfController extends Controller
 
     public function impor(Request $request, RekomendasiJfImportService $service)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        $user = $request->user();
+        abort_unless($user->isAdmin() || $user->isPembina(), 403);
         $data = $request->validate([
-            'token' => ['required', 'regex:/^[A-Za-z0-9]{32}$/'], 'nama_berkas' => 'nullable|string|max:255', 'profil_id' => 'nullable|exists:impor_profil,id',
+            'token' => ['required', 'regex:/^[A-Za-z0-9]{32}$/'], 'nama_berkas' => 'nullable|string|max:255', 'profil_id' => 'required|exists:impor_profil,id',
         ]);
+        $profil = $this->profilBolehDipakai($user, (int) $data['profil_id']);
         $path = self::FOLDER.'/'.$data['token'].'.xlsx';
         abort_unless(Storage::disk('local')->exists($path), 422, 'Berkas pratinjau sudah kedaluwarsa. Unggah ulang.');
 
         try {
-            $hasil = $service->baca(Storage::disk('local')->path($path), isset($data['profil_id']) ? ImporProfil::find($data['profil_id']) : null);
+            $hasil = $service->baca(Storage::disk('local')->path($path), $profil);
             $impor = $service->simpan($hasil, $request->user(), $data['nama_berkas'] ?? 'rekap.xlsx');
         } finally {
             Storage::disk('local')->delete($path);
@@ -142,10 +154,32 @@ class RekomendasiJfController extends Controller
         return back()->with('success', "Impor rekomendasi JF MASN: {$impor->dibuat} baris dibuat, {$impor->diperbarui} diperbarui, {$impor->fakta_baru} angka baru/berubah, ".count($impor->peringatan ?? []).' peringatan.');
     }
 
-    /** Sumber angka aktif yang berasal dari impor (kolom dinamis di daftar). */
-    private function sumberImpor()
+    /** Sumber angka aktif milik satu pembina yang berasal dari impor (kolom dinamis di daftar). */
+    private function sumberImpor(?int $pembinaId)
     {
-        return SumberData::where('is_active', true)->where('adapter', 'fakta')->orderBy('urutan')->get();
+        return SumberData::where('pembina_id', $pembinaId)->where('is_active', true)->where('adapter', 'fakta')->orderBy('urutan')->get();
+    }
+
+    /** Instansi pembina yang boleh dilihat pengguna: pengguna pembina hanya pembinanya sendiri. */
+    private function pembinaDapatDiakses($user)
+    {
+        return InstansiPembina::where('is_active', true)->when($user->isScopedToPembina(), fn ($q) => $q->where('id', $user->pembina_id))->orderBy('nama')->get();
+    }
+
+    /** Pembina yang sedang dilihat: dari parameter bila boleh diakses, jika tidak yang pertama. */
+    private function pembinaTerpilih($opsi): ?int
+    {
+        $diminta = request()->integer('pembina_id');
+
+        return $opsi->contains('id', $diminta) ? $diminta : $opsi->first()?->id;
+    }
+
+    private function profilBolehDipakai($user, int $profilId): ImporProfil
+    {
+        $profil = ImporProfil::findOrFail($profilId);
+        abort_unless($user->canAccessPembina($profil->pembina_id), 403, 'Profil impor ini bukan hak instansi pembina Anda.');
+
+        return $profil;
     }
 
     /** Batas unggah efektif server (terkecil antara upload_max_filesize dan post_max_size), dalam MB. */

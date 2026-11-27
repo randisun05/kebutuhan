@@ -8,6 +8,9 @@
             <Field class="col-md-6" label="Email" :error="form.errors.email"><input v-model="form.email" type="email" class="form-control"></Field>
             <Field class="col-md-6" label="Password" :error="form.errors.password" :help="data ? 'Kosongkan jika tidak diubah' : 'Minimal 8 karakter'"><input v-model="form.password" type="password" class="form-control" autocomplete="new-password"></Field>
             <Field class="col-md-6" label="Peran" :error="form.errors.role"><select v-model="form.role" class="form-select"><option v-for="r in roleOptions" :key="r.value" :value="r.value">{{ r.label }}</option></select></Field>
+            <Field v-if="form.role === 'pembina'" class="col-md-6" label="Instansi pembina" :error="form.errors.pembina_id" help="Wajib untuk peran pembina; pengguna hanya mengakses data instansi pembina ini">
+                <select v-model="form.pembina_id" class="form-select"><option :value="null">-</option><option v-for="p in pembinaOptions" :key="p.id" :value="p.id">{{ p.nama }}</option></select>
+            </Field>
             <Field class="col-md-6" label="Instansi" :error="form.errors.instansi_id" help="Wajib untuk operator instansi">
                 <select v-model="form.instansi_id" class="form-select"><option :value="null">-</option><option v-for="i in instansiOptions" :key="i.id" :value="i.id">{{ i.nama }}</option></select>
             </Field>
@@ -21,11 +24,11 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import Field from '../../Components/Field.vue';
 
-const props = defineProps({ data: Object, roleOptions: Array, instansiOptions: Array });
+const props = defineProps({ data: Object, roleOptions: Array, instansiOptions: Array, pembinaOptions: { type: Array, default: () => [] } });
 const d = props.data || {};
 const form = useForm({
     name: d.name ?? '', nip: d.nip ?? '', email: d.email ?? '', password: '', role: d.role ?? 'operator_instansi',
-    instansi_id: d.instansi_id ?? null, is_active: d.is_active ?? true,
+    instansi_id: d.instansi_id ?? null, pembina_id: d.pembina_id ?? null, is_active: d.is_active ?? true,
 });
 const submit = () => (props.data ? form.put(`/users/${props.data.id}`) : form.post('/users'));
 </script>
