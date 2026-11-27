@@ -2,69 +2,136 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Rekomendasi/penetapan kebutuhan JF MASN dengan skema ternormalisasi dan dinamis:
+ * jabatan pokok, jenjang, dan sumber angka adalah DATA (dikelola lewat menu manajemen), bukan konstanta kode;
+ * instansi dikenali lewat alias nama sehingga ganti nama tidak memutus data; angka disimpan sebagai fakta
+ * berversi (riwayat tidak hilang); tata letak Excel disimpan sebagai profil impor yang dapat diubah.
+ */
 return new class extends Migration
 {
     public function up(): void
     {
-        // Catatan setiap impor Excel rekapitulasi kebutuhan JF MASN dari tim data.
+        Schema::create('jf_jabatan_pokok', function (Blueprint $table) {
+            $table->id();
+            $table->string('kode', 32)->unique();
+            $table->string('nama')->unique();
+            $table->string('rumpun', 16);            // keahlian | keterampilan
+            $table->unsignedSmallInteger('urutan')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->string('keterangan')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('jf_jenjang', function (Blueprint $table) {
+            $table->id();
+            $table->string('kode', 24)->unique();
+            $table->string('nama', 48);
+            $table->string('rumpun', 16);
+            $table->unsignedSmallInteger('urutan')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        // Jenjang yang berlaku untuk tiap jabatan pokok, beserta posisinya pada blok kolom Excel (1, 2, 3, ...).
+        Schema::create('jf_jabatan_jenjang', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('jabatan_pokok_id')->constrained('jf_jabatan_pokok')->cascadeOnDelete();
+            $table->foreignId('jenjang_id')->constrained('jf_jenjang')->restrictOnDelete();
+            $table->unsignedTinyInteger('urutan_kolom');
+            $table->timestamps();
+
+            $table->unique(['jabatan_pokok_id', 'jenjang_id']);
+            $table->unique(['jabatan_pokok_id', 'urutan_kolom']);
+        });
+
+        // Daftar sumber angka. Sumber baru = baris baru, bukan migrasi.
+        Schema::create('sumber_data', function (Blueprint $table) {
+            $table->id();
+            $table->string('kode', 32)->unique();
+            $table->string('nama');
+            $table->string('jenis', 12);              // kebutuhan | bezetting
+            $table->string('tingkat', 8);             // instansi | unit
+            $table->string('sifat', 8);               // foto (saat dokumen) | hidup (kondisi kini)
+            $table->string('adapter', 16)->default('fakta'); // fakta (tabel kebutuhan_fakta) | abk | pegawai | dashboard
+            $table->unsignedSmallInteger('urutan')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->string('keterangan')->nullable();
+            $table->timestamps();
+        });
+
+        // Nama instansi sebagaimana tertulis di sumber, dipetakan ke referensi instansi BKN.
+        Schema::create('instansi_alias', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama_normal', 191)->unique();
+            $table->string('nama');
+            $table->foreignId('ref_instansi_id')->nullable()->constrained('ref_instansi_bkn')->nullOnDelete();
+            $table->string('jenis_instansi', 16)->nullable();
+            $table->string('pokja', 16)->nullable();       // opsional
+            $table->string('wilayah_kerja')->nullable();   // opsional
+            $table->string('asal', 8)->default('impor');   // impor | manual
+            $table->timestamps();
+        });
+
+        // Tata letak berkas Excel sumber (sheet, kolom, blok angka) sebagai data yang dapat diubah.
+        Schema::create('impor_profil', function (Blueprint $table) {
+            $table->id();
+            $table->string('kode', 32)->unique();
+            $table->string('nama');
+            $table->string('sheet');
+            $table->json('pemetaan');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
         Schema::create('rekomendasi_jf_impor', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('impor_profil_id')->nullable()->constrained('impor_profil')->nullOnDelete();
             $table->string('nama_berkas');
             $table->unsignedInteger('jumlah_baris')->default(0);
             $table->unsignedInteger('dibuat')->default(0);
             $table->unsignedInteger('diperbarui')->default(0);
+            $table->unsignedInteger('fakta_baru')->default(0);
             $table->json('peringatan')->nullable();
             $table->timestamps();
         });
 
-        // Pemetaan manual nama instansi di Excel ke referensi instansi BKN (dipertahankan antar impor).
-        Schema::create('rekomendasi_jf_peta_instansi', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama_normal', 191)->unique();
-            $table->string('nama_excel');
-            $table->foreignId('ref_instansi_id')->nullable()->constrained('ref_instansi_bkn')->nullOnDelete();
-            $table->timestamps();
-        });
-
-        // Satu baris = instansi × jabatan pokok (Analis, Pranata, Asesor, Auditor).
+        // Satu baris = instansi (alias) × jabatan pokok: status dan catatan.
         Schema::create('rekomendasi_jf', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ref_instansi_id')->nullable()->constrained('ref_instansi_bkn')->nullOnDelete();
-            $table->string('nama_instansi');
-            $table->string('nama_instansi_normal', 191)->index();
-            $table->string('jabatan_pokok', 64);
-            $table->string('rumpun', 12); // keahlian | keterampilan
-            $table->string('jenis_instansi', 16)->nullable();
-            $table->string('pokja', 16)->nullable();          // opsional, untuk kepentingan sementara
-            $table->string('wilayah_kerja')->nullable();       // opsional
-            $table->string('status_rekom', 40)->nullable();    // DONE, Belum Usul, Dikembalikan, ...
-            $table->string('jenis_rekom', 24)->nullable();     // Rekom baru / Rekom tambahan
-            $table->string('status_menpan', 24)->nullable();   // ditetapkan bila ada penetapan Menpan
+            $table->foreignId('alias_id')->constrained('instansi_alias')->cascadeOnDelete();
+            $table->foreignId('jabatan_pokok_id')->constrained('jf_jabatan_pokok')->restrictOnDelete();
+            $table->string('status_rekom', 40)->nullable();
+            $table->string('jenis_rekom', 24)->nullable();
+            $table->string('status_menpan', 24)->nullable();
             $table->boolean('ditetapkan_sesuai_bezetting')->nullable();
             $table->text('catatan')->nullable();
             $table->foreignId('impor_id')->nullable()->constrained('rekomendasi_jf_impor')->nullOnDelete();
             $table->timestamps();
 
-            $table->unique(['nama_instansi_normal', 'jabatan_pokok']);
+            $table->unique(['alias_id', 'jabatan_pokok_id']);
         });
 
-        // Angka per jenjang. Lowongan tidak disimpan: dihitung ulang = bezetting − rekomendasi BKN.
-        Schema::create('rekomendasi_jf_jenjang', function (Blueprint $table) {
+        // Fakta angka berversi: tidak ditimpa. is_terbaru menandai nilai yang berlaku. unit_kerja_id kosong = tingkat instansi.
+        Schema::create('kebutuhan_fakta', function (Blueprint $table) {
             $table->id();
             $table->foreignId('rekomendasi_jf_id')->constrained('rekomendasi_jf')->cascadeOnDelete();
-            $table->string('jenjang', 12); // pertama|muda|madya|utama (keahlian) | terampil|mahir|penyelia (keterampilan)
-            $table->integer('bezetting_rekom')->nullable();   // bezetting saat rekomendasi (foto, bukan kondisi kini)
-            $table->integer('rekom_bkn')->nullable();         // kolom "Perhitungan formasi" = jumlah rekomendasi BKN
-            $table->integer('penetapan_menpan')->nullable();
+            $table->foreignId('jenjang_id')->constrained('jf_jenjang')->restrictOnDelete();
+            $table->foreignId('sumber_id')->constrained('sumber_data')->restrictOnDelete();
+            $table->foreignId('unit_kerja_id')->nullable()->constrained('unit_kerjas')->nullOnDelete();
+            $table->integer('nilai')->nullable();           // null = nilai dicabut pada impor berikutnya
+            $table->date('tanggal_data')->nullable();
+            $table->foreignId('impor_id')->nullable()->constrained('rekomendasi_jf_impor')->nullOnDelete();
+            $table->boolean('is_terbaru')->default(true);
             $table->timestamps();
 
-            $table->unique(['rekomendasi_jf_id', 'jenjang']);
+            $table->index(['rekomendasi_jf_id', 'sumber_id', 'jenjang_id', 'is_terbaru'], 'fakta_terbaru_idx');
         });
 
-        // Satu surat = satu baris (rekomendasi, rekomendasi tambahan, pengembalian, penetapan Menpan).
         Schema::create('rekomendasi_jf_surat', function (Blueprint $table) {
             $table->id();
             $table->foreignId('rekomendasi_jf_id')->constrained('rekomendasi_jf')->cascadeOnDelete();
@@ -77,14 +144,71 @@ return new class extends Migration
             $table->text('tautan')->nullable();
             $table->timestamps();
         });
+
+        $this->isiBawaan();
+    }
+
+    /** Master bawaan agar modul langsung dapat dipakai; seluruhnya dapat diubah lewat menu manajemen. */
+    private function isiBawaan(): void
+    {
+        $now = now();
+        $jab = [['analis', 'Analis SDM Aparatur', 'keahlian', 1], ['pranata', 'Pranata SDM Aparatur', 'keterampilan', 2],
+            ['asesor', 'Asesor SDM Aparatur', 'keahlian', 3], ['auditor', 'Auditor Manajemen ASN', 'keahlian', 4]];
+        foreach ($jab as [$kode, $nama, $rumpun, $urutan]) {
+            DB::table('jf_jabatan_pokok')->insert(compact('kode', 'nama', 'rumpun', 'urutan') + ['is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
+        }
+
+        $jenjang = [['pertama', 'Pertama', 'keahlian', 1], ['muda', 'Muda', 'keahlian', 2], ['madya', 'Madya', 'keahlian', 3], ['utama', 'Utama', 'keahlian', 4],
+            ['terampil', 'Terampil', 'keterampilan', 1], ['mahir', 'Mahir', 'keterampilan', 2], ['penyelia', 'Penyelia', 'keterampilan', 3]];
+        foreach ($jenjang as [$kode, $nama, $rumpun, $urutan]) {
+            DB::table('jf_jenjang')->insert(compact('kode', 'nama', 'rumpun', 'urutan') + ['is_active' => true, 'created_at' => $now, 'updated_at' => $now]);
+        }
+
+        // jenjang yang berlaku per jabatan (Pranata tanpa jenjang keempat)
+        $idJab = DB::table('jf_jabatan_pokok')->pluck('id', 'kode');
+        $idJen = DB::table('jf_jenjang')->pluck('id', 'kode');
+        $pasang = ['analis' => ['pertama', 'muda', 'madya', 'utama'], 'asesor' => ['pertama', 'muda', 'madya', 'utama'], 'auditor' => ['pertama', 'muda', 'madya', 'utama'],
+            'pranata' => ['terampil', 'mahir', 'penyelia']];
+        foreach ($pasang as $kodeJab => $daftar) {
+            foreach ($daftar as $i => $kodeJen) {
+                DB::table('jf_jabatan_jenjang')->insert(['jabatan_pokok_id' => $idJab[$kodeJab], 'jenjang_id' => $idJen[$kodeJen], 'urutan_kolom' => $i + 1, 'created_at' => $now, 'updated_at' => $now]);
+            }
+        }
+
+        $sumber = [
+            ['bezetting_rekom', 'Bezetting saat rekomendasi', 'bezetting', 'instansi', 'foto', 'fakta', 1, 'Jumlah pejabat pada saat rekomendasi disusun (foto, bukan kondisi kini).'],
+            ['rekom_bkn', 'Rekomendasi BKN', 'kebutuhan', 'instansi', 'foto', 'fakta', 2, 'Kolom "Perhitungan formasi" pada Excel rekap.'],
+            ['penetapan_menpan', 'Penetapan KemenPANRB', 'kebutuhan', 'instansi', 'foto', 'fakta', 3, null],
+        ];
+        foreach ($sumber as [$kode, $nama, $jenis, $tingkat, $sifat, $adapter, $urutan, $ket]) {
+            DB::table('sumber_data')->insert(compact('kode', 'nama', 'jenis', 'tingkat', 'sifat', 'adapter', 'urutan') + ['is_active' => true, 'keterangan' => $ket, 'created_at' => $now, 'updated_at' => $now]);
+        }
+
+        // Profil impor bawaan = tata letak sheet "Input Data (Instansi Baru)" pada Excel rekap tim data.
+        DB::table('impor_profil')->insert([
+            'kode' => 'rekap-jfmasn', 'nama' => 'Rekap Kebutuhan JFMASN (tim data)', 'sheet' => 'Input Data (Instansi Baru)', 'is_active' => true,
+            'pemetaan' => json_encode([
+                'kolom' => ['instansi' => 'D', 'jabatan' => 'E', 'jenis_instansi' => 'F', 'pokja' => 'G', 'status_rekom' => 'H', 'jenis_rekom' => 'O',
+                    'wilayah_kerja' => 'AX', 'sesuai_bezetting' => 'AF', 'catatan' => ['AG', 'AY']],
+                'surat' => [
+                    ['jenis' => 'rekomendasi', 'nomor' => 'J', 'tanggal' => 'K', 'tautan' => 'L'],
+                    ['jenis' => 'pengembalian', 'nomor' => 'M', 'tanggal' => 'N'],
+                    ['jenis' => 'penetapan_menpan', 'nomor' => 'AP', 'tanggal' => 'AQ', 'ttd_jabatan' => 'AR', 'ttd_nama' => 'AS'],
+                ],
+                'blok' => [
+                    ['sumber' => 'bezetting_rekom', 'kolom_awal' => 'R'],
+                    ['sumber' => 'rekom_bkn', 'kolom_awal' => 'W'],
+                    ['sumber' => 'penetapan_menpan', 'kolom_awal' => 'AL', 'cadangan_kolom_awal' => 'AH'],
+                ],
+            ]),
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('rekomendasi_jf_surat');
-        Schema::dropIfExists('rekomendasi_jf_jenjang');
-        Schema::dropIfExists('rekomendasi_jf');
-        Schema::dropIfExists('rekomendasi_jf_peta_instansi');
-        Schema::dropIfExists('rekomendasi_jf_impor');
+        foreach (['rekomendasi_jf_surat', 'kebutuhan_fakta', 'rekomendasi_jf', 'rekomendasi_jf_impor', 'impor_profil', 'instansi_alias', 'sumber_data', 'jf_jabatan_jenjang', 'jf_jenjang', 'jf_jabatan_pokok'] as $t) {
+            Schema::dropIfExists($t);
+        }
     }
 };

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\AkunController;
+use App\Http\Controllers\AliasInstansiController;
 use App\Http\Controllers\AnalitikController;
 use App\Http\Controllers\AnjabAbkController;
 use App\Http\Controllers\AuditController;
@@ -9,8 +10,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormasiController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HistoriController;
+use App\Http\Controllers\ImporProfilController;
 use App\Http\Controllers\InstansiController;
 use App\Http\Controllers\JabatanController;
+use App\Http\Controllers\JfMasterController;
 use App\Http\Controllers\KebutuhanSementaraController;
 use App\Http\Controllers\KualitasDataController;
 use App\Http\Controllers\LaporanController;
@@ -147,7 +150,26 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::post('/rekomendasi-jf/pratinjau', [RekomendasiJfController::class, 'pratinjau'])->name('rekomendasi-jf.pratinjau');
         Route::post('/rekomendasi-jf/impor', [RekomendasiJfController::class, 'impor'])->name('rekomendasi-jf.impor');
-        Route::post('/rekomendasi-jf/petakan-instansi', [RekomendasiJfController::class, 'petakanInstansi'])->name('rekomendasi-jf.petakan-instansi');
+
+        // Manajemen master JF, sumber angka, alias instansi, dan profil impor (data, bukan kode)
+        Route::get('/jf-master', [JfMasterController::class, 'index'])->name('jf-master.index');
+        Route::post('/jf-master/jabatan-pokok', [JfMasterController::class, 'simpanJabatan'])->name('jf-master.jabatan.store');
+        Route::put('/jf-master/jabatan-pokok/{jabatanPokok}', [JfMasterController::class, 'simpanJabatan'])->name('jf-master.jabatan.update');
+        Route::delete('/jf-master/jabatan-pokok/{jabatanPokok}', [JfMasterController::class, 'hapusJabatan'])->name('jf-master.jabatan.destroy');
+        Route::put('/jf-master/jabatan-pokok/{jabatanPokok}/jenjang', [JfMasterController::class, 'syncJenjang'])->name('jf-master.jabatan.jenjang');
+        Route::post('/jf-master/jenjang', [JfMasterController::class, 'simpanJenjang'])->name('jf-master.jenjang.store');
+        Route::put('/jf-master/jenjang/{jenjang}', [JfMasterController::class, 'simpanJenjang'])->name('jf-master.jenjang.update');
+        Route::delete('/jf-master/jenjang/{jenjang}', [JfMasterController::class, 'hapusJenjang'])->name('jf-master.jenjang.destroy');
+        Route::post('/jf-master/sumber', [JfMasterController::class, 'simpanSumber'])->name('jf-master.sumber.store');
+        Route::put('/jf-master/sumber/{sumber}', [JfMasterController::class, 'simpanSumber'])->name('jf-master.sumber.update');
+        Route::delete('/jf-master/sumber/{sumber}', [JfMasterController::class, 'hapusSumber'])->name('jf-master.sumber.destroy');
+
+        Route::get('/alias-instansi', [AliasInstansiController::class, 'index'])->name('alias-instansi.index');
+        Route::post('/alias-instansi', [AliasInstansiController::class, 'simpan'])->name('alias-instansi.store');
+        Route::put('/alias-instansi/{alias}', [AliasInstansiController::class, 'simpan'])->name('alias-instansi.update');
+        Route::delete('/alias-instansi/{alias}', [AliasInstansiController::class, 'hapus'])->name('alias-instansi.destroy');
+
+        Route::resource('impor-profil', ImporProfilController::class)->except('show')->parameters(['impor-profil' => 'profil']);
         Route::post('/kebutuhan-sementara/persetujuan', [KebutuhanSementaraController::class, 'persetujuan'])->name('kebutuhan-sementara.persetujuan');
         Route::resource('instansi', InstansiController::class)->except('show');
         Route::resource('jabatan', JabatanController::class)->except('show');

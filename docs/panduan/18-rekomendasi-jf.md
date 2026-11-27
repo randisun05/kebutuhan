@@ -9,36 +9,31 @@ menu: [/rekomendasi-jf]
 
 Menu **Rekomendasi JF MASN** menyimpan rekomendasi kebutuhan dari BKN dan penetapan dari KemenPANRB untuk jabatan fungsional manajemen ASN, dengan rincian **per instansi × jabatan pokok × jenjang**. Datanya berasal dari Excel rekap yang disusun tim data, bukan dari usulan di aplikasi ini.
 
-Tiga angka ditampilkan **berdampingan sebagai referensi**, tanpa satu pun dijadikan patokan:
+Angka dari beberapa sumber ditampilkan **berdampingan sebagai referensi**, tanpa satu pun dijadikan patokan dan tanpa saling membatasi. Kolomnya mengikuti **daftar sumber** di menu [Master JF & Sumber](/panduan/19-master-jf), sehingga sumber baru muncul sendiri. Bawaannya:
 
-| Angka | Arti |
+| Sumber | Arti |
 | --- | --- |
 | **Bezetting saat rekomendasi** | Jumlah pejabat pada saat rekomendasi disusun. Ini **foto**, bukan kondisi sekarang. |
-| **Rekom BKN** | Jumlah rekomendasi BKN (kolom *Perhitungan formasi* di Excel). |
-| **Penetapan Menpan** | Jumlah yang ditetapkan KemenPANRB. |
+| **Rekomendasi BKN** | Jumlah rekomendasi BKN (kolom *Perhitungan formasi* di Excel). |
+| **Penetapan KemenPANRB** | Jumlah yang ditetapkan KemenPANRB. |
 
-**Lowongan** = bezetting − rekomendasi BKN (negatif berarti masih kurang) dan **selalu dihitung ulang** oleh aplikasi; kolom lowongan dan total di Excel tidak dipakai.
+**Lowongan** = bezetting − rekomendasi BKN (negatif berarti masih kurang) dan **selalu dihitung ulang** oleh aplikasi; kolom lowongan dan total di Excel tidak dipakai. Sel yang kosong berarti **tidak ada data**, bukan nol.
 
 ## Jabatan dan jenjang
 
-| Jabatan pokok | Jenjang |
-| --- | --- |
-| Analis SDM Aparatur, Asesor SDM Aparatur, Auditor Manajemen ASN | Pertama, Muda, Madya, Utama |
-| Pranata SDM Aparatur | Terampil, Mahir, Penyelia |
-
-Kolom Excel *Pertama/Terampil, Muda/Mahir, Madya/Penyelia, Utama* dibaca sesuai jabatannya. Angka pada jenjang keempat Pranata diabaikan dan dilaporkan sebagai peringatan.
+Jabatan pokok dan jenjang yang berlaku adalah data yang dikelola administrator (bawaan: Analis, Asesor, dan Auditor dengan jenjang Pertama, Muda, Madya, Utama; Pranata dengan Terampil, Mahir, Penyelia). Blok empat kolom di Excel dibaca menurut **posisi kolom** tiap jenjang; angka pada posisi yang tidak punya jenjang (mis. kolom keempat Pranata) diabaikan dan dilaporkan sebagai peringatan.
 
 ## Melihat data
 
-Halaman utama menampilkan satu baris per instansi × jabatan beserta status rekomendasi (mis. *DONE*, *Belum Usul*), jumlah per sumber, dan **selisih Menpan − BKN**. Saring menurut nama instansi, jabatan, status rekomendasi, atau status penetapan. Klik **Rincian** untuk melihat angka per jenjang, daftar surat (nomor, tanggal, penandatangan, tautan), dan catatan. Pokja dan wilayah kerja, bila ada di Excel, tampil di rincian dan bersifat opsional.
+Halaman utama menampilkan satu baris per instansi × jabatan beserta status rekomendasi (mis. *DONE*, *Belum Usul*), angka tiap sumber, dan selisih antara dua sumber kebutuhan pertama (bawaan: Menpan − BKN). Saring menurut nama instansi, jabatan, status rekomendasi, atau status penetapan. Klik **Rincian** untuk melihat angka per jenjang, daftar surat (nomor, tanggal, penandatangan, tautan), catatan, dan **riwayat perubahan angka**: nilai lama yang digantikan impor berikutnya tetap tersimpan. Pokja dan wilayah kerja, bila ada di Excel, disimpan pada alias instansi dan bersifat opsional.
 
 Operator instansi hanya melihat instansinya sendiri (yang sudah dipetakan ke referensi instansi BKN); peran lain melihat seluruh instansi.
 
 ## Impor dari Excel (administrator)
 
-1. Klik **Pilih berkas .xlsx** dan pilih berkas rekap. Hanya sheet `Input Data (Instansi Baru)` yang dibaca; sheet turunan, pivot, dan sheet rusak diabaikan.
+1. Pilih **profil impor** bila ada lebih dari satu, lalu klik **Pilih berkas .xlsx**. Yang dibaca hanya sheet dan kolom yang ditentukan di [profil impor](/panduan/19-master-jf) (bawaan: sheet `Input Data (Instansi Baru)`); sheet turunan, pivot, dan sheet rusak diabaikan.
 2. Baca **pratinjau**: jumlah baris dan instansi, berapa yang **baru** dan **diperbarui**, jumlah surat, instansi yang belum cocok, serta peringatan data. **Belum ada yang tersimpan** pada tahap ini.
-3. Klik **Simpan impor**. Baris yang sudah ada (instansi × jabatan yang sama) **diperbarui**, bukan digandakan, sehingga berkas dapat diimpor ulang setiap kali tim data memperbaruinya. Impor tidak dapat dibatalkan; impor ulang dari berkas yang benar menggantikan isinya.
+3. Klik **Simpan impor**. Baris yang sudah ada (instansi × jabatan yang sama) **diperbarui**, bukan digandakan, sehingga berkas dapat diimpor ulang setiap kali tim data memperbaruinya. Angka disimpan **berversi**: hanya angka yang berubah mendapat versi baru, nilai lama tetap tercatat di riwayat, dan **sel yang dikosongkan tidak menghapus** nilai sebelumnya. Daftar surat diganti sesuai berkas terbaru.
 
 Yang ikut dirapikan saat impor:
 
@@ -48,7 +43,7 @@ Yang ikut dirapikan saat impor:
 
 ### Instansi yang belum cocok
 
-Nama instansi di Excel dicocokkan dengan **referensi instansi BKN** setelah dinormalkan (mis. *Kab.* dibaca *Kabupaten*). Yang belum cocok ditandai **belum cocok** dan tampil di kartu *Instansi di Excel yang belum cocok*. Administrator mengetik nama referensi yang benar lalu **Simpan**; pemetaan ini **dipertahankan** pada impor berikutnya.
+Nama instansi di Excel dicocokkan dengan **referensi instansi BKN** setelah dinormalkan (mis. *Kab.* dibaca *Kabupaten*). Yang belum cocok ditandai **belum dipetakan**; administrator memetakannya di menu **Alias Instansi** ([panduan](/panduan/19-master-jf)). Pemetaan itu **dipertahankan** pada impor berikutnya, dan instansi yang berganti nama cukup ditambah aliasnya.
 
 > Data ini per instansi. Rekomendasi BKN per unit kerja dan pembandingan dengan ABK serta bezetting terkini akan menyusul setelah sumber datanya dipetakan.
 

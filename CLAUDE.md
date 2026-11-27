@@ -29,4 +29,5 @@ Jangan menulis manual isi yang tersedia sebagai penanda dinamis (`{{ tabel_peran
 - Operator instansi harus selalu dibatasi ke instansinya (`Controller::scoped()` / `authorizeInstansi()`).
 - Query harus portabel SQLite & MySQL (hindari fungsi khusus satu DB, mis. `||` untuk string).
 - Fitur AI (Gemini) wajib lewat `App\Services\Ai\AsistenAi::riwayat()`: hasil disimpan di tabel `ai_riwayat` dan dipakai ulang; AI hanya dipanggil lagi bila pengguna meminta "Buat ulang" (`baru=1`). Jangan memanggil `GeminiClient` langsung dari controller, dan jangan membuat tabel riwayat AI baru.
+- Modul Rekomendasi JF MASN bersifat **dinamis**: jangan menulis jabatan pokok, jenjang, sumber angka, nama sheet, atau huruf kolom Excel di dalam kode. Semuanya data (`jf_jabatan_pokok`, `jf_jenjang`, `sumber_data`, `impor_profil`, `instansi_alias`) yang dikelola lewat menu Referensi; angka disimpan berversi di `kebutuhan_fakta`.
 - Jalankan `vendor/bin/pint` dan `php artisan test` sebelum push.

@@ -66,6 +66,9 @@ export default {
                 { label: 'Referensi', items: [
                     { label: 'Instansi', href: '/instansi', icon: 'fa-building', roles: ['admin'] },
                     { label: 'Jabatan', href: '/jabatan', icon: 'fa-briefcase', roles: ['admin'] },
+                    { label: 'Master JF & Sumber', href: '/jf-master', icon: 'fa-cubes', roles: ['admin'] },
+                    { label: 'Alias Instansi', href: '/alias-instansi', icon: 'fa-random', roles: ['admin'] },
+                    { label: 'Profil Impor', href: '/impor-profil', icon: 'fa-columns', roles: ['admin'] },
                     { label: 'Pengguna', href: '/users', icon: 'fa-user-secret', roles: ['admin'] },
                     { label: 'Log Audit', href: '/audit', icon: 'fa-shield', roles: ['admin'] },
                     { label: 'Pedoman & Regulasi', href: '/pedoman', icon: 'fa-book', roles: ALL },

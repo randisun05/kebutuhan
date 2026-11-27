@@ -1,28 +1,27 @@
 <template>
-    <Head :title="data.nama_instansi" />
+    <Head :title="data.alias.nama" />
     <Link href="/rekomendasi-jf" class="small"><i class="fa fa-angle-left"></i> Semua rekomendasi</Link>
-    <div class="page-title">{{ data.nama_instansi }}</div>
-    <div class="page-subtitle">{{ data.jabatan_pokok }} · {{ data.rumpun }}
-        <span v-if="data.pokja"> · {{ data.pokja }}</span><span v-if="data.wilayah_kerja"> · {{ data.wilayah_kerja }}</span></div>
+    <div class="page-title">{{ data.alias.nama }}</div>
+    <div class="page-subtitle">{{ data.jabatan_pokok.nama }} · {{ data.jabatan_pokok.rumpun }}
+        <span v-if="data.alias.pokja"> · {{ data.alias.pokja }}</span><span v-if="data.alias.wilayah_kerja"> · {{ data.alias.wilayah_kerja }}</span></div>
 
     <div class="d-flex flex-wrap gap-2 mb-3 small">
         <span class="badge" :class="data.status_rekom === 'DONE' ? 'bg-success' : 'bg-secondary'">Rekomendasi: {{ data.status_rekom || '-' }}</span>
         <span v-if="data.jenis_rekom" class="badge bg-info text-dark">{{ data.jenis_rekom }}</span>
         <span class="badge" :class="data.status_menpan ? 'bg-primary' : 'bg-secondary'">Menpan: {{ data.status_menpan || 'belum ditetapkan' }}</span>
-        <span v-if="!data.ref_instansi" class="badge bg-warning text-dark">belum cocok dengan referensi instansi BKN</span>
+        <span v-if="!data.alias.ref_instansi" class="badge bg-warning text-dark">alias belum dipetakan ke referensi instansi BKN</span>
     </div>
 
     <div class="card mb-3">
         <div class="card-header">Perbandingan per jenjang</div>
-        <div class="card-body py-2 small text-muted">Bezetting adalah foto saat rekomendasi. Lowongan = bezetting − rekomendasi BKN (negatif berarti masih kurang). Tiga angka ini dipakai sebagai referensi berdampingan.</div>
+        <div class="card-body py-2 small text-muted">Setiap sumber ditampilkan apa adanya dan tidak saling membatasi. Sel kosong berarti tidak ada data, bukan nol.<template v-if="lowonganAda"> Lowongan = bezetting − rekomendasi BKN (negatif berarti masih kurang).</template></div>
         <div class="table-responsive"><table class="table table-sm mb-0">
-            <thead><tr><th>Jenjang</th><th class="num">Bezetting saat rekom</th><th class="num">Rekom BKN</th><th class="num">Penetapan Menpan</th><th class="num">Lowongan</th><th class="num">Menpan − BKN</th></tr></thead>
+            <thead><tr><th>Jenjang</th><th v-for="x in sumber" :key="x.kode" class="num">{{ x.nama }}</th><th v-if="lowonganAda" class="num">Lowongan</th></tr></thead>
             <tbody>
-                <tr v-for="j in jenjang" :key="j.kode"><td class="text-capitalize">{{ j.kode }}</td>
-                    <td class="num">{{ n(j.bezetting_rekom) }}</td><td class="num">{{ n(j.rekom_bkn) }}</td><td class="num">{{ n(j.penetapan_menpan) }}</td>
-                    <td class="num" :class="j.lowongan < 0 ? 'text-kurang' : ''">{{ n(j.lowongan) }}</td>
-                    <td class="num" :class="j.selisih_menpan < 0 ? 'text-kurang' : j.selisih_menpan > 0 ? 'text-lebih' : ''">{{ n(j.selisih_menpan) }}</td></tr>
-                <tr class="fw-semibold"><td>Total</td><td class="num">{{ jumlah('bezetting_rekom') }}</td><td class="num">{{ jumlah('rekom_bkn') }}</td><td class="num">{{ jumlah('penetapan_menpan') }}</td><td class="num">{{ jumlah('lowongan') }}</td><td class="num">{{ jumlah('selisih_menpan') }}</td></tr>
+                <tr v-for="j in jenjang" :key="j.kode"><td>{{ j.nama }}</td>
+                    <td v-for="x in sumber" :key="x.kode" class="num">{{ n(j.nilai[x.kode]) }}</td>
+                    <td v-if="lowonganAda" class="num" :class="lowongan(j) < 0 ? 'text-kurang' : ''">{{ lowongan(j) === null ? '-' : n(lowongan(j)) }}</td></tr>
+                <tr class="fw-semibold"><td>Total</td><td v-for="x in sumber" :key="x.kode" class="num">{{ jumlah(x.kode) }}</td><td v-if="lowonganAda" class="num">{{ n(jenjang.reduce((a, j) => a + (lowongan(j) ?? 0), 0)) }}</td></tr>
             </tbody>
         </table></div>
     </div>
@@ -40,15 +39,26 @@
         </table></div>
     </div>
 
+    <div v-if="riwayat.length" class="card mb-3">
+        <div class="card-header">Riwayat perubahan angka <span class="badge bg-secondary ms-1">{{ riwayat.length }}</span></div>
+        <div class="card-body py-2 small text-muted">Nilai lama yang digantikan oleh impor berikutnya (versi terbaru ada di tabel di atas).</div>
+        <div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Sumber</th><th>Jenjang</th><th class="num">Nilai lama</th><th>Dicatat</th></tr></thead>
+            <tbody><tr v-for="(r, i) in riwayat" :key="i"><td>{{ r.sumber }}</td><td>{{ r.jenjang }}</td><td class="num">{{ n(r.nilai) }}</td><td class="small">{{ waktu(r.dicatat) }}</td></tr></tbody></table></div>
+    </div>
+
     <div v-if="data.catatan" class="alert alert-light border small" style="white-space: pre-line">{{ data.catatan }}</div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { num, tanggal } from '../../utils';
+import { num, tanggal, waktu } from '../../utils';
 
-const props = defineProps({ data: Object, jenjang: Array });
+const props = defineProps({ data: Object, sumber: Array, jenjang: Array, riwayat: Array });
 const label = { rekomendasi: 'Rekomendasi BKN', pengembalian: 'Pengembalian', penetapan_menpan: 'Penetapan KemenPANRB' };
 const n = (v) => (v === null || v === undefined ? '-' : num(v));
-const jumlah = (k) => num(props.jenjang.reduce((a, j) => a + (j[k] ?? 0), 0));
+const jumlah = (kode) => (props.jenjang.some((j) => j.nilai[kode] != null) ? num(props.jenjang.reduce((a, j) => a + (j.nilai[kode] ?? 0), 0)) : '-');
+// lowongan hanya bila kedua sumber (bezetting saat rekom dan rekomendasi BKN) tersedia
+const lowonganAda = computed(() => props.sumber.some((x) => x.kode === 'bezetting_rekom') && props.sumber.some((x) => x.kode === 'rekom_bkn'));
+const lowongan = (j) => (j.nilai.bezetting_rekom == null || j.nilai.rekom_bkn == null ? null : j.nilai.bezetting_rekom - j.nilai.rekom_bkn);
 </script>

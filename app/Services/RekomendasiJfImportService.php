@@ -2,10 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\ImporProfil;
+use App\Models\InstansiAlias;
+use App\Models\JfJabatanPokok;
+use App\Models\JfJenjang;
+use App\Models\KebutuhanFakta;
 use App\Models\RefInstansiBkn;
 use App\Models\RekomendasiJf;
 use App\Models\RekomendasiJfImpor;
-use App\Models\RekomendasiJfPetaInstansi;
+use App\Models\SumberData;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -16,128 +21,256 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Throwable;
 
 /**
- * Impor Excel rekap kebutuhan JF MASN dari tim data (sheet "Input Data (Instansi Baru)").
- * Hanya kolom isian yang dibaca; kolom rumus (bulan/tahun, total, status Menpan, selisih) diabaikan karena
- * dihitung ulang. Lowongan tidak disimpan: selalu bezetting − rekomendasi BKN.
+ * Impor Excel rekap kebutuhan JF MASN. Tata letak berkas (sheet, kolom, blok angka) dibaca dari profil impor,
+ * sedangkan jabatan pokok, jenjang, dan sumber angka dibaca dari master di database, sehingga perubahan tata letak
+ * atau penambahan JF/jenjang/sumber cukup dilakukan lewat menu manajemen. Angka disimpan sebagai fakta berversi.
+ * Lowongan tidak disimpan: selalu bezetting − rekomendasi.
  */
 class RekomendasiJfImportService
 {
-    public const SHEET = 'Input Data (Instansi Baru)';
-
-    /** Indeks kolom (0-based) pada sheet sumber. */
-    private const K = [
-        'instansi' => 3, 'jabatan' => 4, 'jenis_instansi' => 5, 'pokja' => 6, 'status_rekom' => 7,
-        'no_rekom' => 9, 'tgl_rekom' => 10, 'link_rekom' => 11, 'no_kembali' => 12, 'tgl_kembali' => 13, 'jenis_rekom' => 14,
-        'bezetting' => [17, 18, 19, 20], 'rekom_bkn' => [22, 23, 24, 25], 'lowongan' => [27, 28, 29, 30],
-        'sesuai_bezetting' => 31, 'catatan' => 32, 'menpan_blok1' => [33, 34, 35, 36], 'menpan_blok2' => [37, 38, 39, 40],
-        'no_menpan' => 41, 'tgl_menpan' => 42, 'ttd_jabatan' => 43, 'ttd_nama' => 44, 'wilayah' => 49, 'catatan2' => 50,
-    ];
-
     private const BULAN = [
         'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4, 'mei' => 5, 'juni' => 6, 'juli' => 7,
         'agustus' => 8, 'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
     ];
 
+    /** Lebar blok angka bawaan (jumlah kolom jenjang) bila profil tidak menyebutkan. */
+    private const LEBAR_BLOK = 4;
+
     /**
      * Baca dan validasi berkas tanpa menulis ke database.
      *
-     * @return array{baris: array, peringatan: array, ringkas: array}
+     * @return array{baris: array, peringatan: array, ringkas: array, profil_id: int}
      */
-    public function baca(string $path): array
+    public function baca(string $path, ?ImporProfil $profil = null): array
     {
+        $profil ??= ImporProfil::where('is_active', true)->orderBy('id')->first();
+        if (! $profil) {
+            throw new \RuntimeException('Belum ada profil impor aktif. Tambahkan di menu Profil Impor.');
+        }
+        $p = $profil->pemetaan;
+
         $reader = IOFactory::createReaderForFile($path);
-        // rumus tetap dimuat agar nilai tersimpan (cached) sel rumus bisa dibaca: banyak kolom isian di Excel
-        // sumber berisi VLOOKUP dari sheet lain, dan nilai tersimpannya adalah datanya.
-        $reader->setReadDataOnly(false);
-        $reader->setLoadSheetsOnly([self::SHEET]);
+        // Mode data saja (tanpa gaya sel) jauh lebih cepat (sekitar 3 dtk, bukan 40 dtk) dan tetap memuat nilai tersimpan
+        // sel rumus; diuji sama persis pada berkas sumber. Banyak kolom isian berisi VLOOKUP dari sheet lain,
+        // dan nilai tersimpannya adalah datanya (dibaca lewat getOldCalculatedValue).
+        $reader->setReadDataOnly(true);
+        $reader->setLoadSheetsOnly([$profil->sheet]);
         try {
-            $sheet = $reader->load($path)->getSheetByName(self::SHEET);
+            $sheet = $reader->load($path)->getSheetByName($profil->sheet);
         } catch (Throwable $e) {
-            throw new \RuntimeException('Berkas tidak dapat dibaca atau tidak memuat sheet "'.self::SHEET.'".', 0, $e);
+            throw new \RuntimeException('Berkas tidak dapat dibaca atau tidak memuat sheet "'.$profil->sheet.'".', 0, $e);
         }
         if (! $sheet) {
-            throw new \RuntimeException('Sheet "'.self::SHEET.'" tidak ditemukan pada berkas.');
+            throw new \RuntimeException('Sheet "'.$profil->sheet.'" tidak ditemukan pada berkas.');
+        }
+
+        $master = $this->muatMaster();
+        $col = fn (?string $huruf): ?int => $huruf ? Coordinate::columnIndexFromString(strtoupper($huruf)) - 1 : null;
+        $K = $p['kolom'] ?? [];
+        $cInstansi = $col($K['instansi'] ?? null);
+        $cJabatan = $col($K['jabatan'] ?? null);
+        if ($cInstansi === null || $cJabatan === null) {
+            throw new \RuntimeException('Profil impor harus menentukan kolom instansi dan jabatan.');
         }
 
         $peringatan = [];
         $baris = [];
         $kunciTerlihat = [];
+        $jabatanTakDikenal = [];
+        $blokTakDikenal = [];
+        $rumusTanpaNilai = 0;
         $cocok = $this->pencocok();
 
-        $rumusTanpaNilai = 0;
         foreach ($this->barisMentah($sheet, $rumusTanpaNilai) as $i => $r) {
-            $jabatan = trim((string) ($r[self::K['jabatan']] ?? ''));
-            $nama = trim((string) ($r[self::K['instansi']] ?? ''));
-            if ($nama === '' || ! isset(RekomendasiJf::JABATAN[$jabatan])) {
+            $nama = trim((string) ($r[$cInstansi] ?? ''));
+            $namaJabatan = trim((string) ($r[$cJabatan] ?? ''));
+            if ($nama === '' || $namaJabatan === '' || is_numeric($nama) || is_numeric($namaJabatan)
+                || in_array(mb_strtolower($nama), ['nama instansi', 'instansi'], true) || mb_strtolower($namaJabatan) === 'jabatan') {
                 continue; // baris judul, nomor kolom, atau kosong
             }
             $line = $i + 1;
-            $rumpun = RekomendasiJf::JABATAN[$jabatan];
-            $normal = RefInstansiBkn::normalisasiNama($nama);
-            if (isset($kunciTerlihat["{$normal}|{$jabatan}"])) {
-                $peringatan[] = "Baris {$line}: {$nama} / {$jabatan} muncul lagi (sebelumnya baris {$kunciTerlihat["{$normal}|{$jabatan}"]}); baris ini yang dipakai.";
+            $jab = $master['jabatan'][mb_strtolower($namaJabatan)] ?? null;
+            if (! $jab) {
+                $jabatanTakDikenal[$namaJabatan] = ($jabatanTakDikenal[$namaJabatan] ?? 0) + 1;
+
+                continue;
             }
-            $kunciTerlihat["{$normal}|{$jabatan}"] = $line;
 
-            $bez = $this->angkaSet($r, self::K['bezetting'], $line, 'bezetting', $peringatan);
-            $rek = $this->angkaSet($r, self::K['rekom_bkn'], $line, 'perhitungan formasi', $peringatan);
-            $men2 = $this->angkaSet($r, self::K['menpan_blok2'], $line, 'penetapan Menpan', $peringatan);
-            $men1 = $this->angkaSet($r, self::K['menpan_blok1'], $line, 'penetapan Menpan (blok 1)', $peringatan);
-            $men = array_filter($men2, fn ($v) => $v !== null) ? $men2 : $men1;
+            $normal = InstansiAlias::normalisasi($nama);
+            $kunci = $normal.'|'.$jab['id'];
+            if (isset($kunciTerlihat[$kunci])) {
+                $peringatan[] = "Baris {$line}: {$nama} / {$jab['nama']} muncul lagi (sebelumnya baris {$kunciTerlihat[$kunci]}); baris ini yang dipakai.";
+            }
+            $kunciTerlihat[$kunci] = $line;
 
-            // jenjang: Pranata hanya tiga jenjang
-            $jenjang = [];
-            foreach (RekomendasiJf::JENJANG[$rumpun] as $idx => $kode) {
-                $nilai = [$bez[$idx], $rek[$idx], $men[$idx]];
-                if ($kode === null) {
-                    if (array_sum(array_map(fn ($v) => $v ?? 0, $nilai)) > 0) {
-                        $peringatan[] = "Baris {$line}: {$nama} / {$jabatan} berisi angka pada jenjang keempat, padahal {$jabatan} hanya punya tiga jenjang (diabaikan).";
-                    }
+            // angka per blok sumber → fakta per jenjang
+            $fakta = [];
+            $nilaiBlok = [];
+            foreach ($p['blok'] ?? [] as $blok) {
+                $sumber = $master['sumber'][$blok['sumber'] ?? ''] ?? null;
+                if (! $sumber || $sumber['adapter'] !== 'fakta') {
+                    $blokTakDikenal[$blok['sumber'] ?? '(kosong)'] = true;
 
                     continue;
                 }
-                if (array_filter($nilai, fn ($v) => $v !== null)) {
-                    $jenjang[$kode] = ['bezetting_rekom' => $nilai[0], 'rekom_bkn' => $nilai[1], 'penetapan_menpan' => $nilai[2]];
+                $lebar = (int) ($blok['lebar'] ?? self::LEBAR_BLOK);
+                $angka = $this->angkaBlok($r, $col($blok['kolom_awal'] ?? null), $lebar, $line, $sumber['nama'], $peringatan);
+                if (! array_filter($angka, fn ($v) => $v !== null) && ! empty($blok['cadangan_kolom_awal'])) {
+                    $angka = $this->angkaBlok($r, $col($blok['cadangan_kolom_awal']), $lebar, $line, $sumber['nama'].' (cadangan)', $peringatan);
+                }
+                $nilaiBlok[$sumber['kode']] = $angka;
+                foreach ($angka as $slot => $nilai) {
+                    $jenjang = $jab['jenjang_per_slot'][$slot + 1] ?? null;
+                    if ($jenjang === null) {
+                        if (($nilai ?? 0) > 0) {
+                            $peringatan[] = "Baris {$line}: {$nama} / {$jab['nama']} berisi angka {$sumber['nama']} pada jenjang ke-".($slot + 1).", padahal {$jab['nama']} tidak punya jenjang itu (diabaikan).";
+                        }
+
+                        continue;
+                    }
+                    if ($nilai !== null) {
+                        $fakta[] = ['sumber' => $sumber['kode'], 'jenjang' => $jenjang, 'nilai' => $nilai];
+                    }
                 }
             }
 
-            // lowongan di Excel dibanding hitung ulang (informasi)
-            $lowExcel = $this->angkaSet($r, self::K['lowongan'], $line, 'lowongan', $peringatan, true);
-            foreach (RekomendasiJf::JENJANG[$rumpun] as $idx => $kode) {
-                if ($kode !== null && $bez[$idx] !== null && $rek[$idx] !== null && $lowExcel[$idx] !== null && $lowExcel[$idx] !== $bez[$idx] - $rek[$idx]) {
-                    $peringatan[] = "Baris {$line}: lowongan {$kode} di Excel ({$lowExcel[$idx]}) berbeda dari bezetting − rekomendasi ({$bez[$idx]} − {$rek[$idx]}); dihitung ulang.";
+            $surat = [];
+            foreach ($p['surat'] ?? [] as $def) {
+                $tambahan = [];
+                if (! empty($def['tautan'])) {
+                    $tambahan['tautan'] = $this->teks($r[$col($def['tautan'])] ?? null);
                 }
+                if (! empty($def['ttd_jabatan'])) {
+                    $tambahan['penandatangan_jabatan'] = $this->teks($r[$col($def['ttd_jabatan'])] ?? null);
+                }
+                if (! empty($def['ttd_nama'])) {
+                    $tambahan['penandatangan_nama'] = $this->teks($r[$col($def['ttd_nama'])] ?? null);
+                }
+                $surat = array_merge($surat, $this->surat((string) $def['jenis'], $r[$col($def['nomor'] ?? null)] ?? null,
+                    isset($def['tanggal']) ? ($r[$col($def['tanggal'])] ?? null) : null, $line, $peringatan, $tambahan));
             }
 
-            $surat = array_merge(
-                $this->surat('rekomendasi', $r[self::K['no_rekom']] ?? null, $r[self::K['tgl_rekom']] ?? null, $line, $peringatan, ['tautan' => $this->teks($r[self::K['link_rekom']] ?? null)]),
-                $this->surat('pengembalian', $r[self::K['no_kembali']] ?? null, $r[self::K['tgl_kembali']] ?? null, $line, $peringatan),
-                $this->surat('penetapan_menpan', $r[self::K['no_menpan']] ?? null, $r[self::K['tgl_menpan']] ?? null, $line, $peringatan, [
-                    'penandatangan_jabatan' => $this->teks($r[self::K['ttd_jabatan']] ?? null), 'penandatangan_nama' => $this->teks($r[self::K['ttd_nama']] ?? null),
-                ]),
-            );
-
-            $adaMenpan = array_filter(array_column($jenjang, 'penetapan_menpan'), fn ($v) => $v !== null && $v > 0) || collect($surat)->contains('jenis', 'penetapan_menpan');
-            $sesuai = $this->teks($r[self::K['sesuai_bezetting']] ?? null);
+            $adaMenpan = collect($fakta)->contains(fn ($f) => $f['sumber'] === 'penetapan_menpan' && ($f['nilai'] ?? 0) > 0) || collect($surat)->contains('jenis', 'penetapan_menpan');
+            $sesuai = $this->teks($r[$col($K['sesuai_bezetting'] ?? null)] ?? null);
+            $catatan = collect((array) ($K['catatan'] ?? []))->map(fn ($h) => $this->teks($r[$col($h)] ?? null))->filter()->implode("\n");
+            $v = fn (string $kunciKolom, int $maks = 255) => isset($K[$kunciKolom]) ? $this->teks($r[$col($K[$kunciKolom])] ?? null, $maks) : null;
 
             $baris[] = [
-                'nama_instansi' => $nama, 'nama_instansi_normal' => $normal, 'ref_instansi_id' => $cocok($nama, $normal),
-                'jabatan_pokok' => $jabatan, 'rumpun' => $rumpun,
-                'jenis_instansi' => $this->teks($r[self::K['jenis_instansi']] ?? null, 16), 'pokja' => $this->teks($r[self::K['pokja']] ?? null, 16),
-                'wilayah_kerja' => $this->teks($r[self::K['wilayah']] ?? null),
-                'status_rekom' => $this->teks($r[self::K['status_rekom']] ?? null, 40), 'jenis_rekom' => $this->teks($r[self::K['jenis_rekom']] ?? null, 24),
+                'nama_instansi' => $nama, 'nama_normal' => $normal, 'alias_id' => $cocok['alias'][$normal] ?? null, 'ref_instansi_id' => $cocok['ref']($normal),
+                'jabatan_pokok_id' => $jab['id'], 'jabatan_nama' => $jab['nama'],
+                'jenis_instansi' => $v('jenis_instansi', 16), 'pokja' => $v('pokja', 16), 'wilayah_kerja' => $v('wilayah_kerja'),
+                'status_rekom' => $v('status_rekom', 40), 'jenis_rekom' => $v('jenis_rekom', 24),
                 'status_menpan' => $adaMenpan ? 'ditetapkan' : null,
                 'ditetapkan_sesuai_bezetting' => $sesuai === null ? null : in_array(mb_strtolower($sesuai), ['ya', 'sesuai', 'true'], true),
-                'catatan' => trim(implode("\n", array_filter([$this->teks($r[self::K['catatan']] ?? null), $this->teks($r[self::K['catatan2']] ?? null)]))) ?: null,
-                'jenjang' => $jenjang, 'surat' => $surat,
+                'catatan' => $catatan ?: null, 'fakta' => $fakta, 'surat' => $surat,
             ];
         }
 
+        foreach ($jabatanTakDikenal as $nama => $n) {
+            $peringatan[] = "{$n} baris berjabatan \"{$nama}\" dilewati karena belum ada di master Jabatan Pokok JF.";
+        }
+        foreach (array_keys($blokTakDikenal) as $kode) {
+            $peringatan[] = "Blok angka untuk sumber \"{$kode}\" dilewati karena sumber itu tidak ada, nonaktif, atau bukan sumber impor (menu Sumber Data).";
+        }
         if ($rumusTanpaNilai > 0) {
             $peringatan[] = "{$rumusTanpaNilai} sel rumus tidak memiliki nilai tersimpan (berkas belum dihitung ulang di Excel) dan dianggap kosong. Buka dan simpan ulang berkas di Excel, lalu impor lagi.";
         }
 
-        return ['baris' => $baris, 'peringatan' => $peringatan, 'ringkas' => $this->ringkas($baris, $peringatan)];
+        return ['baris' => $baris, 'peringatan' => $peringatan, 'ringkas' => $this->ringkas($baris, $peringatan, $master), 'profil_id' => $profil->id];
+    }
+
+    /** Simpan hasil baca ke database. Baris yang sudah ada diperbarui; angka disimpan berversi (riwayat tetap ada). */
+    public function simpan(array $hasil, ?User $user, string $namaBerkas): RekomendasiJfImpor
+    {
+        $sumberId = SumberData::pluck('id', 'kode');
+        $jenjangId = JfJenjang::pluck('id', 'kode');
+
+        return DB::transaction(function () use ($hasil, $user, $namaBerkas, $sumberId, $jenjangId) {
+            $impor = RekomendasiJfImpor::create([
+                'user_id' => $user?->id, 'impor_profil_id' => $hasil['profil_id'] ?? null, 'nama_berkas' => mb_substr($namaBerkas, 0, 255),
+                'jumlah_baris' => count($hasil['baris']), 'peringatan' => array_slice($hasil['peringatan'], 0, 300),
+            ]);
+            $dibuat = $diperbarui = $faktaBaru = 0;
+
+            foreach ($hasil['baris'] as $b) {
+                $alias = InstansiAlias::firstOrNew(['nama_normal' => $b['nama_normal']]);
+                if (! $alias->exists) {
+                    $alias->fill(['nama' => $b['nama_instansi'], 'ref_instansi_id' => $b['ref_instansi_id'], 'asal' => 'impor']);
+                }
+                // atribut opsional diperbarui bila sumber mengisinya; pemetaan ke referensi (mungkin manual) tidak ditimpa
+                foreach (['jenis_instansi', 'pokja', 'wilayah_kerja'] as $f) {
+                    if ($b[$f] !== null) {
+                        $alias->{$f} = $b[$f];
+                    }
+                }
+                $alias->save();
+
+                $rekom = RekomendasiJf::firstOrNew(['alias_id' => $alias->id, 'jabatan_pokok_id' => $b['jabatan_pokok_id']]);
+                $baru = ! $rekom->exists;
+                $rekom->fill(collect($b)->only(['status_rekom', 'jenis_rekom', 'status_menpan', 'ditetapkan_sesuai_bezetting', 'catatan'])->all() + ['impor_id' => $impor->id])->save();
+                $baru ? $dibuat++ : $diperbarui++;
+
+                foreach ($b['fakta'] as $f) {
+                    $faktaBaru += $this->simpanFakta($rekom, $sumberId[$f['sumber']], $jenjangId[$f['jenjang']], $f['nilai'], $impor->id);
+                }
+
+                $rekom->surats()->delete();
+                foreach ($b['surat'] as $s) {
+                    $rekom->surats()->create($s);
+                }
+            }
+
+            $impor->update(['dibuat' => $dibuat, 'diperbarui' => $diperbarui, 'fakta_baru' => $faktaBaru]);
+
+            return $impor;
+        });
+    }
+
+    /** Tambah versi baru hanya bila nilainya berubah; nilai lama ditandai bukan terbaru. @return int jumlah baris fakta baru */
+    private function simpanFakta(RekomendasiJf $rekom, int $sumberId, int $jenjangId, int $nilai, int $imporId): int
+    {
+        $kunci = ['rekomendasi_jf_id' => $rekom->id, 'sumber_id' => $sumberId, 'jenjang_id' => $jenjangId, 'unit_kerja_id' => null];
+        $terbaru = KebutuhanFakta::where($kunci)->where('is_terbaru', true)->first();
+        if ($terbaru && $terbaru->nilai === $nilai) {
+            return 0;
+        }
+        $terbaru?->update(['is_terbaru' => false]);
+        KebutuhanFakta::create($kunci + ['nilai' => $nilai, 'impor_id' => $imporId, 'is_terbaru' => true]);
+
+        return 1;
+    }
+
+    /** Master yang dipakai impor: jabatan (beserta jenjang per posisi kolom) dan sumber aktif. */
+    private function muatMaster(): array
+    {
+        $jabatan = [];
+        foreach (JfJabatanPokok::where('is_active', true)->with('jenjangs')->get() as $j) {
+            $jabatan[mb_strtolower($j->nama)] = [
+                'id' => $j->id, 'nama' => $j->nama,
+                'jenjang_per_slot' => $j->jenjangs->where('is_active', true)->mapWithKeys(fn ($jj) => [(int) $jj->pivot->urutan_kolom => $jj->kode])->all(),
+            ];
+        }
+        $sumber = SumberData::where('is_active', true)->get()->mapWithKeys(fn ($s) => [$s->kode => ['kode' => $s->kode, 'nama' => $s->nama, 'adapter' => $s->adapter]])->all();
+
+        return ['jabatan' => $jabatan, 'sumber' => $sumber];
+    }
+
+    /** Pencocok nama instansi: alias yang sudah ada (termasuk pemetaan manual) dulu, lalu kecocokan nama referensi BKN. */
+    private function pencocok(): array
+    {
+        $alias = InstansiAlias::pluck('id', 'nama_normal')->all();
+        $aliasRef = InstansiAlias::whereNotNull('ref_instansi_id')->pluck('ref_instansi_id', 'nama_normal')->all();
+        $ref = [];
+        foreach (RefInstansiBkn::get(['id', 'nama']) as $r) {
+            $n = RefInstansiBkn::normalisasiNama($r->nama);
+            $ref[$n] ??= $r->id;
+            $ref[preg_replace('/^pemerintah /', '', $n)] ??= $r->id;
+        }
+
+        return [
+            'alias' => $alias,
+            'ref' => fn (string $normal) => $aliasRef[$normal] ?? $ref[$normal] ?? $ref[preg_replace('/^pemerintah /', '', $normal)] ?? null,
+        ];
     }
 
     /**
@@ -169,71 +302,15 @@ class RekomendasiJfImportService
         return $hasil;
     }
 
-    /** Simpan hasil baca ke database. Baris yang sudah ada (instansi × jabatan) diperbarui, bukan digandakan. */
-    public function simpan(array $hasil, ?User $user, string $namaBerkas): RekomendasiJfImpor
-    {
-        return DB::transaction(function () use ($hasil, $user, $namaBerkas) {
-            $impor = RekomendasiJfImpor::create([
-                'user_id' => $user?->id, 'nama_berkas' => mb_substr($namaBerkas, 0, 255), 'jumlah_baris' => count($hasil['baris']),
-                'peringatan' => array_slice($hasil['peringatan'], 0, 300),
-            ]);
-            $dibuat = $diperbarui = 0;
-
-            foreach ($hasil['baris'] as $b) {
-                $data = collect($b)->except(['jenjang', 'surat'])->all() + ['impor_id' => $impor->id];
-                $rekom = RekomendasiJf::where('nama_instansi_normal', $b['nama_instansi_normal'])->where('jabatan_pokok', $b['jabatan_pokok'])->first();
-                if ($rekom) {
-                    $rekom->update($data);
-                    $rekom->jenjangs()->delete();
-                    $rekom->surats()->delete();
-                    $diperbarui++;
-                } else {
-                    $rekom = RekomendasiJf::create($data);
-                    $dibuat++;
-                }
-                foreach ($b['jenjang'] as $kode => $angka) {
-                    $rekom->jenjangs()->create(['jenjang' => $kode] + $angka);
-                }
-                foreach ($b['surat'] as $s) {
-                    $rekom->surats()->create($s);
-                }
-            }
-
-            $impor->update(['dibuat' => $dibuat, 'diperbarui' => $diperbarui]);
-
-            return $impor;
-        });
-    }
-
-    /** Petakan nama instansi Excel ke referensi BKN secara manual, lalu terapkan ke baris yang sudah ada. */
-    public function petakanInstansi(string $namaNormal, string $namaExcel, ?int $refInstansiId): void
-    {
-        RekomendasiJfPetaInstansi::updateOrCreate(['nama_normal' => $namaNormal], ['nama_excel' => $namaExcel, 'ref_instansi_id' => $refInstansiId]);
-        RekomendasiJf::where('nama_instansi_normal', $namaNormal)->update(['ref_instansi_id' => $refInstansiId]);
-    }
-
-    /** Fungsi pencocok nama instansi: pemetaan manual dulu, lalu kecocokan nama yang dinormalkan. */
-    private function pencocok(): \Closure
-    {
-        $manual = RekomendasiJfPetaInstansi::whereNotNull('ref_instansi_id')->pluck('ref_instansi_id', 'nama_normal');
-        $ref = [];
-        foreach (RefInstansiBkn::get(['id', 'nama']) as $r) {
-            $ref[RefInstansiBkn::normalisasiNama($r->nama)] ??= $r->id;
-            $ref[preg_replace('/^pemerintah /', '', RefInstansiBkn::normalisasiNama($r->nama))] ??= $r->id;
-        }
-
-        return fn (string $nama, string $normal) => $manual[$normal] ?? $ref[$normal] ?? $ref[preg_replace('/^pemerintah /', '', $normal)] ?? null;
-    }
-
-    /** @return array<int, ?int> empat angka kolom jenjang; sel rumus/kosong/teks menjadi null. */
-    private function angkaSet(array $r, array $kolom, int $line, string $label, array &$peringatan, bool $boleh_negatif = false): array
+    /** @return array<int, ?int> angka sepanjang blok; sel rumus/kosong/teks menjadi null. */
+    private function angkaBlok(array $r, ?int $awal, int $lebar, int $line, string $label, array &$peringatan): array
     {
         $hasil = [];
-        foreach ($kolom as $c) {
-            $v = $r[$c] ?? null;
+        for ($k = 0; $k < $lebar; $k++) {
+            $v = $awal === null ? null : ($r[$awal + $k] ?? null);
             if ($v === null || $v === '' || is_bool($v) || (is_string($v) && str_starts_with($v, '='))) {
                 $hasil[] = null;
-            } elseif (is_numeric($v) && (float) $v == round((float) $v) && ($boleh_negatif || (float) $v >= 0)) {
+            } elseif (is_numeric($v) && (float) $v == round((float) $v) && (float) $v >= 0) {
                 $hasil[] = (int) round((float) $v);
             } else {
                 $peringatan[] = "Baris {$line}: nilai {$label} \"".mb_substr((string) $v, 0, 30).'" bukan bilangan bulat yang valid (diabaikan).';
@@ -272,8 +349,7 @@ class RekomendasiJfImportService
 
         $hasil = [];
         foreach ($nomorList as $i => $no) {
-            $tgl = $tglList[$i] ?? null;
-            $hasil[] = ['jenis' => $jenis, 'urutan' => $i + 1, 'nomor' => mb_substr($no, 0, 191), 'tanggal' => $tgl] + ($i === 0 ? $tambahan : []);
+            $hasil[] = ['jenis' => $jenis, 'urutan' => $i + 1, 'nomor' => mb_substr($no, 0, 191), 'tanggal' => $tglList[$i] ?? null] + ($i === 0 ? $tambahan : []);
         }
 
         return $hasil;
@@ -322,22 +398,25 @@ class RekomendasiJfImportService
         }
     }
 
-    private function ringkas(array $baris, array $peringatan): array
+    private function ringkas(array $baris, array $peringatan, array $master): array
     {
-        $koleksi = collect($baris);
-        $tidakCocok = $koleksi->whereNull('ref_instansi_id')->pluck('nama_instansi')->unique()->values();
-        $ada = RekomendasiJf::get(['nama_instansi_normal', 'jabatan_pokok'])->map(fn ($r) => $r->nama_instansi_normal.'|'.$r->jabatan_pokok)->flip();
+        $k = collect($baris);
+        $tidakCocok = $k->whereNull('ref_instansi_id')->pluck('nama_instansi')->unique()->values();
+        $aliasAda = InstansiAlias::pluck('id', 'nama_normal');
+        $ada = RekomendasiJf::get(['alias_id', 'jabatan_pokok_id'])->map(fn ($r) => $r->alias_id.'|'.$r->jabatan_pokok_id)->flip();
+        $sudah = fn ($b) => isset($aliasAda[$b['nama_normal']]) && isset($ada[$aliasAda[$b['nama_normal']].'|'.$b['jabatan_pokok_id']]);
 
         return [
-            'baris' => $koleksi->count(),
-            'instansi' => $koleksi->pluck('nama_instansi_normal')->unique()->count(),
-            'baru' => $koleksi->filter(fn ($b) => ! isset($ada[$b['nama_instansi_normal'].'|'.$b['jabatan_pokok']]))->count(),
-            'diperbarui' => $koleksi->filter(fn ($b) => isset($ada[$b['nama_instansi_normal'].'|'.$b['jabatan_pokok']]))->count(),
-            'per_jabatan' => $koleksi->countBy('jabatan_pokok')->all(),
-            'per_status_rekom' => $koleksi->countBy(fn ($b) => $b['status_rekom'] ?? '(kosong)')->all(),
+            'baris' => $k->count(),
+            'instansi' => $k->pluck('nama_normal')->unique()->count(),
+            'baru' => $k->reject($sudah)->count(),
+            'diperbarui' => $k->filter($sudah)->count(),
+            'per_jabatan' => $k->countBy('jabatan_nama')->all(),
+            'per_status_rekom' => $k->countBy(fn ($b) => $b['status_rekom'] ?? '(kosong)')->all(),
+            'angka_per_sumber' => $k->flatMap(fn ($b) => $b['fakta'])->groupBy('sumber')->map(fn ($g) => (int) $g->sum('nilai'))->all(),
             'instansi_tidak_cocok' => $tidakCocok->take(100)->all(),
             'jumlah_tidak_cocok' => $tidakCocok->count(),
-            'jumlah_surat' => $koleksi->sum(fn ($b) => count($b['surat'])),
+            'jumlah_surat' => $k->sum(fn ($b) => count($b['surat'])),
             'jumlah_peringatan' => count($peringatan),
         ];
     }

@@ -54,10 +54,14 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 
 ## Rekomendasi JF MASN
 
-Menu **Rekomendasi JF MASN** mengimpor Excel rekap kebutuhan dari tim data (sheet `Input Data (Instansi Baru)`) menjadi rekomendasi BKN
-dan penetapan KemenPANRB per instansi × jabatan pokok × jenjang, dengan pratinjau, perhitungan ulang lowongan, dan pemetaan instansi ke
-referensi BKN. Ketiga sumber (ABK, rekomendasi BKN, penetapan KemenPANRB) dirancang sebagai referensi berdampingan; rekom BKN per unit,
-adapter bezetting dari API Dashboard, dan halaman perbandingan empat sumber menyusul.
+Menu **Rekomendasi JF MASN** mengimpor Excel rekap kebutuhan dari tim data menjadi rekomendasi BKN dan penetapan KemenPANRB per instansi ×
+jabatan pokok × jenjang, dengan pratinjau, perhitungan ulang lowongan, dan angka berversi (riwayat tidak hilang).
+
+Skemanya **ternormalisasi dan dinamis**: jabatan pokok (`jf_jabatan_pokok`), jenjang (`jf_jenjang`, `jf_jabatan_jenjang`), sumber angka
+(`sumber_data`), alias nama instansi (`instansi_alias` → `ref_instansi_bkn`), dan tata letak Excel (`impor_profil`) adalah data yang
+dikelola lewat menu Referensi (Master JF & Sumber, Alias Instansi, Profil Impor). Angka disimpan format panjang di `kebutuhan_fakta`
+(rekomendasi × jenjang × sumber × unit opsional, `is_terbaru`). Sumber baru, JF baru, atau perubahan susunan kolom Excel tidak memerlukan
+perubahan kode. Rekom BKN per unit, adapter bezetting dari API Dashboard, dan halaman perbandingan menyusul.
 
 ## Operasional
 

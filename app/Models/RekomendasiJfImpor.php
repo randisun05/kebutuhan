@@ -17,4 +17,9 @@ class RekomendasiJfImpor extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function profil(): BelongsTo
+    {
+        return $this->belongsTo(ImporProfil::class, 'impor_profil_id');
+    }
 }
