@@ -23,8 +23,11 @@ class SumberData extends Model
 
     public const SIFAT = ['foto' => 'Foto saat dokumen', 'hidup' => 'Data hidup (kondisi kini)'];
 
-    /** Adapter penyedia nilai: fakta = tabel kebutuhan_fakta (impor); lainnya dibaca langsung dari modul terkait. */
-    public const ADAPTER = ['fakta' => 'Impor (tabel fakta)', 'abk' => 'ABK SIMONKEB', 'pegawai' => 'Pegawai SIMONKEB', 'dashboard' => 'API Dashboard'];
+    /**
+     * Asal nilai. Saat ini hanya impor (tabel kebutuhan_fakta). Asal lain (ABK, pegawai, API Dashboard) baru ditambahkan
+     * di sini bersama implementasinya, supaya admin tidak bisa memilih opsi yang belum berfungsi.
+     */
+    public const ADAPTER = ['fakta' => 'Impor (tabel fakta)'];
 
     public function getActivitylogOptions(): LogOptions
     {

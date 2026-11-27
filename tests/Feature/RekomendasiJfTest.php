@@ -314,10 +314,11 @@ class RekomendasiJfTest extends TestCase
         $this->put("/jf-master/jabatan-pokok/{$analis->id}/jenjang", ['jenjang' => [['jenjang_id' => JfJenjang::where('kode', 'muda')->value('id'), 'urutan_kolom' => 2]]])->assertSessionHas('error');
 
         // yang belum dipakai boleh dihapus; kode unik dan format dijaga
-        $this->post('/jf-master/sumber', ['kode' => 'sementara', 'nama' => 'Sementara', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'abk'])->assertSessionHasNoErrors();
+        $this->post('/jf-master/sumber', ['kode' => 'sementara', 'nama' => 'Sementara', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasNoErrors();
         $this->delete('/jf-master/sumber/'.SumberData::where('kode', 'sementara')->value('id'))->assertSessionHas('success');
-        $this->post('/jf-master/sumber', ['kode' => 'rekom_bkn', 'nama' => 'Ganda', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'abk'])->assertSessionHasErrors('kode');
-        $this->post('/jf-master/sumber', ['kode' => 'Kode Salah!', 'nama' => 'X', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'abk'])->assertSessionHasErrors('kode');
+        $this->post('/jf-master/sumber', ['kode' => 'asal_gaib', 'nama' => 'X', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'abk'])->assertSessionHasErrors('adapter'); // asal yang belum berfungsi ditolak
+        $this->post('/jf-master/sumber', ['kode' => 'rekom_bkn', 'nama' => 'Ganda', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasErrors('kode');
+        $this->post('/jf-master/sumber', ['kode' => 'Kode Salah!', 'nama' => 'X', 'jenis' => 'kebutuhan', 'tingkat' => 'unit', 'sifat' => 'hidup', 'adapter' => 'fakta'])->assertSessionHasErrors('kode');
         $this->post('/jf-master/jabatan-pokok', ['kode' => 'x', 'nama' => 'X', 'rumpun' => 'lain'])->assertSessionHasErrors('rumpun');
     }
 

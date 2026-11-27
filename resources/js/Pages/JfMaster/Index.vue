@@ -60,7 +60,7 @@
                 </tr>
             </tbody>
         </table></div>
-        <div class="card-body small text-muted">Sumber dengan asal nilai <b>Impor (tabel fakta)</b> mendapat kolomnya di daftar rekomendasi dan dapat dipakai pada profil impor. Asal lain (ABK, pegawai, API Dashboard) disiapkan untuk perbandingan mendatang.</div>
+        <div class="card-body small text-muted">Sumber aktif mendapat kolomnya di daftar rekomendasi dan dapat dipakai pada profil impor. Saat ini semua sumber berasal dari impor Excel; asal lain (ABK, pegawai, API Dashboard) akan ditambahkan bersama halaman perbandingan.</div>
     </div>
 
     <!-- Form tambah/ubah -->
@@ -73,7 +73,7 @@
                 <Field class="col-md-6" label="Jenis" :error="err.jenis"><select v-model="f.jenis" class="form-select"><option v-for="o in opsi.jenis" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
                 <Field class="col-md-6" label="Tingkat rinci" :error="err.tingkat"><select v-model="f.tingkat" class="form-select"><option v-for="o in opsi.tingkat" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
                 <Field class="col-md-6" label="Sifat" :error="err.sifat"><select v-model="f.sifat" class="form-select"><option v-for="o in opsi.sifat" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
-                <Field class="col-md-12" label="Asal nilai" :error="err.adapter"><select v-model="f.adapter" class="form-select"><option v-for="o in opsi.adapter" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
+                <Field v-if="opsi.adapter.length > 1" class="col-md-12" label="Asal nilai" :error="err.adapter"><select v-model="f.adapter" class="form-select"><option v-for="o in opsi.adapter" :key="o.value" :value="o.value">{{ o.label }}</option></select></Field>
             </template>
             <Field class="col-md-6" label="Urutan tampil" :error="err.urutan"><input v-model="f.urutan" type="number" min="0" class="form-control"></Field>
             <Field v-if="dlg.tipe !== 'jenjang'" class="col-12" label="Keterangan" :error="err.keterangan"><input v-model="f.keterangan" class="form-control"></Field>

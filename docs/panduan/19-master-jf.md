@@ -15,7 +15,7 @@ Menu **Master JF & Sumber** punya tiga tab.
 
 - **Jabatan pokok** — kode, nama, rumpun (keahlian atau keterampilan), urutan, dan status. Ikon **atur jenjang** menetapkan jenjang yang berlaku untuk jabatan itu beserta **posisi kolom** pada blok angka di Excel (1 = kolom pertama blok, dst.). Posisi harus unik per jabatan.
 - **Jenjang** — kode, nama, rumpun, urutan, dan status.
-- **Sumber angka** — kode, nama, jenis (kebutuhan atau bezetting), tingkat rinci (per instansi atau per unit), sifat (foto saat dokumen atau data hidup), dan **asal nilai**. Sumber berasal *Impor (tabel fakta)* mendapat kolom di daftar rekomendasi dan dapat dipakai pada profil impor; asal lain (ABK, pegawai, API Dashboard) disiapkan untuk perbandingan mendatang.
+- **Sumber angka** — kode, nama, jenis (kebutuhan atau bezetting), tingkat rinci (per instansi atau per unit), sifat (foto saat dokumen atau data hidup), dan asal nilai (saat ini selalu impor). Sumber aktif mendapat kolom di daftar rekomendasi dan dapat dipakai pada profil impor. Saat ini semua sumber berasal dari impor Excel; asal lain (ABK, pegawai, API Dashboard) akan ditambahkan bersama halaman perbandingan, dan baru muncul sebagai pilihan setelah berfungsi.
 
 ![Master JF & Sumber](/img/panduan/master-jf.png)
 
@@ -43,7 +43,7 @@ Menu **Profil Impor** menyimpan tata letak berkas Excel sumber. Bila tim data me
 
 - **Umum**: kode, nama, nama sheet, dan status aktif.
 - **Kolom isian**: huruf kolom Excel (mis. `D`, `AX`) untuk nama instansi dan jabatan (wajib) serta jenis instansi, pokja, status rekomendasi, jenis rekomendasi, wilayah kerja, dan sesuai bezetting. Kolom catatan boleh lebih dari satu.
-- **Blok angka**: satu blok per sumber, dengan kolom awal (jenjang pertama), lebar, dan kolom awal cadangan bila blok utama kosong. Hanya sumber berasal *Impor* yang dapat dipilih.
+- **Blok angka**: satu blok per sumber, dengan kolom awal (jenjang pertama), lebar, dan kolom awal cadangan bila blok utama kosong. Semua sumber aktif dapat dipilih.
 - **Surat**: untuk tiap jenis surat, kolom nomor, tanggal, tautan, dan penandatangan. Satu sel boleh memuat beberapa surat.
 
 Profil divalidasi saat disimpan (huruf kolom, sumber dikenal, minimal satu blok). Pratinjau impor menampilkan peringatan bila jabatan di berkas belum ada di master atau bila angka berada pada posisi jenjang yang tidak berlaku.
