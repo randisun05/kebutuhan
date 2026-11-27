@@ -9,8 +9,10 @@ use App\Models\RekomendasiJfPetaInstansi;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Throwable;
 
 /**
@@ -44,7 +46,9 @@ class RekomendasiJfImportService
     public function baca(string $path): array
     {
         $reader = IOFactory::createReaderForFile($path);
-        $reader->setReadDataOnly(true);
+        // rumus tetap dimuat agar nilai tersimpan (cached) sel rumus bisa dibaca: banyak kolom isian di Excel
+        // sumber berisi VLOOKUP dari sheet lain, dan nilai tersimpannya adalah datanya.
+        $reader->setReadDataOnly(false);
         $reader->setLoadSheetsOnly([self::SHEET]);
         try {
             $sheet = $reader->load($path)->getSheetByName(self::SHEET);
@@ -60,7 +64,8 @@ class RekomendasiJfImportService
         $kunciTerlihat = [];
         $cocok = $this->pencocok();
 
-        foreach ($sheet->toArray(null, false, false, false) as $i => $r) {
+        $rumusTanpaNilai = 0;
+        foreach ($this->barisMentah($sheet, $rumusTanpaNilai) as $i => $r) {
             $jabatan = trim((string) ($r[self::K['jabatan']] ?? ''));
             $nama = trim((string) ($r[self::K['instansi']] ?? ''));
             if ($nama === '' || ! isset(RekomendasiJf::JABATAN[$jabatan])) {
@@ -128,7 +133,40 @@ class RekomendasiJfImportService
             ];
         }
 
+        if ($rumusTanpaNilai > 0) {
+            $peringatan[] = "{$rumusTanpaNilai} sel rumus tidak memiliki nilai tersimpan (berkas belum dihitung ulang di Excel) dan dianggap kosong. Buka dan simpan ulang berkas di Excel, lalu impor lagi.";
+        }
+
         return ['baris' => $baris, 'peringatan' => $peringatan, 'ringkas' => $this->ringkas($baris, $peringatan)];
+    }
+
+    /**
+     * Baca seluruh sel sheet menjadi baris array (indeks kolom 0-based). Sel rumus memakai nilai tersimpan
+     * (cached) terakhir; nilai galat Excel (#REF!, #VALUE!, ...) dianggap kosong.
+     *
+     * @return array<int, array<int, mixed>>
+     */
+    private function barisMentah(Worksheet $sheet, int &$rumusTanpaNilai): array
+    {
+        $hasil = [];
+        foreach ($sheet->getRowIterator() as $row) {
+            $iter = $row->getCellIterator();
+            $iter->setIterateOnlyExistingCells(true);
+            $data = [];
+            foreach ($iter as $cell) {
+                $nilai = $cell->isFormula() ? $cell->getOldCalculatedValue() : $cell->getValue();
+                if ($cell->isFormula() && ($nilai === null || $nilai === '')) {
+                    $rumusTanpaNilai++;
+                }
+                if (is_string($nilai) && preg_match('/^#(REF|VALUE|N\/A|DIV\/0|NAME|NUM|NULL)[!?]?$/', $nilai)) {
+                    $nilai = null;
+                }
+                $data[Coordinate::columnIndexFromString($cell->getColumn()) - 1] = $nilai;
+            }
+            $hasil[$row->getRowIndex() - 1] = $data;
+        }
+
+        return $hasil;
     }
 
     /** Simpan hasil baca ke database. Baris yang sudah ada (instansi × jabatan) diperbarui, bukan digandakan. */

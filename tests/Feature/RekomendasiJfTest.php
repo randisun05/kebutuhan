@@ -96,6 +96,25 @@ class RekomendasiJfTest extends TestCase
         $this->assertNull($belum['ref_instansi_id']);
     }
 
+    public function test_sel_rumus_dibaca_dari_nilai_tersimpan(): void
+    {
+        // Di Excel sumber banyak kolom isian berisi VLOOKUP dari sheet lain; nilai tersimpannya adalah datanya.
+        $path = $this->buatExcel([$this->baris('Instansi Rumus', 'Analis SDM Aparatur', [
+            17 => '=SUM(10,6)', 22 => '=40+5', 37 => '=SUM(30,3)', 41 => '="B/9/M.SM.01.00/2025"', 42 => '=DATE(2025,8,31)', 9 => '="111/B/2025"', 10 => '=DATE(2025,6,4)',
+            15 => '=#REF!',
+        ])]);
+
+        $h = app(RekomendasiJfImportService::class)->baca($path);
+        unlink($path);
+
+        $b = $h['baris'][0];
+        $this->assertSame(['bezetting_rekom' => 16, 'rekom_bkn' => 45, 'penetapan_menpan' => 33], $b['jenjang']['pertama']);
+        $menpan = collect($b['surat'])->firstWhere('jenis', 'penetapan_menpan');
+        $this->assertSame(['B/9/M.SM.01.00/2025', '2025-08-31'], [$menpan['nomor'], $menpan['tanggal']]);
+        $rekom = collect($b['surat'])->firstWhere('jenis', 'rekomendasi');
+        $this->assertSame(['111/B/2025', '2025-06-04'], [$rekom['nomor'], $rekom['tanggal']]);
+    }
+
     public function test_sheet_tidak_ada_ditolak_dengan_pesan_jelas(): void
     {
         $path = $this->buatExcel([$this->baris('X', 'Analis SDM Aparatur')], 'Sheet Lain');

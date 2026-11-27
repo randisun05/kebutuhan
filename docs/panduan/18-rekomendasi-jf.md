@@ -43,7 +43,7 @@ Operator instansi hanya melihat instansinya sendiri (yang sudah dipetakan ke ref
 Yang ikut dirapikan saat impor:
 
 - Satu sel berisi beberapa nomor dan tanggal surat (bertanda "- ") diurai menjadi **satu surat per baris**. Tanggal dalam bentuk teks (mis. *13 Oktober 2025*) dikenali; bila jumlah nomor dan tanggal berbeda, keduanya dipasangkan berurutan dan dilaporkan.
-- Kolom rumus di Excel (bulan/tahun, total, status Menpan, selisih) tidak dibaca. Status *ditetapkan* ditentukan dari adanya angka atau surat penetapan.
+- **Sel rumus dibaca dari nilai tersimpannya.** Banyak kolom isian di Excel sumber (bezetting, perhitungan formasi, nomor dan tanggal penetapan) berisi rumus pencarian dari sheet lain; yang diimpor adalah hasil hitung terakhir yang tersimpan di berkas. Bila berkas belum pernah dihitung ulang di Excel, sel semacam itu terbaca kosong dan pratinjau memberi peringatan; buka dan simpan ulang berkas di Excel lalu impor lagi. Kolom turunan (bulan/tahun, total, status Menpan, selisih) tidak dipakai karena dihitung ulang oleh aplikasi; status *ditetapkan* ditentukan dari adanya angka atau surat penetapan.
 - Baris tanpa angka (mis. *Belum Usul*) tetap dicatat agar cakupan instansi terlihat.
 
 ### Instansi yang belum cocok
