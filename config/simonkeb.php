@@ -11,6 +11,13 @@ return [
     // peran yang wajib mengaktifkan autentikasi dua faktor (pisahkan koma), contoh: admin,verifikator_bkn
     'wajib_2fa' => array_values(array_filter(array_map('trim', explode(',', (string) env('WAJIB_2FA_PERAN', ''))))),
 
+    // data awal produksi (BknStarterSeeder): lihat docs/DEPLOY.md
+    'starter' => [
+        'impor_rekap' => (bool) env('STARTER_IMPOR_REKAP', true),
+        'rekap_path' => env('REKAP_JFMASN_PATH') ?: base_path('docs/Rekap Kebutuhan JFMASN.xlsx'),
+        'impor_ujikom' => (bool) env('STARTER_IMPOR_UJIKOM', false),
+    ],
+
     // ambang batas sistem peringatan dini (early warning)
     'peringatan' => [
         'stagnan_bulan' => (int) env('PERINGATAN_STAGNAN_BULAN', 6),

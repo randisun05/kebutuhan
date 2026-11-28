@@ -17,11 +17,24 @@ composer install --no-dev --optimize-autoloader
 cp .env.example .env && php artisan key:generate
 # isi .env (lihat bagian 3), lalu:
 php artisan migrate --force
-php artisan db:seed --force        # HANYA lingkungan demo/uji; jangan di produksi
+php artisan db:seed --force        # data DEMO (akun contoh): HANYA lingkungan demo/uji; jangan di produksi
+php artisan db:seed --class=BknStarterSeeder --force   # data awal khusus BKN: AMAN di produksi (lihat bagian 2a)
 php artisan config:cache && php artisan route:cache && php artisan view:cache
 ```
 
 `public/build/` sudah di-commit; jalankan `npm ci && npm run build` hanya bila mengubah frontend.
+
+### 2a. Data awal khusus BKN (`BknStarterSeeder`)
+
+Berbeda dengan `DatabaseSeeder` (data demo), `BknStarterSeeder` aman di produksi: **tidak membuat akun**, **idempoten** (boleh dijalankan ulang), dan **tidak menimpa** perubahan admin (hanya melengkapi yang belum ada). Isinya:
+
+1. **Master BKN**: instansi pembina BKN, jabatan pokok (Analis, Pranata, Asesor, Auditor), jenjang, sumber angka, dan profil impor Excel.
+2. **Referensi instansi BKN** (654 entri) dari `database/data/bkn-instansi-ref.csv`.
+3. **Alias bawaan** untuk tiga nama yang berbeda penulisan di Excel (Gunungkidul, Kepulauan Mentawai, Kejaksaan RI). Periksa di menu *Alias Instansi*; *Badan Intelijen Negara* tidak ada di referensi BKN dan perlu dipetakan admin bila perlu.
+4. **Angka dari Excel rekap tim data** (sheet `Input Data (Instansi Baru)`): rekomendasi BKN, penetapan KemenPANRB, dan bezetting saat rekomendasi. Berkas dicari di `docs/Rekap Kebutuhan JFMASN.xlsx`, atau path di `REKAP_JFMASN_PATH`; bila tidak ada, langkah ini dilewati dengan peringatan. Matikan dengan `STARTER_IMPOR_REKAP=false`. Perlu `memory_limit` sekitar 512M (lihat bagian 3).
+5. **Data eksisting JF (pegawai)**: hanya bila `STARTER_IMPOR_UJIKOM=true` dan `UJIKOM_DB_*` terisi, yang menjalankan `jf:impor-ujikom`. Bawaannya dilewati karena menyalin data dalam jumlah besar; alternatifnya `php artisan jf:sync` (API pembina) atau, nanti, API Dashboard.
+
+Akun admin pertama tidak dibuat oleh seeder ini; buat lewat prosedur akun Anda sendiri.
 
 ## 3. Pengaturan `.env` yang wajib
 
@@ -116,5 +129,5 @@ Baca `docs/panduan/perubahan.md` untuk catatan tiap versi (mis. migrasi yang men
 - [ ] `LOGIN_MANUAL=false`; NIP seluruh pengguna SSO sudah terisi dan benar.
 - [ ] 2FA wajib untuk peran administrator.
 - [ ] Hak tulis hanya pada `storage/` dan `bootstrap/cache/`.
-- [ ] `php artisan db:seed` **tidak** dijalankan di produksi (akun demo berpassword `password`).
+- [ ] `php artisan db:seed` (data demo) **tidak** dijalankan di produksi (akun demo berpassword `password`); gunakan `--class=BknStarterSeeder` untuk data awal.
 - [ ] Whitelist IP server di BKN untuk web service SIASN.

@@ -67,7 +67,7 @@ perubahan kode. Rekom BKN per unit, adapter bezetting dari API Dashboard, dan ha
 
 ## Operasional
 
-Panduan deploy produksi (server, antrean, scheduler, cadangan, keamanan) ada di `docs/DEPLOY.md`. Endpoint `GET /health`
+Panduan deploy produksi (server, antrean, scheduler, cadangan, keamanan) ada di `docs/DEPLOY.md`. Data awal produksi khusus BKN (master, referensi instansi, dan angka dari Excel rekap) disiapkan oleh `php artisan db:seed --class=BknStarterSeeder` (aman dan idempoten; `DatabaseSeeder` hanya untuk demo). Endpoint `GET /health`
 mengembalikan status database, scheduler, dan antrean untuk uptime monitor. CI menjalankan test di SQLite dan MySQL 8.
 
 ## Panduan pengguna
