@@ -61,6 +61,7 @@ export default {
                 { label: 'Hilir: Usulan s.d. Penetapan', items: [
                     { label: 'Usulan Kebutuhan', href: '/usulan', icon: 'fa-inbox', roles: ALL, badge: true },
                     { label: 'Rekomendasi JF MASN', href: '/rekomendasi-jf', icon: 'fa-balance-scale', roles: ['admin', 'verifikator_bkn', 'validator_kemenpan', 'operator_instansi', 'pimpinan', 'pembina'] },
+                    { label: 'Perbandingan Kebutuhan JF', href: '/perbandingan-jf', icon: 'fa-columns', roles: ['admin', 'verifikator_bkn', 'validator_kemenpan', 'operator_instansi', 'pimpinan', 'pembina'] },
                     { label: 'Penetapan Kebutuhan', href: '/penetapan', icon: 'fa-gavel', roles: ALL },
                     { label: 'Pengisian Formasi', href: '/formasi', icon: 'fa-user-plus', roles: ALL },
                 ] },

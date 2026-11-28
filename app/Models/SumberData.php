@@ -25,10 +25,19 @@ class SumberData extends Model
     public const SIFAT = ['foto' => 'Foto saat dokumen', 'hidup' => 'Data hidup (kondisi kini)'];
 
     /**
-     * Asal nilai. Saat ini hanya impor (tabel kebutuhan_fakta). Asal lain (ABK, pegawai, API Dashboard) baru ditambahkan
-     * di sini bersama implementasinya, supaya admin tidak bisa memilih opsi yang belum berfungsi.
+     * Asal nilai; setiap pilihan di sini sudah berfungsi (opsi baru ditambahkan bersama implementasinya).
+     * fakta = angka dari impor Excel (tabel kebutuhan_fakta); abk dan pegawai = dihitung langsung dari data SIMONKEB lewat kaitan
+     * jabatan ke JF; dashboard = ditarik dari API Dashboard ke tabel kebutuhan_fakta (perintah jf:tarik-dashboard).
      */
-    public const ADAPTER = ['fakta' => 'Impor (tabel fakta)'];
+    public const ADAPTER = [
+        'fakta' => 'Impor (tabel fakta)',
+        'abk' => 'ABK SIMONKEB (dihitung langsung)',
+        'pegawai' => 'Pegawai SIMONKEB (dihitung langsung)',
+        'dashboard' => 'API Dashboard (ditarik berkala)',
+    ];
+
+    /** Jenis yang wajib untuk adapter tertentu; adapter selain fakta hanya boleh satu sumber per pembina. */
+    public const JENIS_ADAPTER = ['abk' => 'kebutuhan', 'pegawai' => 'bezetting', 'dashboard' => 'bezetting'];
 
     public function getActivitylogOptions(): LogOptions
     {

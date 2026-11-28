@@ -82,6 +82,18 @@ class BknStarterSeeder extends Seeder
             ]);
         }
 
+        // sumber pembanding: ABK dan pegawai dihitung langsung dari SIMONKEB; Dashboard ditarik berkala (nonaktif sampai dikonfigurasi)
+        $pembanding = [
+            ['abk_simonkeb', 'ABK SIMONKEB', 'kebutuhan', 'unit', 'abk', 4, true, 'ABK final terbaru per unit kerja, dijumlahkan per instansi; memerlukan kaitan jabatan ke JF MASN (form Jabatan).'],
+            ['pegawai_simonkeb', 'Pegawai aktif SIMONKEB', 'bezetting', 'unit', 'pegawai', 5, true, 'Pegawai aktif di SIMONKEB (kondisi kini), per jabatan yang dikaitkan ke JF MASN.'],
+            ['bezetting_dashboard', 'Bezetting API Dashboard', 'bezetting', 'instansi', 'dashboard', 6, false, 'Data JF dari API Dashboard (kondisi kini). Aktifkan setelah DASHBOARD_JF_* terisi; lihat docs/API-DASHBOARD.md.'],
+        ];
+        foreach ($pembanding as [$kode, $nama, $jenis, $tingkat, $adapter, $urutan, $aktif, $ket]) {
+            SumberData::firstOrCreate(['pembina_id' => $bkn->id, 'kode' => $kode], [
+                'nama' => $nama, 'jenis' => $jenis, 'tingkat' => $tingkat, 'sifat' => 'hidup', 'adapter' => $adapter, 'urutan' => $urutan, 'is_active' => $aktif, 'keterangan' => $ket,
+            ]);
+        }
+
         ImporProfil::firstOrCreate(['kode' => 'rekap-jfmasn'], [
             'pembina_id' => $bkn->id, 'nama' => 'Rekap Kebutuhan JFMASN (tim data)', 'sheet' => 'Input Data (Instansi Baru)', 'is_active' => true,
             'pemetaan' => [

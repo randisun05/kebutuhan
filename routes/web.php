@@ -23,6 +23,7 @@ use App\Http\Controllers\PanduanController;
 use App\Http\Controllers\PedomanController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PenetapanController;
+use App\Http\Controllers\PerbandinganJfController;
 use App\Http\Controllers\PerencanaanController;
 use App\Http\Controllers\PeringatanController;
 use App\Http\Controllers\RekomendasiJfController;
@@ -108,6 +109,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/usulan/{usulan}', [UsulanController::class, 'update'])->name('usulan.update.multipart');
     Route::resource('usulan', UsulanController::class);
 
+    Route::get('/perbandingan-jf', [PerbandinganJfController::class, 'index'])->name('perbandingan-jf.index');
+    Route::get('/perbandingan-jf/{rekomendasi}', [PerbandinganJfController::class, 'show'])->whereNumber('rekomendasi')->name('perbandingan-jf.show');
     Route::get('/rekomendasi-jf', [RekomendasiJfController::class, 'index'])->name('rekomendasi-jf.index');
     Route::get('/rekomendasi-jf/wawasan', [RekomendasiJfController::class, 'wawasan'])->name('rekomendasi-jf.wawasan');
     Route::get('/rekomendasi-jf/wawasan/unduh/{panel}', [RekomendasiJfController::class, 'wawasanUnduh'])->whereIn('panel', ['sasaran', 'tersumbat', 'pendampingan', 'antrean'])->name('rekomendasi-jf.wawasan.unduh');

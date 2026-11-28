@@ -6,7 +6,6 @@ use App\Models\ImporProfil;
 use App\Models\InstansiAlias;
 use App\Models\JfJabatanPokok;
 use App\Models\JfJenjang;
-use App\Models\KebutuhanFakta;
 use App\Models\RefInstansiBkn;
 use App\Models\RekomendasiJf;
 use App\Models\RekomendasiJfImpor;
@@ -211,7 +210,7 @@ class RekomendasiJfImportService
                 $baru ? $dibuat++ : $diperbarui++;
 
                 foreach ($b['fakta'] as $f) {
-                    $faktaBaru += $this->simpanFakta($rekom, $sumberId[$f['sumber']], $jenjangId[$f['jenjang']], $f['nilai'], $impor->id);
+                    $faktaBaru += app(KebutuhanFaktaService::class)->simpan($rekom, $sumberId[$f['sumber']], $jenjangId[$f['jenjang']], $f['nilai'], $impor->id);
                 }
 
                 $rekom->surats()->delete();
@@ -224,20 +223,6 @@ class RekomendasiJfImportService
 
             return $impor;
         });
-    }
-
-    /** Tambah versi baru hanya bila nilainya berubah; nilai lama ditandai bukan terbaru. @return int jumlah baris fakta baru */
-    private function simpanFakta(RekomendasiJf $rekom, int $sumberId, int $jenjangId, int $nilai, int $imporId): int
-    {
-        $kunci = ['rekomendasi_jf_id' => $rekom->id, 'sumber_id' => $sumberId, 'jenjang_id' => $jenjangId, 'unit_kerja_id' => null];
-        $terbaru = KebutuhanFakta::where($kunci)->where('is_terbaru', true)->first();
-        if ($terbaru && $terbaru->nilai === $nilai) {
-            return 0;
-        }
-        $terbaru?->update(['is_terbaru' => false]);
-        KebutuhanFakta::create($kunci + ['nilai' => $nilai, 'impor_id' => $imporId, 'is_terbaru' => true]);
-
-        return 1;
     }
 
     /** Master yang dipakai impor: jabatan (beserta jenjang per posisi kolom) dan sumber aktif. */

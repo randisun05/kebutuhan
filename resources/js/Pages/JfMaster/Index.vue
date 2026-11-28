@@ -66,7 +66,7 @@
                 </tr>
             </tbody>
         </table></div>
-        <div class="card-body small text-muted">Sumber aktif mendapat kolomnya di daftar rekomendasi dan dapat dipakai pada profil impor. Saat ini semua sumber berasal dari impor Excel; asal lain (ABK, pegawai, API Dashboard) akan ditambahkan bersama halaman perbandingan.</div>
+        <div class="card-body small text-muted">Sumber aktif tampil sebagai kolom di halaman Perbandingan; sumber impor juga di daftar rekomendasi dan dapat dipakai pada profil impor. Asal nilai: <b>impor Excel</b> (diisi lewat profil impor), <b>ABK</b> dan <b>pegawai</b> SIMONKEB (dihitung langsung; perlu kaitan jabatan ke JF), atau <b>API Dashboard</b> (ditarik berkala). Sumber selain impor hanya satu per pembina.</div>
     </div>
 
     <!-- Instansi pembina (administrator) -->

@@ -45,7 +45,7 @@ class BknStarterSeederTest extends TestCase
 
         // master BKN lengkap
         $this->assertSame(4, JfJabatanPokok::where('pembina_id', $this->pembinaBkn()->id)->count());
-        $this->assertSame(3, SumberData::where('pembina_id', $this->pembinaBkn()->id)->count());
+        $this->assertSame(6, SumberData::where('pembina_id', $this->pembinaBkn()->id)->count()); // 3 impor + ABK, pegawai, dan Dashboard
         $this->assertSame(1, ImporProfil::where('kode', 'rekap-jfmasn')->count());
         // referensi instansi dari CSV dan tiga alias bawaan; yang tidak ada di referensi (BIN) tetap menunggu pemetaan admin
         $this->assertGreaterThan(600, RefInstansiBkn::count());

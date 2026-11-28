@@ -18,6 +18,11 @@ return [
         'ambang_pemotongan' => (int) env('WAWASAN_AMBANG_PEMOTONGAN', 110), // penetapan di atas % rekomendasi dianggap perlu diperiksa
     ],
 
+    // halaman Perbandingan: sumber sejenis dianggap berjauhan bila selisih terbesar melampaui persen ini dari nilai terbesar
+    'perbandingan' => [
+        'ambang_beda_persen' => (int) env('PERBANDINGAN_AMBANG_BEDA', 20),
+    ],
+
     // data awal produksi (BknStarterSeeder): lihat docs/DEPLOY.md
     'starter' => [
         'impor_rekap' => (bool) env('STARTER_IMPOR_REKAP', true),

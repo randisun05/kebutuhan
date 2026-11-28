@@ -15,7 +15,7 @@ class BatasiPembina
 {
     /** Awalan path yang boleh diakses pengguna pembina. */
     private const BOLEH = [
-        'rekomendasi-jf', 'jf-master', 'impor-profil', 'panduan', 'akun', 'notifikasi', 'logout', 'user', 'two-factor-challenge',
+        'rekomendasi-jf', 'perbandingan-jf', 'jf-master', 'impor-profil', 'panduan', 'akun', 'notifikasi', 'logout', 'user', 'two-factor-challenge',
         'confirm-password', 'forgot-password', 'reset-password', 'email', 'health', 'up', 'img', 'build',
     ];
 

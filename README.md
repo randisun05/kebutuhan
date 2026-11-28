@@ -65,7 +65,7 @@ Skemanya **ternormalisasi dan dinamis**: jabatan pokok (`jf_jabatan_pokok`), jen
 (`sumber_data`), alias nama instansi (`instansi_alias` → `ref_instansi_bkn`), dan tata letak Excel (`impor_profil`) adalah data yang
 dikelola lewat menu Referensi (Master JF & Sumber, Alias Instansi, Profil Impor). Angka disimpan format panjang di `kebutuhan_fakta`
 (rekomendasi × jenjang × sumber × unit opsional, `is_terbaru`). Sumber baru, JF baru, atau perubahan susunan kolom Excel tidak memerlukan
-perubahan kode. Rekom BKN per unit, adapter bezetting dari API Dashboard, dan halaman perbandingan menyusul.
+perubahan kode. Halaman **Perbandingan Kebutuhan JF** (`/perbandingan-jf`, `PerbandinganJfService`) menyandingkan semua sumber; bezetting dari API Dashboard ditarik lewat `php artisan jf:tarik-dashboard` (lihat `docs/API-DASHBOARD.md`). Rekom BKN per unit menyusul.
 
 ## Operasional
 

@@ -9,6 +9,12 @@ menu: []
 
 Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan sebagai sudah dibaca.
 
+## v1.9.0 — 2026-11-28
+
+- **Perbandingan Kebutuhan JF** (menu baru, juga untuk Operator Instansi Pembina): rekomendasi BKN, penetapan KemenPANRB, bezetting, ABK SIMONKEB, dan jumlah pegawai SIMONKEB ditampilkan **berdampingan** sebagai referensi, tanpa saling mengunci. Angka yang berjauhan (ambang dapat diatur) diberi warna; nilai kosong berarti belum ada data, bukan nol. Rincian per jenjang dan per unit kerja tersedia di halaman detail.
+- **Sumber pembanding langsung**: sumber ber-adapter ABK dan Pegawai dihitung langsung dari data SIMONKEB lewat kaitan jabatan ke JF, tanpa impor.
+- **API Dashboard disiapkan**: perintah `jf:tarik-dashboard` menarik bezetting dari API Dashboard ke fakta berversi. Alamat, token, dan nama field diatur lewat `.env` (lihat `docs/API-DASHBOARD.md`); sumber **Bezetting Dashboard** nonaktif sampai dihubungkan.
+
 ## v1.8.0 — 2026-11-27
 
 - **Rekomendasi JF MASN** (menu baru): rekomendasi BKN dan penetapan KemenPANRB per instansi × jabatan pokok × jenjang, diimpor dari Excel rekap tim data dengan **pratinjau**, perhitungan ulang lowongan, dan penguraian banyak surat per sel. Angka disimpan **berversi** (riwayat perubahan terlihat) dan kolom sumber mengikuti daftar sumber.

@@ -148,6 +148,18 @@ class JfMasterController extends Controller
         ]);
         $data['urutan'] ??= 0;
 
+        // asal selain impor: jenisnya tertentu dan hanya satu sumber per pembina (agar tidak ada kolom ganda)
+        $adapter = $data['adapter'];
+        if ($adapter !== 'fakta') {
+            if ($data['jenis'] !== SumberData::JENIS_ADAPTER[$adapter]) {
+                return back()->withErrors(['jenis' => 'Asal nilai ini hanya untuk sumber berjenis '.SumberData::JENIS_ADAPTER[$adapter].'.']);
+            }
+            $ganda = SumberData::where('pembina_id', $pembinaId)->where('adapter', $adapter)->when($sumber, fn ($q) => $q->where('id', '!=', $sumber->id))->exists();
+            if ($ganda) {
+                return back()->withErrors(['adapter' => 'Pembina ini sudah memiliki sumber dengan asal nilai tersebut.']);
+            }
+        }
+
         // kode dipakai sebagai acuan di profil impor dan data lama; mengubahnya setelah dipakai akan memutus acuan itu
         if ($sumber && $sumber->kode !== $data['kode'] && KebutuhanFakta::where('sumber_id', $sumber->id)->exists()) {
             return back()->withErrors(['kode' => 'Kode sumber yang sudah memiliki data tidak dapat diubah.']);

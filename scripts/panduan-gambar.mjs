@@ -28,6 +28,7 @@ const GAMBAR = {
     'kualitas-data': ['/kualitas-data?instansi_id=1', 'admin'],
     'rekomendasi-jf': ['/rekomendasi-jf', 'admin'],
     'wawasan-rekomendasi': ['/rekomendasi-jf/wawasan', 'admin'],
+    'perbandingan-jf': ['/perbandingan-jf', 'admin'],
     'master-jf': ['/jf-master', 'admin'],
     'alias-instansi': ['/alias-instansi?belum_cocok=1', 'admin'],
     'impor-profil': ['/impor-profil/1/edit', 'admin'],
