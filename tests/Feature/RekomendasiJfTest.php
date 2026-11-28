@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\Role;
 use App\Models\ImporProfil;
 use App\Models\InstansiAlias;
+use App\Models\Jabatan;
 use App\Models\JfJabatanPokok;
 use App\Models\JfJenjang;
 use App\Models\KebutuhanFakta;
@@ -349,5 +350,36 @@ class RekomendasiJfTest extends TestCase
 
         $this->delete('/impor-profil/'.ImporProfil::where('kode', 'profil-baru')->value('id'))->assertSessionHas('success');
         $this->assertSame(1, ImporProfil::count());
+    }
+
+    public function test_jabatan_simonkeb_dapat_dikaitkan_ke_master_jf_dengan_validasi(): void
+    {
+        $this->actingAs($this->user(Role::Admin));
+        $analis = JfJabatanPokok::where('kode', 'analis')->firstOrFail();
+        $pranata = JfJabatanPokok::where('kode', 'pranata')->firstOrFail();
+        $pertama = JfJenjang::where('kode', 'pertama')->firstOrFail();
+        $terampil = JfJenjang::where('kode', 'terampil')->firstOrFail();
+        $dasar = ['kode' => 'JF-UJI-1', 'nama' => 'Analis Uji Ahli Pertama', 'jenis' => 'fungsional', 'bup' => 58, 'is_active' => true];
+
+        // lengkap dan sesuai: tersimpan
+        $this->post('/jabatan', $dasar + ['jf_jabatan_pokok_id' => $analis->id, 'jf_jenjang_id' => $pertama->id])->assertSessionHasNoErrors();
+        $jab = Jabatan::where('kode', 'JF-UJI-1')->firstOrFail();
+        $this->assertSame([$analis->id, $pertama->id], [$jab->jf_jabatan_pokok_id, $jab->jf_jenjang_id]);
+        $this->assertSame('Analis SDM Aparatur', $jab->jfJabatanPokok->nama);
+
+        // setengah terisi, atau jenjang yang tidak berlaku untuk jabatan pokok itu: ditolak
+        $this->post('/jabatan', ['kode' => 'JF-UJI-2'] + $dasar + ['jf_jabatan_pokok_id' => $analis->id])->assertSessionHasErrors('jf_jenjang_id');
+        $this->post('/jabatan', ['kode' => 'JF-UJI-3'] + $dasar + ['jf_jabatan_pokok_id' => $pranata->id, 'jf_jenjang_id' => $pertama->id])->assertSessionHasErrors('jf_jenjang_id');
+        $this->post('/jabatan', ['kode' => 'JF-UJI-4'] + $dasar + ['jf_jabatan_pokok_id' => $pranata->id, 'jf_jenjang_id' => $terampil->id])->assertSessionHasNoErrors();
+
+        // tanpa kaitan tetap sah (opsional); jabatan non-fungsional tidak membawa kaitan
+        $this->post('/jabatan', ['kode' => 'JF-UJI-5'] + $dasar)->assertSessionHasNoErrors();
+        $this->assertNull(Jabatan::where('kode', 'JF-UJI-5')->value('jf_jabatan_pokok_id'));
+        $this->post('/jabatan', ['kode' => 'ADM-UJI', 'jenis' => 'administrator'] + $dasar + ['jf_jabatan_pokok_id' => $analis->id, 'jf_jenjang_id' => $pertama->id])->assertSessionHasNoErrors();
+        $this->assertNull(Jabatan::where('kode', 'ADM-UJI')->value('jf_jabatan_pokok_id'));
+
+        // form menyediakan pilihan jabatan pokok beserta jenjangnya; daftar menampilkan kaitannya
+        $this->get('/jabatan/create')->assertInertia(fn ($p) => $p->has('jfOptions', 4)->has('jfOptions.0.jenjang', 4));
+        $this->get('/jabatan?q=JF-UJI-1')->assertInertia(fn ($p) => $p->where('datas.data.0.jf_jabatan_pokok.nama', 'Analis SDM Aparatur')->where('datas.data.0.jf_jenjang.nama', 'Pertama'));
     }
 }

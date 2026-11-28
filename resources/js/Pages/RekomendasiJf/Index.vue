@@ -3,6 +3,7 @@
     <div class="page-title">Rekomendasi JF MASN</div>
     <div class="page-subtitle">Rekomendasi BKN dan penetapan KemenPANRB per instansi × jabatan pokok × jenjang, diimpor dari Excel rekap tim data. Angka bezetting di sini adalah <b>foto saat rekomendasi</b>, bukan kondisi sekarang.</div>
 
+    <div v-if="$page.props.auth.user.role !== 'operator_instansi'" class="mb-2"><Link :href="`/rekomendasi-jf/wawasan?pembina_id=${pembinaId}`" class="btn btn-sm btn-outline-primary"><i class="fa fa-lightbulb-o me-1"></i> Wawasan: sasaran penataan, pendampingan, antrean</Link></div>
     <div v-if="pembinaOptions.length > 1" class="mb-2 d-flex align-items-center gap-2">
         <span class="small text-muted">Instansi pembina:</span>
         <select v-model="f.pembina_id" class="form-select form-select-sm w-auto" @change="gantiPembina"><option v-for="p in pembinaOptions" :key="p.id" :value="p.id">{{ p.nama }}</option></select>

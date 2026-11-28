@@ -11,6 +11,13 @@ return [
     // peran yang wajib mengaktifkan autentikasi dua faktor (pisahkan koma), contoh: admin,verifikator_bkn
     'wajib_2fa' => array_values(array_filter(array_map('trim', explode(',', (string) env('WAJIB_2FA_PERAN', ''))))),
 
+    // ambang panel Wawasan Rekomendasi JF (instansi sasaran dan jalur karier tersumbat)
+    'wawasan' => [
+        'ambang_sasaran' => (int) env('WAWASAN_AMBANG_SASARAN', 5),       // instansi dengan JF kurang dari ini = sasaran penataan
+        'ambang_tersumbat' => (int) env('WAWASAN_AMBANG_TERSUMBAT', 20),  // jenjang bawah >= ini sementara dua jenjang teratas nol
+        'ambang_pemotongan' => (int) env('WAWASAN_AMBANG_PEMOTONGAN', 110), // penetapan di atas % rekomendasi dianggap perlu diperiksa
+    ],
+
     // data awal produksi (BknStarterSeeder): lihat docs/DEPLOY.md
     'starter' => [
         'impor_rekap' => (bool) env('STARTER_IMPOR_REKAP', true),

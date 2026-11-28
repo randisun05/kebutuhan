@@ -57,6 +57,8 @@ Bootstrap 5, Font Awesome, SweetAlert2, Chart.js, maatwebsite/excel.
 Menu **Rekomendasi JF MASN** mengimpor Excel rekap kebutuhan dari tim data menjadi rekomendasi BKN dan penetapan KemenPANRB per instansi ×
 jabatan pokok × jenjang, dengan pratinjau, perhitungan ulang lowongan, dan angka berversi (riwayat tidak hilang).
 
+Panel **Wawasan** (`/rekomendasi-jf/wawasan`) merangkum instansi sasaran penataan, jalur karier tersumbat, peluang pendampingan, antrean menunggu penetapan, dan pola pemotongan penetapan (`WawasanRekomendasiJfService`; ambang di `simonkeb.wawasan`). Jabatan SIMONKEB dapat dikaitkan ke master JF (`jabatans.jf_jabatan_pokok_id` dan `jf_jenjang_id`) untuk perbandingan dengan ABK dan pegawai.
+
 Modul ini mendukung **banyak instansi pembina JF** (`instansi_pembina`; BKN = pembina JF SDM Aparatur). Jabatan pokok, sumber angka, dan profil impor dimiliki satu pembina, dan peran `pembina` (`users.pembina_id`) hanya mengakses data pembinanya serta ditolak dari modul operasional lain (middleware `BatasiPembina`). Pembina baru memakai metode yang sama.
 
 Skemanya **ternormalisasi dan dinamis**: jabatan pokok (`jf_jabatan_pokok`), jenjang (`jf_jenjang`, `jf_jabatan_jenjang`), sumber angka

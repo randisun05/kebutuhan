@@ -27,6 +27,7 @@ const GAMBAR = {
     'monitoring-instansi': ['/monitoring/instansi/1', 'admin'],
     'kualitas-data': ['/kualitas-data?instansi_id=1', 'admin'],
     'rekomendasi-jf': ['/rekomendasi-jf', 'admin'],
+    'wawasan-rekomendasi': ['/rekomendasi-jf/wawasan', 'admin'],
     'master-jf': ['/jf-master', 'admin'],
     'alias-instansi': ['/alias-instansi?belum_cocok=1', 'admin'],
     'impor-profil': ['/impor-profil/1/edit', 'admin'],

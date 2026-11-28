@@ -19,6 +19,23 @@ Angka dari beberapa sumber ditampilkan **berdampingan sebagai referensi**, tanpa
 
 **Lowongan** = bezetting − rekomendasi BKN (negatif berarti masih kurang) dan **selalu dihitung ulang** oleh aplikasi; kolom lowongan dan total di Excel tidak dipakai. Sel yang kosong berarti **tidak ada data**, bukan nol.
 
+## Wawasan: sasaran penataan, pendampingan, antrean
+
+Tombol **Wawasan** di atas daftar membuka panel ringkasan untuk menentukan ke mana pembinaan diarahkan (tidak tersedia untuk operator instansi). Semua angka adalah **foto saat dokumen**, dan peran sumber dibaca dari master (bezetting = sumber bezetting pertama; rekomendasi dan penetapan = dua sumber kebutuhan pertama), sehingga panel mengikuti sumber yang Anda atur.
+
+| Panel | Arti |
+| --- | --- |
+| **Cakupan** | Per jabatan: berapa instansi sudah direkom, sudah ditetapkan, dan belum usul (dihitung dari ada tidaknya angka, bukan dari teks status). |
+| **Instansi sasaran penataan** | Instansi dengan JF kurang dari ambang (bawaan 5 pejabat). *Nol* hanya untuk instansi yang sudah direkom; yang belum usul dihitung terpisah karena datanya belum ada. Nol dapat berarti belum didata, jadi verifikasi dulu. |
+| **Jalur karier tersumbat** | Jenjang bawah berisi pejabat (bawaan ≥ 20) tetapi **dua jenjang teratas kosong**; berlaku untuk jabatan dengan tiga jenjang atau lebih. |
+| **Peluang pendampingan** | Instansi yang sudah direkom untuk jabatan acuan (urutan pertama) tetapi belum mengusulkan jabatan lain, dirinci per jenis instansi. |
+| **Antrean menunggu penetapan** | Sudah ada rekomendasi tetapi belum ada angka atau surat penetapan, dikelompokkan menurut umur surat rekomendasi terakhir (< 90, 90–180, 181–365, > 365 hari, tanpa tanggal). Sebagian dapat berarti belum diinput. |
+| **Penetapan dibanding rekomendasi** | Persentase per jenis instansi. Di atas ambang (bawaan 110%) ditandai **periksa** karena penetapan lebih besar dari rekomendasi. |
+
+Setiap daftar menampilkan 50 baris teratas; klik **Unduh semua** untuk Excel lengkap. Ambang diatur administrator server lewat `WAWASAN_AMBANG_SASARAN`, `WAWASAN_AMBANG_TERSUMBAT`, dan `WAWASAN_AMBANG_PEMOTONGAN`.
+
+![Wawasan rekomendasi JF](/img/panduan/wawasan-rekomendasi.png)
+
 ## Instansi pembina
 
 Data dikelompokkan menurut **instansi pembina JF**. Saat ini yang tersedia adalah BKN sebagai pembina JF SDM Aparatur; pembina lain dapat ditambahkan administrator dengan metode yang sama (jabatan pokok, sumber angka, dan profil impor sendiri). Setiap pembina hanya melihat dan mengelola datanya sendiri:

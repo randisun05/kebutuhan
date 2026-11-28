@@ -17,6 +17,8 @@ Di form instansi, **Jalur kebutuhan** menentukan dasar kebutuhan (*Standar* dari
 
 Isi kode, nama, jenis, kategori/jenjang (jabatan fungsional), **kelas jabatan**, **BUP** (menentukan TMT pensiun), kualifikasi pendidikan, **ID jabatan SIASN** (untuk pemetaan sinkron), dan **estimasi belanja pegawai per orang per tahun** (untuk estimasi anggaran). Jabatan yang sudah dipakai tidak dapat dihapus — nonaktifkan saja.
 
+**Kaitan ke JF MASN (opsional).** Untuk jabatan fungsional, isi **Jabatan pokok JF MASN** dan **Jenjang JF MASN** (keduanya sekaligus, dan jenjang harus berlaku untuk jabatan pokok itu). Contoh: "Analis ... Ahli Pertama" dikaitkan ke *Analis SDM Aparatur, jenjang Pertama*. Kaitan ini yang memungkinkan ABK dan pegawai jabatan tersebut disejajarkan dengan rekomendasi dan penetapan di modul [Rekomendasi JF MASN](/panduan/18-rekomendasi-jf). Jabatan tanpa kaitan tetap berfungsi normal dan diabaikan di perbandingan. Pilihan hanya muncul untuk jenis jabatan fungsional.
+
 ## Pengguna
 
 Tambah pengguna dengan nama, **NIP**, email, password awal, peran, dan instansi (wajib untuk operator instansi). Pengguna yang dinonaktifkan tidak dapat masuk.

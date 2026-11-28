@@ -13,6 +13,9 @@ Halaman ini mencatat perubahan aplikasi. Membuka halaman ini menandai pembaruan 
 
 - **Rekomendasi JF MASN** (menu baru): rekomendasi BKN dan penetapan KemenPANRB per instansi × jabatan pokok × jenjang, diimpor dari Excel rekap tim data dengan **pratinjau**, perhitungan ulang lowongan, dan penguraian banyak surat per sel. Angka disimpan **berversi** (riwayat perubahan terlihat) dan kolom sumber mengikuti daftar sumber.
 - **Banyak instansi pembina**: BKN adalah pembina JF SDM Aparatur, dan pembina lain dapat ditambahkan dengan metode yang sama. Peran baru **Operator Instansi Pembina** hanya mengakses data instansi pembinanya (rekomendasi, master JF, sumber, dan profil impor miliknya); modul operasional lain tertutup untuknya. Banyak pengguna boleh berbagi satu pembina.
+- **Wawasan rekomendasi JF**: panel instansi sasaran penataan, jalur karier tersumbat, peluang pendampingan, antrean menunggu penetapan, dan pola penetapan dibanding rekomendasi, dengan unduh Excel dan ambang yang dapat diatur.
+- **Kaitan jabatan ke JF MASN**: jabatan fungsional dapat dikaitkan ke jabatan pokok dan jenjang JF (opsional) di form Jabatan.
+- **Data awal BKN**: `BknStarterSeeder` (aman di produksi) menyiapkan master BKN, referensi instansi, dan angka dari Excel rekap.
 - **Dinamis dan dapat dikelola** (menu Referensi: **Master JF & Sumber**, **Alias Instansi**, **Profil Impor**): jabatan pokok, jenjang, sumber angka, nama alias instansi, dan tata letak kolom Excel adalah data dengan tambah/ubah/hapus, bukan kode. Perubahan susunan Excel atau JF/jenjang/sumber baru tidak memerlukan perubahan aplikasi.
 
 ## v1.7.1 — 2026-11-08

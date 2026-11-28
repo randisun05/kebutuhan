@@ -14,10 +14,10 @@
     <div class="card">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead><tr><th>Kode</th><th>Nama jabatan</th><th>Jenis</th><th>Jenjang</th><th class="num">Kelas</th><th class="num">BUP</th><th>Kualifikasi</th><th>Status</th><th></th></tr></thead>
+                <thead><tr><th>Kode</th><th>Nama jabatan</th><th>Jenis</th><th>Jenjang</th><th>JF MASN</th><th class="num">Kelas</th><th class="num">BUP</th><th>Kualifikasi</th><th>Status</th><th></th></tr></thead>
                 <tbody>
                     <tr v-for="d in datas.data" :key="d.id">
-                        <td class="small">{{ d.kode }}</td><td>{{ d.nama }}</td><td>{{ d.jenis_label }}</td><td>{{ d.jenjang || '-' }}</td>
+                        <td class="small">{{ d.kode }}</td><td>{{ d.nama }}</td><td>{{ d.jenis_label }}</td><td>{{ d.jenjang || '-' }}</td><td class="small"><span v-if="d.jf_jabatan_pokok">{{ d.jf_jabatan_pokok.nama }} · {{ d.jf_jenjang?.nama }}</span><span v-else class="text-muted">-</span></td>
                         <td class="num">{{ d.kelas_jabatan || '-' }}</td><td class="num">{{ d.bup }}</td><td class="small">{{ d.kualifikasi_pendidikan }}</td>
                         <td><span class="badge" :class="d.is_active ? 'bg-success' : 'bg-secondary'">{{ d.is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
                         <td class="text-nowrap"><Link :href="`/jabatan/${d.id}/edit`" class="btn btn-sm btn-light"><i class="fa fa-pencil"></i></Link>

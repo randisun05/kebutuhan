@@ -8,6 +8,8 @@ use App\Models\AnjabAbk;
 use App\Models\Instansi;
 use App\Models\InstansiPembina;
 use App\Models\Jabatan;
+use App\Models\JfJabatanPokok;
+use App\Models\JfJenjang;
 use App\Models\KebutuhanSementara;
 use App\Models\Pegawai;
 use App\Models\UnitKerja;
@@ -38,6 +40,12 @@ class DatabaseSeeder extends Seeder
         $faker->seed(2026);
 
         $jabatans = $this->jabatans();
+
+        // kaitkan jabatan demo Analis SDM Aparatur (per jenjang) ke master JF MASN agar dapat disejajarkan dengan rekomendasi
+        $analis = JfJabatanPokok::where('kode', 'analis')->value('id');
+        foreach (['JF-ASDM-1' => 'pertama', 'JF-ASDM-2' => 'muda', 'JF-ASDM-3' => 'madya'] as $kode => $jenjang) {
+            $jabatans[$kode]?->update(['jf_jabatan_pokok_id' => $analis, 'jf_jenjang_id' => JfJenjang::where('kode', $jenjang)->value('id')]);
+        }
 
         $admin = User::create(['name' => 'Administrator', 'email' => 'admin@simonkeb.test', 'password' => 'password', 'role' => Role::Admin]);
         $bkn = User::create(['name' => 'Verifikator BKN', 'email' => 'bkn@simonkeb.test', 'password' => 'password', 'role' => Role::VerifikatorBkn]);

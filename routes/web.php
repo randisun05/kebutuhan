@@ -109,6 +109,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('usulan', UsulanController::class);
 
     Route::get('/rekomendasi-jf', [RekomendasiJfController::class, 'index'])->name('rekomendasi-jf.index');
+    Route::get('/rekomendasi-jf/wawasan', [RekomendasiJfController::class, 'wawasan'])->name('rekomendasi-jf.wawasan');
+    Route::get('/rekomendasi-jf/wawasan/unduh/{panel}', [RekomendasiJfController::class, 'wawasanUnduh'])->whereIn('panel', ['sasaran', 'tersumbat', 'pendampingan', 'antrean'])->name('rekomendasi-jf.wawasan.unduh');
     Route::get('/rekomendasi-jf/{rekomendasi}', [RekomendasiJfController::class, 'show'])->whereNumber('rekomendasi')->name('rekomendasi-jf.show');
 
     Route::get('/penetapan', [PenetapanController::class, 'index'])->name('penetapan.index');

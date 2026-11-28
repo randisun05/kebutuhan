@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ArrayExport;
 use App\Models\ImporProfil;
 use App\Models\InstansiAlias;
 use App\Models\InstansiPembina;
@@ -11,10 +12,12 @@ use App\Models\RekomendasiJf;
 use App\Models\RekomendasiJfImpor;
 use App\Models\SumberData;
 use App\Services\RekomendasiJfImportService;
+use App\Services\WawasanRekomendasiJfService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
 /**
@@ -77,6 +80,55 @@ class RekomendasiJfController extends Controller
             'bolehImpor' => $bolehImpor,
             'batasUnggahMb' => $bolehImpor ? $this->batasUnggahMb() : null,
         ]);
+    }
+
+    /** Panel wawasan: sasaran penataan, jalur tersumbat, peluang pendampingan, antrean Menpan, dan pola pemotongan. */
+    public function wawasan(WawasanRekomendasiJfService $service)
+    {
+        $user = request()->user();
+        abort_if($user->isScopedToInstansi(), 403, 'Panel wawasan untuk pembina, bukan untuk operator instansi.');
+        $pembinaOptions = $this->pembinaDapatDiakses($user);
+        $pembinaId = $this->pembinaTerpilih($pembinaOptions);
+        $w = $pembinaId ? $service->hitung($pembinaId) : ['lengkap' => false, 'peran' => []];
+
+        // daftar panjang dipotong di layar; seluruhnya tersedia lewat unduh Excel
+        if ($w['lengkap']) {
+            $b = WawasanRekomendasiJfService::BATAS_LAYAR;
+            foreach (['sasaran', 'tersumbat', 'pendampingan', 'antrean'] as $panel) {
+                $w[$panel]['total_daftar'] = count($w[$panel]['daftar']);
+                $w[$panel]['daftar'] = array_slice($w[$panel]['daftar'], 0, $b);
+            }
+        }
+
+        return inertia('RekomendasiJf/Wawasan', [
+            'w' => $w, 'pembinaOptions' => $pembinaOptions->map(fn ($p) => ['id' => $p->id, 'nama' => $p->nama])->values(), 'pembinaId' => $pembinaId,
+            'batasLayar' => WawasanRekomendasiJfService::BATAS_LAYAR,
+        ]);
+    }
+
+    /** Unduh daftar lengkap salah satu panel wawasan ke Excel. */
+    public function wawasanUnduh(string $panel, WawasanRekomendasiJfService $service)
+    {
+        $user = request()->user();
+        abort_if($user->isScopedToInstansi(), 403);
+        $pembinaId = $this->pembinaTerpilih($this->pembinaDapatDiakses($user));
+        abort_unless($pembinaId, 404);
+        $w = $service->hitung($pembinaId);
+        abort_unless($w['lengkap'], 404);
+
+        [$judul, $kolom, $baris] = match ($panel) {
+            'sasaran' => ['sasaran-penataan', ['Instansi', 'Jenis', 'Pokja', 'Bezetting', 'Rekomendasi', 'Kategori'],
+                array_map(fn ($r) => [$r['instansi'], $r['jenis'], $r['pokja'], $r['bezetting'], $r['rekom'], $r['kategori'] === 'nol' ? 'Nol' : 'Kurang'], $w['sasaran']['daftar'])],
+            'tersumbat' => ['jalur-tersumbat', ['Instansi', 'Jenis', 'Jabatan', 'Jenjang bawah', 'Dua jenjang teratas'],
+                array_map(fn ($r) => [$r['instansi'], $r['jenis'], $r['jabatan'], $r['bawah'], $r['atas']], $w['tersumbat']['daftar'])],
+            'pendampingan' => ['peluang-pendampingan', ['Instansi', 'Jenis', 'Pokja', 'Belum usul'],
+                array_map(fn ($r) => [$r['instansi'], $r['jenis'], $r['pokja'], $r['belum_usul']], $w['pendampingan']['daftar'])],
+            'antrean' => ['antrean-penetapan', ['Instansi', 'Jenis', 'Jabatan', 'Nomor surat rekomendasi', 'Tanggal surat', 'Umur (hari)'],
+                array_map(fn ($r) => [$r['instansi'], $r['jenis'], $r['jabatan'], $r['nomor'], $r['tanggal'], $r['umur_hari']], $w['antrean']['daftar'])],
+            default => abort(404),
+        };
+
+        return Excel::download(new ArrayExport($kolom, $baris), "wawasan-{$judul}-".now()->format('Ymd').'.xlsx');
     }
 
     public function show(RekomendasiJf $rekomendasi)
