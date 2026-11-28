@@ -32,3 +32,9 @@ Jangan menulis manual isi yang tersedia sebagai penanda dinamis (`{{ tabel_peran
 - Modul Rekomendasi JF MASN bersifat **dinamis**: jangan menulis jabatan pokok, jenjang, sumber angka, nama sheet, atau huruf kolom Excel di dalam kode. Semuanya data (`jf_jabatan_pokok`, `jf_jenjang`, `sumber_data`, `impor_profil`, `instansi_alias`) yang dikelola lewat menu Referensi; angka disimpan berversi di `kebutuhan_fakta`.
 - Isolasi instansi pembina: data modul Rekomendasi JF dimiliki satu `instansi_pembina` (lewat `jf_jabatan_pokok`, `sumber_data`, `impor_profil`). Setiap query/aksi yang menyentuh data itu harus dibatasi dengan `User::canAccessPembina()` / `RekomendasiJf::untukPembina()`, dan pengguna berperan `pembina` ditolak dari modul lain oleh `BatasiPembina`. Peran baru yang membatasi cakupan harus ditambahkan ke middleware itu.
 - Jalankan `vendor/bin/pint` dan `php artisan test` sebelum push.
+
+## Pengingat arsitektur (dari pemilik produk)
+
+Dashboard = pusat pertukaran data antar-project (lihat `docs/KONTEKS-EKOSISTEM.md` §9a). Ingatkan pengguna bila merancang fitur yang
+mengambil data project lain langsung (harus lewat Dashboard), atau fitur yang memuat data sendiri tetapi belum dikirim ke Dashboard.
+Referensi baku (instansi, jabatan JF, jenjang) harus identik antar-project: jangan membuat varian lokal.

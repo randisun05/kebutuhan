@@ -141,6 +141,17 @@ Tanpa keduanya, INSIGHT dan Dashboard hanya bisa merekap, tidak bisa menganalisi
 - Gunakan bahasa Indonesia yang lugas untuk dokumentasi, komentar penjelas, dan pesan ke pengguna, kecuali konvensi repositori berkata lain.
 - Tandai dengan jelas mana fakta dari kode atau dokumen, mana asumsi.
 
+## 9a. Keputusan arsitektur data (dikonfirmasi pemilik produk, 2026-11-28)
+
+- **Dashboard adalah pusat pertukaran data.** Setiap project mengirim datanya ke Dashboard; bila sebuah project memerlukan data project lain
+  (mis. SIMONKEB memerlukan data ukom RICT/OLCT atau data JF), data itu **diambil dari Dashboard**, bukan langsung dari project sumbernya.
+  Dashboard yang menyalurkan (delivery). SIMONKEB sudah menarik bezetting dari Dashboard (`jf:tarik-dashboard`); arah sebaliknya
+  (SIMONKEB mengirim ABK/kebutuhan ke Dashboard) belum dibuat.
+- **Data ukom** (RICT/OLCT) hanya dari Dashboard.
+- **Referensi baku harus sama di semua project** (contoh: instansi, jabatan JF, jenjang). Sumber kebenaran satu; project lain mengikuti
+  kode/ID bakunya (instansi = ID SIASN). Alias nama hanya untuk menampung penulisan berbeda yang dipetakan ke referensi baku.
+- **Satu pengguna = satu instansi pembina**, kecuali Admin (lintas pembina).
+
 ## 10. Informasi repositori (isi oleh tim)
 
 - Stack teknologi: [lengkapi]
